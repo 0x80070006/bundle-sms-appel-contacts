@@ -1,0 +1,75 @@
+package app.people.contacts.data
+
+/** A contact as the list shows it. [id] is ContactsContract.Contacts._ID. */
+data class ContactSummary(
+    val id: Long,
+    val lookupKey: String,
+    val name: String,
+    /** Name in "Last, First" order, for sorting by last name. */
+    val nameAlternative: String,
+    val photoUri: String?,
+    val starred: Boolean,
+    /** Phone numbers and email addresses, for search. */
+    val numbers: List<String> = emptyList(),
+    val emails: List<String> = emptyList(),
+    /** Company, job title, nickname, notes and addresses, so search can find people by them. */
+    val details: List<String> = emptyList(),
+    /** The accounts it's stored in, as (type, name); both null for the phone. */
+    val accounts: List<Pair<String?, String?>> = emptyList(),
+)
+
+/**
+ * One labelled value: a number, an address, a date… with its type label ("Mobile", "Work") and
+ * the provider's type code behind it.
+ */
+data class LabeledValue(
+    val value: String,
+    val label: String,
+    val type: Int = 0,
+    /** The provider's row id, for setting a default number or email. */
+    val dataId: Long = 0,
+    /** The contact's default (Android's "super primary") number or email. */
+    val isDefault: Boolean = false,
+)
+
+/** Everything the contact page shows. */
+data class ContactDetails(
+    val id: Long,
+    val lookupKey: String,
+    val name: String,
+    val photoUri: String?,
+    val thumbnailUri: String?,
+    val starred: Boolean,
+    val phones: List<LabeledValue> = emptyList(),
+    val emails: List<LabeledValue> = emptyList(),
+    val addresses: List<LabeledValue> = emptyList(),
+    /** Raw dates as stored ("1990-03-04", or "--03-04" without a year). */
+    val events: List<LabeledValue> = emptyList(),
+    val websites: List<String> = emptyList(),
+    val relations: List<LabeledValue> = emptyList(),
+    /** Internet call (SIP) addresses and chat addresses. */
+    val sipAddresses: List<LabeledValue> = emptyList(),
+    val chats: List<LabeledValue> = emptyList(),
+    /** How the name is said, if stored ("Phonetic name"). */
+    val phoneticName: String? = null,
+    val nickname: String? = null,
+    val company: String? = null,
+    val jobTitle: String? = null,
+    val notes: List<String> = emptyList(),
+    val labels: List<String> = emptyList(),
+    /** The contact's own ringtone (a URI), or null for the phone's default. */
+    val ringtone: String? = null,
+    /** How many stored contacts are linked into this one; more than 1 can be unlinked. */
+    val linkedCount: Int = 1,
+)
+
+/** The name a contact is sorted and grouped by: "First Last", or "Last, First" by last name. */
+fun ContactSummary.sortName(order: SortOrder): String = if (order == SortOrder.LastName) nameAlternative else name
+
+/** Where a contact's data rows live: the profile ("Your info") has its own store. */
+fun dataUriFor(contactId: Long?): android.net.Uri =
+    if (contactId != null && android.provider.ContactsContract.isProfileId(contactId)) {
+        android.net.Uri.withAppendedPath(android.provider.ContactsContract.Profile.CONTENT_URI, android.provider.ContactsContract.Contacts.Data.CONTENT_DIRECTORY)
+    } else {
+        android.provider.ContactsContract.Data.CONTENT_URI
+    }
