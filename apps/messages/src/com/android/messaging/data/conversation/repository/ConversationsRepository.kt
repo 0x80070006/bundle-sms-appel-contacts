@@ -1,0 +1,565 @@
+package com.android.messaging.data.conversation.repository
+
+import android.content.ContentResolver
+import android.database.ContentObserver
+import android.net.Uri
+import com.android.messaging.data.conversation.mapper.ConversationMessageDetailsMapper
+import com.android.messaging.data.conversation.model.ConversationId
+import com.android.messaging.data.conversation.model.MessageId
+import com.android.messaging.data.conversation.model.ParticipantId
+import com.android.messaging.data.conversation.model.message.ConversationMessageDetailsData
+import com.android.messaging.data.conversation.model.message.ConversationMessageDetailsResult
+import com.android.messaging.data.conversation.model.message.ConversationMessagesWindow
+import com.android.messaging.data.conversation.model.metadata.ConversationComposerAvailability
+import com.android.messaging.data.conversation.model.metadata.ConversationComposerDisabledReason
+import com.android.messaging.data.conversation.model.metadata.ConversationMetadata
+import com.android.messaging.data.conversation.model.send.ConversationSendData
+import com.android.messaging.data.conversation.platform.MessageDetailsPlatformSource
+import com.android.messaging.data.conversation.store.ConversationArchiveStore
+import com.android.messaging.data.conversation.store.ConversationPinStore
+import com.android.messaging.data.conversation.store.ConversationReadStore
+import com.android.messaging.data.conversation.store.ConversationSelfIdStore
+import com.android.messaging.data.conversationsettings.repository.ConversationNotificationRepository
+import com.android.messaging.data.sms.MmsConfigLoadSource
+import com.android.messaging.datamodel.DatabaseHelper.ConversationColumns
+import com.android.messaging.datamodel.DatabaseHelper.ParticipantColumns
+import com.android.messaging.datamodel.MessagingContentProvider
+import com.android.messaging.datamodel.action.DeleteConversationAction
+import com.android.messaging.datamodel.action.DeleteMessageAction
+import com.android.messaging.datamodel.action.RedownloadMmsAction
+import com.android.messaging.datamodel.action.ResendMessageAction
+import com.android.messaging.datamodel.data.ConversationListItemData
+import com.android.messaging.datamodel.data.ConversationMessageData
+import com.android.messaging.datamodel.data.ConversationParticipantsData
+import com.android.messaging.datamodel.data.ParticipantData
+import com.android.messaging.di.core.DefaultDispatcher
+import com.android.messaging.di.core.MessagingDbDispatcher
+import com.android.messaging.sms.canReplyToDestinationFromAnySubscription
+import com.android.messaging.util.db.ReversedCursor
+import com.android.messaging.util.db.ext.getInt
+import com.android.messaging.util.db.ext.getLong
+import com.android.messaging.util.db.ext.getStringOrEmpty
+import javax.inject.Inject
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
+
+internal interface ConversationsRepository {
+    fun getConversationMetadata(conversationId: ConversationId): Flow<ConversationMetadata?>
+
+    suspend fun getConversationMetadataSnapshot(
+        conversationId: ConversationId,
+    ): ConversationMetadata?
+
+    /**
+     * Window over the newest messages of a conversation, emitted oldest-first; re-queried
+     * whenever the conversation changes or [windowSizes] asks for a larger window.
+     */
+    fun getConversationMessages(
+        conversationId: ConversationId,
+        windowSizes: Flow<Int>,
+    ): Flow<ConversationMessagesWindow>
+
+    suspend fun getConversationSendData(
+        conversationId: ConversationId,
+        requestedSelfParticipantId: ParticipantId?,
+    ): ConversationSendData?
+
+    suspend fun getConversationMessage(
+        conversationId: ConversationId,
+        messageId: MessageId,
+    ): ConversationMessageData?
+
+    fun deleteMessages(messageIds: Collection<MessageId>)
+
+    fun downloadMessage(messageId: MessageId)
+
+    suspend fun getMessageDetails(
+        conversationId: ConversationId,
+        messageId: MessageId,
+    ): ConversationMessageDetailsResult?
+
+    fun resendMessage(messageId: MessageId)
+
+    suspend fun archiveConversation(conversationId: ConversationId)
+
+    suspend fun unarchiveConversation(conversationId: ConversationId)
+
+    suspend fun pinConversation(conversationId: ConversationId)
+
+    suspend fun unpinConversation(conversationId: ConversationId)
+
+    suspend fun markConversationRead(conversationId: ConversationId)
+
+    suspend fun markConversationUnread(conversationId: ConversationId)
+
+    fun deleteConversation(conversationId: ConversationId, cutoffTimestamp: Long)
+
+    fun deleteConversations(cutoffTimestampsByConversationId: Map<ConversationId, Long>)
+
+    suspend fun setConversationSelfId(conversationId: ConversationId, selfId: ParticipantId)
+}
+
+internal class ConversationsRepositoryImpl @Inject constructor(
+    private val contentResolver: ContentResolver,
+    private val messageDetailsMapper: ConversationMessageDetailsMapper,
+    private val messageDetailsPlatformSource: MessageDetailsPlatformSource,
+    private val conversationSelfIdStore: ConversationSelfIdStore,
+    private val conversationReadStore: ConversationReadStore,
+    private val conversationPinStore: ConversationPinStore,
+    private val conversationArchiveStore: ConversationArchiveStore,
+    private val notificationRepository: ConversationNotificationRepository,
+    private val mmsConfigLoadSource: MmsConfigLoadSource,
+    @param:DefaultDispatcher
+    private val defaultDispatcher: CoroutineDispatcher,
+    @param:MessagingDbDispatcher
+    private val messagingDbDispatcher: CoroutineDispatcher,
+) : ConversationsRepository {
+
+    override fun getConversationMetadata(
+        conversationId: ConversationId,
+    ): Flow<ConversationMetadata?> {
+        val uri = MessagingContentProvider.buildConversationMetadataUri(conversationId.value)
+
+        return combine(
+            observeUri(uri = uri).flowOn(defaultDispatcher),
+            notificationRepository.observeIsSnoozed(conversationId = conversationId),
+            mmsConfigLoadSource.observeLoads(),
+        ) { _, isSnoozed, _ ->
+            queryConversationMetadata(
+                uri = uri,
+                isSnoozed = isSnoozed,
+            )
+        }.flowOn(messagingDbDispatcher)
+    }
+
+    override suspend fun getConversationMetadataSnapshot(
+        conversationId: ConversationId,
+    ): ConversationMetadata? {
+        if (conversationId.isBlank()) return null
+
+        val uri = MessagingContentProvider.buildConversationMetadataUri(conversationId.value)
+        return withContext(context = messagingDbDispatcher) {
+            queryConversationMetadata(
+                uri = uri,
+                isSnoozed = notificationRepository.isSnoozed(conversationId = conversationId),
+            )
+        }
+    }
+
+    override fun getConversationMessages(
+        conversationId: ConversationId,
+        windowSizes: Flow<Int>,
+    ): Flow<ConversationMessagesWindow> {
+        val notifyUri = MessagingContentProvider.buildConversationMessagesUri(conversationId.value)
+
+        return combine(
+            observeUri(uri = notifyUri),
+            windowSizes,
+        ) { _, windowSize -> windowSize }
+            .flowOn(defaultDispatcher)
+            .conflate()
+            .map { windowSize ->
+                val messages = queryConversationMessages(
+                    uri = MessagingContentProvider.buildConversationMessagesUri(
+                        conversationId.value,
+                        windowSize + 1,
+                    ),
+                )
+
+                ConversationMessagesWindow(
+                    messages = messages.takeLast(windowSize),
+                    hasMore = messages.size > windowSize,
+                )
+            }
+            .flowOn(messagingDbDispatcher)
+    }
+
+    override suspend fun getConversationSendData(
+        conversationId: ConversationId,
+        requestedSelfParticipantId: ParticipantId?,
+    ): ConversationSendData? {
+        return withContext(context = messagingDbDispatcher) {
+            val metadata = when {
+                conversationId.isBlank() -> null
+                else -> {
+                    queryConversationMetadata(
+                        uri = MessagingContentProvider.buildConversationMetadataUri(
+                            conversationId.value,
+                        ),
+                        isSnoozed = notificationRepository.isSnoozed(
+                            conversationId = conversationId,
+                        ),
+                    )
+                }
+            }
+
+            metadata?.let { conversationMetadata ->
+                val resolvedSelfParticipantId = requestedSelfParticipantId
+                    ?: conversationMetadata.selfParticipantId
+
+                ConversationSendData(
+                    metadata = conversationMetadata,
+                    participants = queryConversationParticipants(conversationId = conversationId),
+                    selfParticipant = queryParticipant(participantId = resolvedSelfParticipantId),
+                )
+            }
+        }
+    }
+
+    override suspend fun getConversationMessage(
+        conversationId: ConversationId,
+        messageId: MessageId,
+    ): ConversationMessageData? {
+        return withContext(context = messagingDbDispatcher) {
+            getConversationMessageData(
+                conversationId = conversationId,
+                messageId = messageId,
+            )
+        }
+    }
+
+    override fun deleteMessages(messageIds: Collection<MessageId>) {
+        messageIds
+            .asSequence()
+            .filter(MessageId::isNotBlank)
+            .forEach { DeleteMessageAction.deleteMessage(it.value) }
+    }
+
+    override fun downloadMessage(messageId: MessageId) {
+        messageId
+            .takeIf { it.isNotBlank() }
+            ?.let { RedownloadMmsAction.redownloadMessage(it.value) }
+    }
+
+    override suspend fun getMessageDetails(
+        conversationId: ConversationId,
+        messageId: MessageId,
+    ): ConversationMessageDetailsResult? {
+        return withContext(context = messagingDbDispatcher) {
+            val data = loadMessageDetailsData(
+                conversationId = conversationId,
+                messageId = messageId,
+            ) ?: return@withContext null
+
+            val details = messageDetailsMapper.map(
+                data = data,
+                activeSubscriptionCount = messageDetailsPlatformSource.activeSubscriptionCount(),
+                debug = messageDetailsPlatformSource.loadDebug(data.message),
+            )
+            ConversationMessageDetailsResult(
+                message = data.message,
+                details = details,
+            )
+        }
+    }
+
+    override fun resendMessage(messageId: MessageId) {
+        messageId
+            .takeIf { it.isNotBlank() }
+            ?.let { ResendMessageAction.resendMessage(it.value) }
+    }
+
+    override suspend fun archiveConversation(conversationId: ConversationId) {
+        if (conversationId.isBlank()) return
+
+        withContext(messagingDbDispatcher) {
+            conversationArchiveStore.archiveConversation(conversationId)
+        }
+    }
+
+    override suspend fun unarchiveConversation(conversationId: ConversationId) {
+        if (conversationId.isBlank()) return
+
+        withContext(messagingDbDispatcher) {
+            conversationArchiveStore.unarchiveConversation(conversationId)
+        }
+    }
+
+    override suspend fun pinConversation(conversationId: ConversationId) {
+        if (conversationId.isBlank()) return
+
+        withContext(messagingDbDispatcher) {
+            conversationPinStore.pinConversation(conversationId)
+        }
+    }
+
+    override suspend fun unpinConversation(conversationId: ConversationId) {
+        if (conversationId.isBlank()) return
+
+        withContext(messagingDbDispatcher) {
+            conversationPinStore.unpinConversation(conversationId)
+        }
+    }
+
+    override suspend fun markConversationRead(conversationId: ConversationId) {
+        if (conversationId.isBlank()) return
+
+        withContext(messagingDbDispatcher) {
+            conversationReadStore.markConversationRead(conversationId)
+        }
+    }
+
+    override suspend fun markConversationUnread(conversationId: ConversationId) {
+        if (conversationId.isBlank()) return
+
+        withContext(messagingDbDispatcher) {
+            conversationReadStore.markConversationUnread(conversationId)
+        }
+    }
+
+    override fun deleteConversation(conversationId: ConversationId, cutoffTimestamp: Long) {
+        if (conversationId.isBlank()) {
+            return
+        }
+
+        DeleteConversationAction.deleteConversation(
+            conversationId.value,
+            cutoffTimestamp,
+        )
+    }
+
+    override fun deleteConversations(cutoffTimestampsByConversationId: Map<ConversationId, Long>) {
+        cutoffTimestampsByConversationId
+            .filterKeys(ConversationId::isNotBlank)
+            .mapKeys { (conversationId, _) -> conversationId.value }
+            .takeIf { it.isNotEmpty() }
+            ?.let(DeleteConversationAction::deleteConversations)
+    }
+
+    override suspend fun setConversationSelfId(
+        conversationId: ConversationId,
+        selfId: ParticipantId,
+    ) {
+        if (conversationId.isBlank()) return
+
+        withContext(context = messagingDbDispatcher) {
+            conversationSelfIdStore.updateSelfId(
+                conversationId = conversationId,
+                selfId = selfId,
+            )
+            MessagingContentProvider.notifyConversationListChanged()
+            MessagingContentProvider.notifyConversationMetadataChanged(conversationId.value)
+        }
+    }
+
+    private fun observeUri(uri: Uri): Flow<Unit> {
+        return callbackFlow {
+            val observer = object : ContentObserver(null) {
+                override fun onChange(selfChange: Boolean) {
+                    trySend(Unit)
+                }
+            }
+            contentResolver.registerContentObserver(uri, true, observer)
+
+            trySend(Unit)
+
+            awaitClose {
+                contentResolver.unregisterContentObserver(observer)
+            }
+        }
+    }
+
+    private suspend fun getConversationMessageData(
+        conversationId: ConversationId,
+        messageId: MessageId,
+    ): ConversationMessageData? {
+        return when {
+            conversationId.isBlank() || messageId.isBlank() -> null
+
+            else -> {
+                MessagingContentProvider
+                    .buildConversationMessageUri(conversationId.value, messageId.value)
+                    .let { uri -> queryConversationMessages(uri = uri) }
+                    .firstOrNull()
+            }
+        }
+    }
+
+    private fun queryConversationMetadata(uri: Uri, isSnoozed: Boolean): ConversationMetadata? {
+        return contentResolver
+            .query(
+                uri,
+                ConversationListItemData.PROJECTION,
+                null,
+                null,
+                null,
+            )
+            ?.use { cursor ->
+                if (!cursor.moveToFirst()) {
+                    return@use null
+                }
+
+                val participantCount = cursor.getInt(ConversationColumns.PARTICIPANT_COUNT)
+
+                val otherParticipant = when {
+                    participantCount == 1 -> queryConversationOtherParticipant(uri = uri)
+                    else -> null
+                }
+
+                val otherParticipantContactLookupKey = otherParticipant
+                    ?.lookupKey
+                    ?.takeIf { it.isNotBlank() }
+                    ?: cursor
+                        .getStringOrEmpty(ConversationColumns.PARTICIPANT_LOOKUP_KEY)
+                        .takeIf { it.isNotBlank() }
+                val otherParticipantNormalizedDestination = cursor
+                    .getStringOrEmpty(ConversationColumns.OTHER_PARTICIPANT_NORMALIZED_DESTINATION)
+                    .takeIf { it.isNotBlank() }
+
+                ConversationMetadata(
+                    conversationName = cursor.getStringOrEmpty(ConversationColumns.NAME),
+                    selfParticipantId = ParticipantId.fromOrNull(
+                        cursor.getStringOrEmpty(ConversationColumns.CURRENT_SELF_ID),
+                    ),
+                    isGroupConversation = participantCount > 1,
+                    includeEmailAddress = cursor.getInt(
+                        ConversationColumns.INCLUDE_EMAIL_ADDRESS,
+                    ) == 1,
+                    participantCount = participantCount,
+                    otherParticipantDisplayDestination = otherParticipant
+                        ?.displayDestination
+                        ?.takeIf { it.isNotBlank() },
+                    otherParticipantNormalizedDestination = otherParticipantNormalizedDestination,
+                    otherParticipantContactLookupKey = otherParticipantContactLookupKey,
+                    otherParticipantPhotoUri = otherParticipant
+                        ?.profilePhotoUri
+                        ?.takeIf { it.isNotBlank() },
+                    isArchived = cursor.getInt(ConversationColumns.ARCHIVE_STATUS) == 1,
+                    isBlocked = otherParticipant?.isBlocked == true,
+                    isSnoozed = isSnoozed,
+                    composerAvailability = composerAvailability(
+                        otherParticipantDestination = otherParticipantNormalizedDestination,
+                    ),
+                    sortTimestamp = cursor.getLong(ConversationColumns.SORT_TIMESTAMP),
+                )
+            }
+    }
+
+    private fun composerAvailability(
+        otherParticipantDestination: String?,
+    ): ConversationComposerAvailability {
+        val canReply = when (otherParticipantDestination) {
+            null -> true
+            else -> canReplyToDestinationFromAnySubscription(
+                destination = otherParticipantDestination,
+            )
+        }
+        return when {
+            canReply -> ConversationComposerAvailability.Editable
+            else -> ConversationComposerAvailability.Unavailable(
+                reason = ConversationComposerDisabledReason.READ_ONLY_CONVERSATION,
+            )
+        }
+    }
+
+    private suspend fun loadMessageDetailsData(
+        conversationId: ConversationId,
+        messageId: MessageId,
+    ): ConversationMessageDetailsData? {
+        val message = getConversationMessageData(
+            conversationId = conversationId,
+            messageId = messageId,
+        ) ?: return null
+
+        val participants = queryConversationParticipants(
+            conversationId = conversationId,
+        )
+        val selfParticipant = queryParticipant(
+            participantId = ParticipantId.fromOrNull(message.selfParticipantId),
+        )
+
+        return ConversationMessageDetailsData(
+            message = message,
+            participants = participants,
+            selfParticipant = selfParticipant,
+        )
+    }
+
+    private fun queryConversationOtherParticipant(uri: Uri): ParticipantData? {
+        val conversationId = uri.lastPathSegment
+            ?.takeIf { it.isNotBlank() }
+            ?.let(::ConversationId)
+            ?: return null
+
+        val participants = queryConversationParticipants(
+            conversationId = conversationId,
+        )
+        return participants.getOtherParticipant()
+    }
+
+    private fun queryConversationParticipants(
+        conversationId: ConversationId,
+    ): ConversationParticipantsData {
+        val uri = MessagingContentProvider.buildConversationParticipantsUri(conversationId.value)
+
+        return contentResolver
+            .query(
+                uri,
+                ParticipantData.ParticipantsQuery.PROJECTION,
+                null,
+                null,
+                null,
+            )
+            ?.use { cursor ->
+                ConversationParticipantsData().apply {
+                    bind(cursor)
+                }
+            }
+            ?: ConversationParticipantsData()
+    }
+
+    private fun queryParticipant(
+        participantId: ParticipantId?,
+    ): ParticipantData? {
+        if (participantId == null) {
+            return null
+        }
+
+        return contentResolver
+            .query(
+                MessagingContentProvider.PARTICIPANTS_URI,
+                ParticipantData.ParticipantsQuery.PROJECTION,
+                "${ParticipantColumns._ID} = ?",
+                arrayOf(participantId.value),
+                null,
+            )
+            ?.use { cursor ->
+                if (!cursor.moveToFirst()) {
+                    return@use null
+                }
+
+                ParticipantData.getFromCursor(cursor)
+            }
+    }
+
+    private suspend fun queryConversationMessages(uri: Uri): List<ConversationMessageData> {
+        return contentResolver
+            .query(
+                uri,
+                ConversationMessageData.getProjection(),
+                null,
+                null,
+                null,
+            )
+            ?.use { rawCursor ->
+                val reversedCursor = ReversedCursor(cursor = rawCursor)
+
+                buildList(capacity = rawCursor.count) {
+                    while (reversedCursor.moveToNext()) {
+                        currentCoroutineContext().ensureActive()
+
+                        add(ConversationMessageData().apply { bind(reversedCursor) })
+                    }
+                }
+            }.orEmpty()
+    }
+}

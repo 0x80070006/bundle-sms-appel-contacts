@@ -1,0 +1,359 @@
+package com.android.messaging.data.conversation.repository
+
+import android.content.ContentResolver
+import android.database.ContentObserver
+import android.media.MediaMetadataRetriever
+import android.net.Uri
+import androidx.core.net.toUri
+import com.android.messaging.data.conversation.mapper.ConversationDraftMessageDataMapper
+import com.android.messaging.data.conversation.mapper.ConversationMessageDataDraftMapper
+import com.android.messaging.data.conversation.model.ConversationId
+import com.android.messaging.data.conversation.model.ParticipantId
+import com.android.messaging.data.conversation.model.draft.ConversationDraft
+import com.android.messaging.data.conversation.model.draft.ConversationDraftAttachment
+import com.android.messaging.data.conversation.store.ConversationDraftStore
+import com.android.messaging.data.extension.runInTransaction
+import com.android.messaging.datamodel.MessagingContentProvider
+import com.android.messaging.datamodel.data.MessageData
+import com.android.messaging.di.core.DefaultDispatcher
+import com.android.messaging.di.core.IoDispatcher
+import com.android.messaging.di.core.MessagingDbDispatcher
+import com.android.messaging.util.ContentType
+import com.android.messaging.util.LogUtil
+import com.android.messaging.util.MediaMetadataRetrieverWrapper
+import javax.inject.Inject
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
+
+internal interface ConversationDraftsRepository {
+    fun observeConversationDraft(conversationId: ConversationId): Flow<ConversationDraft>
+
+    suspend fun saveDraft(
+        conversationId: ConversationId,
+        draft: ConversationDraft,
+    )
+
+    suspend fun moveDraft(
+        fromConversationId: ConversationId,
+        toConversationId: ConversationId,
+    )
+}
+
+internal class ConversationDraftsRepositoryImpl @Inject constructor(
+    private val contentResolver: ContentResolver,
+    private val conversationDraftMessageDataMapper: ConversationDraftMessageDataMapper,
+    private val conversationMessageDataDraftMapper: ConversationMessageDataDraftMapper,
+    private val conversationDraftStore: ConversationDraftStore,
+    @param:DefaultDispatcher
+    private val defaultDispatcher: CoroutineDispatcher,
+    @param:IoDispatcher
+    private val ioDispatcher: CoroutineDispatcher,
+    @param:MessagingDbDispatcher
+    private val messagingDbDispatcher: CoroutineDispatcher,
+) : ConversationDraftsRepository {
+
+    override fun observeConversationDraft(conversationId: ConversationId): Flow<ConversationDraft> {
+        val draftChangeUri = MessagingContentProvider.buildConversationMetadataUri(
+            conversationId.value,
+        )
+
+        return observeDraftChanges(uri = draftChangeUri)
+            .flowOn(defaultDispatcher)
+            .conflate()
+            .map { loadConversationDraft(conversationId) }
+            .flowOn(messagingDbDispatcher)
+            .map(::resolveDraftAttachmentMetadata)
+            .catch { e ->
+                LogUtil.e(
+                    TAG,
+                    "Failed to load draft for conversation ${conversationId.value}",
+                    e,
+                )
+
+                emit(ConversationDraft())
+            }
+            .flowOn(ioDispatcher)
+    }
+
+    override suspend fun saveDraft(
+        conversationId: ConversationId,
+        draft: ConversationDraft,
+    ) {
+        withContext(context = messagingDbDispatcher) {
+            val message = conversationDraftMessageDataMapper.map(
+                conversationId = conversationId,
+                draft = draft,
+            )
+            val boundMessage = bindDraftParticipantsIfNeeded(
+                conversationId = conversationId,
+                message = message,
+            ) ?: return@withContext
+
+            conversationDraftStore.updateDraftMessage(
+                conversationId = conversationId,
+                message = boundMessage,
+            )
+
+            notifyConversationMetadataChanged(
+                conversationId = conversationId,
+            )
+        }
+    }
+
+    override suspend fun moveDraft(
+        fromConversationId: ConversationId,
+        toConversationId: ConversationId,
+    ) {
+        if (fromConversationId == toConversationId) {
+            return
+        }
+
+        withContext(context = messagingDbDispatcher) {
+            runInTransaction {
+                moveDraftInTransaction(
+                    fromConversationId = fromConversationId,
+                    toConversationId = toConversationId,
+                )
+            }
+
+            notifyConversationMetadataChanged(conversationId = fromConversationId)
+            notifyConversationMetadataChanged(conversationId = toConversationId)
+        }
+    }
+
+    private fun observeDraftChanges(uri: Uri): Flow<Unit> {
+        return callbackFlow {
+            val observer = object : ContentObserver(null) {
+                override fun onChange(selfChange: Boolean) {
+                    trySend(Unit)
+                }
+            }
+
+            contentResolver.registerContentObserver(uri, true, observer)
+            trySend(Unit)
+
+            awaitClose {
+                contentResolver.unregisterContentObserver(observer)
+            }
+        }
+    }
+
+    private fun notifyConversationMetadataChanged(conversationId: ConversationId) {
+        MessagingContentProvider.notifyConversationMetadataChanged(conversationId.value)
+    }
+
+    private fun loadConversationDraft(conversationId: ConversationId): ConversationDraft {
+        val selfParticipantId = conversationDraftStore.getSelfParticipantId(
+            conversationId = conversationId,
+        ) ?: return ConversationDraft()
+
+        val draftMessage = conversationDraftStore.readDraftMessage(
+            conversationId = conversationId,
+            selfParticipantId = selfParticipantId,
+        )
+
+        return createConversationDraft(
+            selfParticipantId = selfParticipantId,
+            draftMessage = draftMessage,
+        )
+    }
+
+    private fun moveDraftInTransaction(
+        fromConversationId: ConversationId,
+        toConversationId: ConversationId,
+    ) {
+        val movedDraft = loadConversationDraft(conversationId = fromConversationId)
+        if (!movedDraft.hasContent) {
+            return
+        }
+
+        val message = conversationDraftMessageDataMapper.map(
+            conversationId = toConversationId,
+            draft = mergeDrafts(
+                targetDraft = loadConversationDraft(conversationId = toConversationId),
+                movedDraft = movedDraft,
+            ),
+        )
+        val boundMessage = checkNotNull(
+            bindDraftParticipantsIfNeeded(
+                conversationId = toConversationId,
+                message = message,
+            ),
+        ) {
+            "Conversation ${toConversationId.value} no longer exists"
+        }
+
+        conversationDraftStore.moveDraftMessage(
+            fromConversationId = fromConversationId,
+            toConversationId = toConversationId,
+            message = boundMessage,
+        )
+    }
+
+    private fun mergeDrafts(
+        targetDraft: ConversationDraft,
+        movedDraft: ConversationDraft,
+    ): ConversationDraft {
+        val attachments = (targetDraft.attachments + movedDraft.attachments)
+            .distinctBy(ConversationDraftAttachment::contentUri)
+
+        return targetDraft.copy(
+            messageText = mergeDraftText(
+                targetText = targetDraft.messageText,
+                movedText = movedDraft.messageText,
+                separator = "\n",
+            ),
+            subjectText = mergeDraftText(
+                targetText = targetDraft.subjectText,
+                movedText = movedDraft.subjectText,
+                separator = " ",
+            ),
+            attachments = attachments.toImmutableList(),
+        )
+    }
+
+    private fun mergeDraftText(
+        targetText: String,
+        movedText: String,
+        separator: String,
+    ): String {
+        return listOf(targetText, movedText)
+            .filter { it.isNotBlank() }
+            .distinct()
+            .joinToString(separator = separator)
+    }
+
+    private fun createConversationDraft(
+        selfParticipantId: ParticipantId,
+        draftMessage: MessageData?,
+    ): ConversationDraft {
+        return when (draftMessage) {
+            null -> {
+                ConversationDraft(
+                    selfParticipantId = selfParticipantId,
+                )
+            }
+
+            else -> {
+                conversationMessageDataDraftMapper.map(
+                    messageData = draftMessage,
+                    fallbackSelfParticipantId = selfParticipantId,
+                )
+            }
+        }
+    }
+
+    private fun resolveDraftAttachmentMetadata(draft: ConversationDraft): ConversationDraft {
+        val hasAudioAttachments = draft.attachments.any { attachment ->
+            ContentType.isAudioType(attachment.contentType)
+        }
+
+        return when {
+            hasAudioAttachments -> resolveDraftAudioMetadata(draft = draft)
+            else -> draft
+        }
+    }
+
+    private fun resolveDraftAudioMetadata(draft: ConversationDraft): ConversationDraft {
+        var hasChanges = false
+
+        val resolvedAttachments = draft
+            .attachments
+            .map { attachment ->
+                val isAudio = ContentType.isAudioType(attachment.contentType)
+
+                if (!isAudio || attachment.durationMillis != null) {
+                    return@map attachment
+                }
+
+                hasChanges = true
+                attachment.copy(
+                    durationMillis = resolveAudioDurationMillis(
+                        contentUri = attachment.contentUri,
+                    ),
+                )
+            }
+
+        return when {
+            hasChanges -> {
+                draft.copy(
+                    attachments = resolvedAttachments.toImmutableList(),
+                )
+            }
+            else -> draft
+        }
+    }
+
+    @Suppress("TooGenericExceptionCaught")
+    private fun resolveAudioDurationMillis(contentUri: String): Long {
+        val mediaMetadataRetrieverWrapper = MediaMetadataRetrieverWrapper()
+
+        return try {
+            mediaMetadataRetrieverWrapper.setDataSource(contentUri.toUri())
+            mediaMetadataRetrieverWrapper
+                .extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+                ?.toLongOrNull()
+                ?.coerceAtLeast(minimumValue = 0L)
+                ?: 0L
+        } catch (exception: Exception) {
+            LogUtil.w(
+                TAG,
+                "Failed to resolve draft audio duration for $contentUri",
+                exception,
+            )
+
+            0L
+        } finally {
+            mediaMetadataRetrieverWrapper.release()
+        }
+    }
+
+    private fun bindDraftParticipantsIfNeeded(
+        conversationId: ConversationId,
+        message: MessageData,
+    ): MessageData? {
+        if (hasDraftParticipants(message = message)) {
+            return message
+        }
+
+        return conversationDraftStore
+            .getSelfParticipantId(conversationId)
+            ?.let { selfParticipantId ->
+                bindMissingDraftParticipants(
+                    message = message,
+                    selfParticipantId = selfParticipantId,
+                )
+            }
+    }
+
+    private fun hasDraftParticipants(message: MessageData): Boolean {
+        return message.selfId != null && message.participantId != null
+    }
+
+    private fun bindMissingDraftParticipants(
+        message: MessageData,
+        selfParticipantId: ParticipantId,
+    ): MessageData {
+        if (message.selfId == null) {
+            message.bindSelfId(selfParticipantId.value)
+        }
+
+        if (message.participantId == null) {
+            message.bindParticipantId(selfParticipantId.value)
+        }
+
+        return message
+    }
+
+    private companion object {
+        private const val TAG = "ConversationDraftsRepository"
+    }
+}

@@ -1,0 +1,892 @@
+/*
+ * Copyright (C) 2015 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.android.messaging.datamodel;
+
+import android.app.Notification;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Matrix;
+import android.net.Uri;
+import android.service.notification.StatusBarNotification;
+import android.text.TextUtils;
+import android.text.format.DateUtils;
+
+import androidx.annotation.VisibleForTesting;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationCompat.MessagingStyle;
+import androidx.core.app.NotificationManagerCompat;
+import androidx.core.app.Person;
+import androidx.core.app.RemoteInput;
+import androidx.core.content.LocusIdCompat;
+import androidx.core.content.pm.ShortcutInfoCompat;
+import androidx.core.content.pm.ShortcutManagerCompat;
+import androidx.core.graphics.drawable.IconCompat;
+
+import com.android.messaging.Factory;
+import com.android.messaging.R;
+import com.android.messaging.data.conversationsettings.repository.ConversationSnoozeQuery;
+import com.android.messaging.datamodel.MessageNotificationState.Conversation;
+import com.android.messaging.datamodel.action.MarkAsReadAction;
+import com.android.messaging.datamodel.action.MarkAsSeenAction;
+import com.android.messaging.datamodel.action.RedownloadMmsAction;
+import com.android.messaging.datamodel.data.ConversationListItemData;
+import com.android.messaging.datamodel.media.AvatarGroupRequestDescriptor;
+import com.android.messaging.datamodel.media.AvatarRequestDescriptor;
+import com.android.messaging.datamodel.media.ImageRequestDescriptor;
+import com.android.messaging.datamodel.media.ImageResource;
+import com.android.messaging.datamodel.media.MediaRequest;
+import com.android.messaging.datamodel.media.MediaResourceManager;
+import com.android.messaging.datamodel.media.UriImageRequestDescriptor;
+import com.android.messaging.sms.MmsSmsUtils;
+import com.android.messaging.sms.MmsUtils;
+import com.android.messaging.sms.SmsDestinations;
+import com.android.messaging.twill.TwillSmsNotificationDelete;
+import com.android.messaging.twill.TwillNotifications;
+import com.android.messaging.ui.UIIntents;
+import com.android.messaging.util.Assert;
+import com.android.messaging.util.AvatarUriUtil;
+import com.android.messaging.util.LogUtil;
+import com.android.messaging.util.NotificationChannelUtil;
+import com.android.messaging.util.OsUtil;
+import com.android.messaging.util.PendingIntentConstants;
+import com.android.messaging.util.PhoneUtils;
+import com.android.messaging.util.UriUtil;
+import com.android.messaging.util.exif.ExifInterface;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
+
+/**
+ * Handle posting, updating and removing all conversation notifications.<p>
+ *
+ * There are currently two main classes of notification and their rules: <p>
+ * 1) Messages - {@link MessageNotificationState}. Only one message notification.
+ * Unread messages across senders and conversations are coalesced.<p>
+ * 2) Failed Messages - {@link MessageNotificationState#checkFailedMessages } Only one failed
+ * message. Multiple failures are coalesced.<p>
+ *
+ * To add a new class of notifications, subclass the NotificationState and add commands which
+ * create one and pass into general creation function.
+ *
+ */
+public class BugleNotifications {
+    // Logging
+    public static final String TAG = LogUtil.BUGLE_NOTIFICATIONS_TAG;
+
+    @VisibleForTesting
+    public static final int REQUEST_CODE_REDOWNLOAD_MMS = 101;
+
+    // Constants to use for update.
+    public static final int UPDATE_NONE = 0;
+    public static final int UPDATE_MESSAGES = 1;
+    public static final int UPDATE_ERRORS = 2;
+    public static final int UPDATE_ALL = UPDATE_MESSAGES + UPDATE_ERRORS;
+
+    private static final String SMS_NOTIFICATION_TAG = ":sms:";
+    private static final String SMS_ERROR_NOTIFICATION_TAG = ":error:";
+    public static final String SMS_OVERFLOW_NOTIFICATION_TAG = ":sms:overflow:";
+
+    /**
+     * Upper bound on the number of {@link Person} entries attached to a conversation notification.
+     * (Android's MessagingStyle already auto-trims the displayed messages to its own maximum.)
+     */
+    @VisibleForTesting
+    public static final int MAX_NOTIFICATION_PEOPLE = 25;
+
+    @VisibleForTesting
+    public static final int MAX_CONVERSATION_NOTIFICATIONS = 40;
+
+    private static final int NOTIFICATION_IMAGE_MAX_SIZE = 1024;
+    private static final int NOTIFICATION_IMAGE_QUALITY = 85;
+    private static final long NOTIFICATION_IMAGE_SWEEP_GRACE_MILLIS =
+            30 * DateUtils.SECOND_IN_MILLIS;
+    private static final long NOTIFICATION_IMAGE_SWEEP_INTERVAL_MILLIS =
+            5 * DateUtils.MINUTE_IN_MILLIS;
+
+    private static final AtomicLong sLastNotificationImageSweep = new AtomicLong();
+
+    /** Guards a notification pass, so that concurrent callers do not repeat each other's work */
+    private static final Object sNotificationLock = new Object();
+
+    /**
+     * Entry point for posting notifications.
+     * Don't call this on the UI thread.
+     * @param coverage Indicates which notification types should be checked. Valid values are
+     * UPDATE_NONE, UPDATE_MESSAGES, UPDATE_ERRORS, or UPDATE_ALL
+     */
+    public static void update(final int coverage) {
+        update(null /* conversationId */, coverage);
+    }
+
+    /**
+     * Entry point for posting notifications.
+     * Don't call this on the UI thread.
+     * @param conversationId Conversation ID where a new message was received
+     * @param coverage Indicates which notification types should be checked. Valid values are
+     * UPDATE_NONE, UPDATE_MESSAGES, UPDATE_ERRORS, or UPDATE_ALL
+     */
+    public static void update(final String conversationId, final int coverage) {
+        if (LogUtil.isLoggable(TAG, LogUtil.VERBOSE)) {
+            LogUtil.v(TAG, "Update: conversationId = " + conversationId
+                    + " coverage = " + coverage);
+        }
+        Assert.isNotMainThread();
+
+        synchronized (sNotificationLock) {
+            updateSerialized(conversationId, coverage);
+        }
+    }
+
+    private static void updateSerialized(final String conversationId, final int coverage) {
+        final long passStart = System.currentTimeMillis();
+        try {
+            if (!PhoneUtils.getDefault().isDefaultSmsApp()) {
+                LogUtil.d(TAG, "Skipping notification: not the default SMS app");
+                cancel(PendingIntentConstants.SMS_NOTIFICATION_ID);
+                return;
+            }
+            if (conversationId != null
+                    && ConversationSnoozeQuery.isConversationSnoozed(conversationId)) {
+                LogUtil.d(TAG, "Skipping notification: conversation snoozed, id="
+                        + conversationId);
+                cancel(PendingIntentConstants.SMS_NOTIFICATION_ID, conversationId);
+                return;
+            }
+            if ((coverage & UPDATE_MESSAGES) != 0) {
+                createMessageNotification(conversationId);
+            }
+            if ((coverage & UPDATE_ERRORS) != 0) {
+                MessageNotificationState.checkFailedMessages();
+            }
+        } finally {
+            if (isNotificationImageSweepDue(passStart)) {
+                sweepNotificationImages(passStart);
+            }
+        }
+    }
+
+    private static boolean isNotificationImageSweepDue(final long passStart) {
+        final long lastSweep = sLastNotificationImageSweep.get();
+        return passStart - lastSweep >= NOTIFICATION_IMAGE_SWEEP_INTERVAL_MILLIS
+                && sLastNotificationImageSweep.compareAndSet(lastSweep, passStart);
+    }
+
+    @VisibleForTesting
+    static void sweepNotificationImages(final long passStart) {
+        final Set<String> live = new HashSet<>();
+        final StatusBarNotification[] activeNotifications = NotificationChannelUtil.INSTANCE
+                .getNotificationManager()
+                .getActiveNotifications();
+
+        for (final StatusBarNotification posted : activeNotifications) {
+            final MessagingStyle style = MessagingStyle
+                    .extractMessagingStyleFromNotification(posted.getNotification());
+
+            if (style == null) {
+                continue;
+            }
+
+            for (final MessagingStyle.Message message : style.getMessages()) {
+                final Uri dataUri = message.getDataUri();
+
+                if (!NotificationImageProvider.isNotificationImageUri(dataUri)) {
+                    continue;
+                }
+
+                final File liveFile = NotificationImageProvider.getFileFromUri(dataUri);
+                if (liveFile != null) {
+                    live.add(liveFile.getName());
+                }
+            }
+        }
+
+        final long cutoff = passStart - NOTIFICATION_IMAGE_SWEEP_GRACE_MILLIS;
+        for (final File file : NotificationImageProvider.listImageFiles()) {
+            if (file.lastModified() >= cutoff || live.contains(file.getName())) {
+                continue;
+            }
+            if (!file.delete()) {
+                LogUtil.w(TAG, "Could not delete the orphaned notification image "
+                        + file.getAbsolutePath());
+            }
+        }
+    }
+
+    @VisibleForTesting
+    static void createMessageNotification(final String conversationId) {
+        if (!TextUtils.isEmpty(conversationId) && isConversationBlocked(conversationId)) {
+            LogUtil.d(TAG, "Skipping notification: conversation blocked, id=" + conversationId);
+            return;
+        }
+
+        final MessageNotificationState state = MessageNotificationState.getNotificationState();
+        if (state == null) {
+            updateOverflowNotification(0);
+            return;
+        }
+
+        // Send per-conversation notifications (if there are multiple conversations). The list
+        // holds every conversation with unseen messages, so it has to be iterated: picking one
+        // entry notifies whichever conversation holds the newest unseen message and silently
+        // drops the rest, and there is no summary notification to surface them.
+        final List<Conversation> notifiable = state.mConversationsList.mConversations.stream()
+                .filter(conv -> !isConversationBlocked(conv.mConversationId))
+                .filter(conv -> !ConversationSnoozeQuery.isConversationSnoozed(
+                        conv.mConversationId))
+                .toList();
+
+        notifiable.stream()
+                .limit(MAX_CONVERSATION_NOTIFICATIONS)
+                .forEach(conv -> processAndSend(state, conv));
+
+        updateOverflowNotification(notifiable.size() - MAX_CONVERSATION_NOTIFICATIONS);
+    }
+
+    private static void updateOverflowNotification(final int overflowCount) {
+        final Context context = Factory.get().getApplicationContext();
+        final NotificationManagerCompat notificationManager =
+                NotificationManagerCompat.from(context);
+        final String tag = buildNotificationTag(SMS_OVERFLOW_NOTIFICATION_TAG, null);
+        if (overflowCount <= 0) {
+            notificationManager.cancel(tag, PendingIntentConstants.SMS_NOTIFICATION_ID);
+            return;
+        }
+
+        final Notification notification = new NotificationCompat.Builder(context,
+                NotificationChannelUtil.INCOMING_MESSAGES)
+                .setContentTitle(context.getResources().getQuantityString(
+                        R.plurals.notification_more_conversations, overflowCount, overflowCount))
+                .setSmallIcon(R.drawable.ic_notification_sms)
+                .setContentIntent(
+                        UIIntents.get().getPendingIntentForConversationListActivity(context))
+                .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+                .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+                .setOnlyAlertOnce(true)
+                .setAutoCancel(true)
+                .build();
+
+        postNotification(notificationManager, tag, PendingIntentConstants.SMS_NOTIFICATION_ID,
+                notification);
+    }
+
+    /**
+     * Cancel all notifications of a certain type.
+     *
+     * @param type Message or error notifications from Constants.
+     */
+    private static synchronized void cancel(final int type) {
+        cancel(type, null);
+    }
+
+    /**
+     * Cancel all notifications of a certain type.
+     *
+     * @param type Message or error notifications from Constants.
+     * @param conversationId If set, cancel the notification for this
+     *            conversation only. For message notifications, this only works
+     *            if the notifications are bundled (group children).
+     */
+    public static synchronized void cancel(final int type, final String conversationId) {
+        final String notificationTag = buildNotificationTag(type, conversationId);
+        final NotificationManagerCompat notificationManager =
+                NotificationManagerCompat.from(Factory.get().getApplicationContext());
+
+        final Context context = Factory.get().getApplicationContext();
+        if (conversationId == null || conversationId.isBlank()) {
+            notificationManager.getActiveNotifications().forEach(notification -> {
+                String activeTag = notification.getTag();
+                if (activeTag != null && activeTag.contains(notificationTag)) {
+                    cancelKeepingBubble(context, notificationManager, activeTag, type);
+                }
+            });
+        } else {
+            cancelKeepingBubble(context, notificationManager, notificationTag, type);
+        }
+
+        if (LogUtil.isLoggable(TAG, LogUtil.DEBUG)) {
+            LogUtil.d(TAG, "Canceled notifications of type " + type);
+        }
+    }
+
+    public static boolean isConversationBlocked(final String conversationId) {
+        final DatabaseWrapper db = DataModel.get().getDatabase();
+        final ConversationListItemData convData =
+                ConversationListItemData.getExistingConversation(db, conversationId);
+
+        if (convData == null) {
+            return false;
+        }
+
+        final String otherDestination = convData.getOtherParticipantNormalizedDestination();
+        return otherDestination != null
+                && BugleDatabaseOperations.isBlockedDestination(db, otherDestination);
+    }
+
+    /**
+     * Returns a unique tag to identify a notification.
+     *
+     * @param name The tag name (in practice, the type)
+     * @param conversationId The conversation id (optional)
+     */
+    /**
+     * Twill: a conversation's notification stays (hidden from the shade) while it is an open
+     * bubble, since Android closes the bubble along with it.
+     */
+    private static void cancelKeepingBubble(final Context context,
+            final NotificationManagerCompat notificationManager, final String tag,
+            final int type) {
+        if (type == PendingIntentConstants.SMS_NOTIFICATION_ID) {
+            TwillNotifications.cancelKeepingBubble(context, tag, type);
+        } else {
+            notificationManager.cancel(tag, type);
+        }
+    }
+
+    /** Twill: the tag of [conversationId]'s message notification, for bubbling it. */
+    public static String messageNotificationTag(final String conversationId) {
+        return buildNotificationTag(PendingIntentConstants.SMS_NOTIFICATION_ID, conversationId);
+    }
+
+    private static String buildNotificationTag(final String name,
+            final String conversationId) {
+        final Context context = Factory.get().getApplicationContext();
+        if (conversationId != null) {
+            return context.getPackageName() + name + ":" + conversationId;
+        } else {
+            return context.getPackageName() + name;
+        }
+    }
+
+    /**
+     * Returns a unique tag to identify a notification.
+     *
+     * @param type One of the constants in {@link PendingIntentConstants}
+     * @param conversationId The conversation id (where applicable)
+     */
+    static String buildNotificationTag(final int type, final String conversationId) {
+        String tag = null;
+        switch(type) {
+            case PendingIntentConstants.SMS_NOTIFICATION_ID:
+                tag = buildNotificationTag(SMS_NOTIFICATION_TAG, conversationId);
+                break;
+            case PendingIntentConstants.MSG_SEND_ERROR:
+                tag = buildNotificationTag(SMS_ERROR_NOTIFICATION_TAG, null);
+                break;
+        }
+        return tag;
+    }
+
+    /**
+     * Returns the message lines whose {@link Person} should be attached to a conversation
+     * notification, in newest-first order and bounded to {@link #MAX_NOTIFICATION_PEOPLE}.
+     *
+     * <p>Bug #102: {@link #processAndSend} calls {@code addPerson} once per message line, so a
+     * long-lived conversation would otherwise add the same sender hundreds/thousands of times to
+     * the notification's people list ({@code EXTRA_PEOPLE_LIST}). Unlike the MessagingStyle
+     * messages (which Android auto-caps at 25), that list is unbounded: it grows the notification's
+     * parcel until it exceeds the ~1 MB Binder limit, after which {@code NotificationManager.notify}
+     * throws {@link android.os.TransactionTooLargeException} on every update (receive / open /
+     * delete) and crashes the app. A participant only needs to be attached once, and selecting
+     * lines before creating {@link Person}s avoids doing avatar bitmap work for discarded entries.
+     */
+    @VisibleForTesting
+    static List<MessageNotificationState.MessageLineInfo> limitPeopleLineInfos(
+            final List<MessageNotificationState.MessageLineInfo> lineInfos) {
+        final Map<String, MessageNotificationState.MessageLineInfo> distinct = new LinkedHashMap<>();
+
+        for (final MessageNotificationState.MessageLineInfo lineInfo : lineInfos) {
+            if (lineInfo == null) {
+                continue;
+            }
+
+            distinct.putIfAbsent(personKey(lineInfo), lineInfo);
+
+            if (distinct.size() >= MAX_NOTIFICATION_PEOPLE) {
+                break;
+            }
+        }
+
+        return new ArrayList<>(distinct.values());
+    }
+
+    /** Stable identity for de-duplicating notification people (author, else contact, else name). */
+    private static String personKey(final MessageNotificationState.MessageLineInfo lineInfo) {
+        if (lineInfo.mAuthorId != null) {
+            return "author:" + lineInfo.mAuthorId;
+        }
+
+        if (lineInfo.mContactUriString != null) {
+            return "uri:" + lineInfo.mContactUriString;
+        }
+
+        return "name:" + (lineInfo.mName != null ? lineInfo.mName : "");
+    }
+
+    private static Person getOrCreatePerson(
+            final Map<String, Person> peopleByKey,
+            final MessageNotificationState.MessageLineInfo lineInfo) {
+        return peopleByKey.computeIfAbsent(personKey(lineInfo), key -> lineInfo.createPerson());
+    }
+
+    private static void addPeopleToNotification(
+            final NotificationCompat.Builder notifBuilder,
+            final List<MessageNotificationState.MessageLineInfo> lineInfos,
+            final Map<String, Person> peopleByKey) {
+        for (final MessageNotificationState.MessageLineInfo lineInfo :
+                limitPeopleLineInfos(lineInfos)) {
+            notifBuilder.addPerson(getOrCreatePerson(peopleByKey, lineInfo));
+        }
+    }
+
+    @VisibleForTesting
+    static boolean canReplyFromNotification(final Conversation conversation) {
+        final String destination = conversation.mOtherParticipantDestination;
+        return destination == null
+                || SmsDestinations.canReplyToDestination(destination, conversation.mSubId);
+    }
+
+    @VisibleForTesting
+    static void processAndSend(final MessageNotificationState state, final Conversation conversation) {
+        final Context context = Factory.get().getApplicationContext();
+        final String conversationId = conversation.mConversationId;
+        final NotificationCompat.Builder notifBuilder =
+                new NotificationCompat.Builder(context, conversationId);
+        notifBuilder.setCategory(Notification.CATEGORY_MESSAGE);
+
+        NotificationChannelUtil.INSTANCE.createConversationChannelForRuntime(
+                conversationId,
+                conversation.getTitle()
+        );
+
+        state.mBaseRequestCode = state.mType;
+
+        final PendingIntent clearIntent = state.getClearIntent(conversationId);
+        notifBuilder.setDeleteIntent(clearIntent);
+
+        // Set the content intent
+        PendingIntent contentIntent = UIIntents.get()
+                .getPendingIntentForConversationActivity(context, conversationId, null /*draft*/);
+        notifBuilder.setContentIntent(contentIntent);
+
+        MessagingStyle style = null;
+        Notification activeNotification = NotificationChannelUtil.INSTANCE.getActiveNotification(conversationId);
+        long oldestExistingTimestamp = Long.MIN_VALUE;
+        if (activeNotification != null) {
+            style = MessagingStyle.extractMessagingStyleFromNotification(activeNotification);
+            if (style != null) {
+                List<MessagingStyle.Message> messages = style.getMessages();
+                if (!messages.isEmpty()) {
+                    oldestExistingTimestamp = messages.getLast().getTimestamp();
+                } else {
+                    LogUtil.e(TAG, "MessageNotificationState: Notification has no messages");
+                    return;
+                }
+            }
+        }
+
+        // It's possible for the NotificationManager to give us a reference to an "active"
+        // notification which has actually been dismissed and will have a null style. Make sure that
+        // we create a style here if that happens or if the manager never found a notification.
+        if (style == null) {
+            style = new MessagingStyle(
+                    new Person.Builder().setName(context.getString(R.string.unknown_self_participant)).build()
+            );
+        }
+
+        Person latestPerson = null;
+        final Map<String, Person> peopleByKey = new HashMap<>();
+        final List<MessageNotificationState.MessageLineInfo> newLineInfos = new ArrayList<>();
+        List<MessageNotificationState.MessageLineInfo> reversedLineInfos = conversation.mLineInfos.reversed();
+        for (MessageNotificationState.MessageLineInfo messageLineInfo : reversedLineInfos) {
+            // Don't repeat messages by checking the timestamp
+            if (messageLineInfo.mTimestamp <= oldestExistingTimestamp) {
+                if (reversedLineInfos.getLast() == messageLineInfo) {
+                    // No changes were made to this notification
+                    return;
+                }
+                continue;
+            }
+
+            newLineInfos.add(messageLineInfo);
+        }
+
+        addPeopleToNotification(notifBuilder, conversation.mLineInfos, peopleByKey);
+
+        final int retainedMessageStart = Math.max(
+                0,
+                newLineInfos.size() - MessagingStyle.MAXIMUM_RETAINED_MESSAGES
+        );
+
+        for (int i = retainedMessageStart; i < newLineInfos.size(); i++) {
+            MessageNotificationState.MessageLineInfo messageLineInfo = newLineInfos.get(i);
+            Person currentPerson = getOrCreatePerson(peopleByKey, messageLineInfo);
+            MessagingStyle.Message message = messageLineInfo.createStyledMessage(currentPerson);
+            style.addMessage(message);
+            latestPerson = currentPerson;
+        }
+
+        if (!newLineInfos.isEmpty()) {
+            style.setGroupConversation(conversation.mIsGroup);
+        }
+        notifBuilder.setWhen(conversation.mReceivedTimestamp);
+
+        if (conversation.mIsGroup) {
+            Person groupPerson = createGroupPerson(context, conversation);
+            setUpShortcuts(context, conversation, notifBuilder, groupPerson);
+        } else {
+            setUpShortcuts(context, conversation, notifBuilder, latestPerson);
+        }
+
+        final PendingIntent markAsReadPendingIntent =
+                UIIntents.get().getPendingIntentForMarkingAsRead(context, conversationId);
+        final NotificationCompat.Action markAsReadActionBuilder =
+                new NotificationCompat.Action.Builder(0,
+                        context.getString(R.string.mark_as_read), markAsReadPendingIntent).build();
+        notifBuilder.addAction(markAsReadActionBuilder);
+
+        if (canReplyFromNotification(conversation)) {
+            final String selfId = conversation.mSelfParticipantId;
+
+            final boolean requiresMms =
+                    MmsSmsUtils.getRequireMmsForEmailAddress(
+                            conversation.mIncludeEmailAddress, conversation.mSubId) ||
+                            (conversation.mIsGroup && MmsUtils.groupMmsEnabled(conversation.mSubId));
+
+            final int requestCode = state.getReplyIntentRequestCode();
+            final PendingIntent replyPendingIntent = UIIntents.get()
+                    .getPendingIntentForSendingMessageToConversation(context,
+                            conversationId, selfId, requiresMms, requestCode);
+
+            final NotificationCompat.Action.Builder replyActionBuilder =
+                    new NotificationCompat.Action.Builder(0,
+                            context.getString(R.string.notification_reply_prompt),
+                            replyPendingIntent);
+            final RemoteInput remoteInput = new RemoteInput.Builder(Intent.EXTRA_TEXT).setLabel(
+                            context.getString(R.string.notification_reply_prompt))
+                    .build();
+            replyActionBuilder.addRemoteInput(remoteInput);
+            notifBuilder.addAction(replyActionBuilder.build());
+        }
+
+        final String messageId = conversation.getLatestMessageId();
+        if (conversation.getDoesLatestMessageNeedDownload() && messageId != null
+                && !OsUtil.isSecondaryUser()) {
+            final PendingIntent downloadPendingIntent =
+                    RedownloadMmsAction.getPendingIntentForRedownloadMms(context,
+                            messageId, REQUEST_CODE_REDOWNLOAD_MMS);
+
+            final NotificationCompat.Action.Builder actionBuilder =
+                    new NotificationCompat.Action.Builder(R.drawable.ic_file_download_light,
+                            context.getString(R.string.notification_download_mms),
+                            downloadPendingIntent);
+            final NotificationCompat.Action downloadAction = actionBuilder.build();
+            notifBuilder.addAction(downloadAction);
+        }
+
+        // Twill: "Delete" deletes the messages this notification shows. Android shows three
+        // actions, so it gives way to "Download" when an MMS needs downloading.
+        final List<String> notifiedMessageIds = new ArrayList<>();
+        for (final MessageNotificationState.MessageLineInfo line : conversation.mLineInfos) {
+            if (line.mMessageId != null) {
+                notifiedMessageIds.add(line.mMessageId);
+            }
+        }
+        final NotificationCompat.Action deleteAction = TwillSmsNotificationDelete.action(
+                context, conversationId, notifiedMessageIds);
+        if (deleteAction != null) {
+            notifBuilder.addAction(deleteAction);
+        }
+
+        notifBuilder
+                .setSmallIcon(R.drawable.ic_notification_sms)
+                .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+                .setCategory(NotificationCompat.CATEGORY_MESSAGE);
+
+        notifBuilder.setStyle(style);
+
+        // Mark the notification as finished
+        state.mCanceled = true;
+
+        final int type = state.mType;
+        final NotificationManagerCompat notificationManager =
+                NotificationManagerCompat.from(Factory.get().getApplicationContext());
+        final String notificationTag = buildNotificationTag(type, conversationId);
+
+        Notification notification = notifBuilder.build();
+        notification.flags |= Notification.FLAG_AUTO_CANCEL;
+
+        if (postNotification(notificationManager, notificationTag, type, notification)) {
+            LogUtil.i(TAG, "Notifying for conversation " + conversationId + "; "
+                    + "tag = " + notificationTag + ", type = " + type);
+        }
+    }
+
+    @VisibleForTesting
+    static boolean postNotification(final NotificationManagerCompat notificationManager,
+            final String tag, final int type, final Notification notification) {
+        try {
+            notificationManager.notify(tag, type, notification);
+            return true;
+        } catch (SecurityException e) {
+            LogUtil.e(TAG, "Dropping notification: cannot grant access to its attachment", e);
+            return false;
+        }
+    }
+
+    /**
+     * When we go to the conversation list, call this to mark all messages as seen. That means
+     * we won't show a notification again for the same message.
+     */
+    public static void markAllMessagesAsSeen() {
+        MarkAsSeenAction.markAllAsSeen();
+    }
+
+    /**
+     * When we open a particular conversation, call this to mark all messages as read.
+     */
+    public static void markMessagesAsRead(final String conversationId, final boolean cancelNotification) {
+        MarkAsReadAction.markAsRead(conversationId, cancelNotification);
+    }
+
+    public static void notifyEmergencySmsFailed(final String emergencyNumber,
+            final String conversationId) {
+        final Context context = Factory.get().getApplicationContext();
+
+        final CharSequence line1 = MessageNotificationState.applyWarningTextColor(context,
+                context.getString(R.string.notification_emergency_send_failure_line1,
+                emergencyNumber));
+        final String line2 = context.getString(R.string.notification_emergency_send_failure_line2,
+                emergencyNumber);
+        final PendingIntent destinationIntent = UIIntents.get()
+                .getPendingIntentForConversationActivity(context, conversationId, null /* draft */);
+
+        final NotificationCompat.Builder builder =
+                new NotificationCompat.Builder(context, NotificationChannelUtil.ALERTS_CHANNEL);
+        builder.setTicker(line1)
+                .setContentTitle(line1)
+                .setContentText(line2)
+                .setStyle(new NotificationCompat.BigTextStyle(builder).bigText(line2))
+                .setSmallIcon(R.drawable.ic_failed_light)
+                .setContentIntent(destinationIntent)
+                .setSound(UriUtil.getUriForResourceId(context, R.raw.message_failure));
+
+        final String tag = context.getPackageName() + ":emergency_sms_error";
+        NotificationManagerCompat.from(context).notify(
+                tag,
+                PendingIntentConstants.MSG_SEND_ERROR,
+                builder.build());
+    }
+
+    /**
+     * Gets a {@link Bitmap} for an avatar {@link Uri}.
+     * @param context {@link Context} for building the image request.
+     * @param avatarUri {@link Uri} for the avatar.
+     * @return The requested {@link Bitmap} and null if the request failed.
+     */
+    public static Bitmap getAvatarBitmap(Context context, Uri avatarUri) {
+        final int iconSize = (int) context.getResources()
+                .getDimension(R.dimen.contact_icon_view_normal_size);
+
+        ImageRequestDescriptor descriptor;
+        final String avatarType = AvatarUriUtil.getAvatarType(avatarUri);
+        if (AvatarUriUtil.TYPE_GROUP_URI.equals(avatarType)) {
+            descriptor = new AvatarGroupRequestDescriptor(avatarUri, iconSize, iconSize);
+        } else {
+            descriptor = new AvatarRequestDescriptor(avatarUri, iconSize, iconSize, true);
+        }
+
+        final MediaRequest<ImageResource> imageRequest = descriptor.buildSyncMediaRequest(
+                context);
+        final ImageResource avatarImage =
+                MediaResourceManager.get().requestMediaResourceSync(imageRequest);
+
+        if (avatarImage != null) {
+            // We have to make copies of the bitmaps to hand to the NotificationManager
+            // because the bitmap in the ImageResource is managed and will automatically
+            // get released.
+            Bitmap shareableAvatarBitmap = Bitmap.createBitmap(avatarImage.getBitmap());
+            avatarImage.release();
+            return shareableAvatarBitmap;
+        }
+
+        return null;
+    }
+
+    /**
+     * Transcodes the attachment at {@code imageUri} into a file named after {@code partId}, or
+     * returns the file an earlier call already wrote for that part. Call it from a notification
+     * pass only: the deterministic name makes the temporary file it writes through deterministic
+     * too, so two concurrent callers for one part would trample each other's write.
+     */
+    static Uri getNotificationImageUri(final Context context, final Uri imageUri,
+            final String partId) {
+        if (imageUri == null) {
+            return null;
+        }
+
+        final Uri notificationImageUri = NotificationImageProvider
+                .buildNotificationImageUri(partId);
+
+        if (notificationImageUri == null) {
+            return null;
+        }
+        final File imageFile = NotificationImageProvider.getFileFromUri(notificationImageUri);
+        if (imageFile == null) {
+            return null;
+        }
+
+        if (imageFile.length() > 0) {
+            imageFile.setLastModified(System.currentTimeMillis());
+            return notificationImageUri;
+        }
+
+        final ImageRequestDescriptor descriptor = new UriImageRequestDescriptor(
+                imageUri,
+                NOTIFICATION_IMAGE_MAX_SIZE,
+                NOTIFICATION_IMAGE_MAX_SIZE,
+                false,
+                true,
+                false,
+                0,
+                0
+        );
+        final MediaRequest<ImageResource> imageRequest = descriptor.buildSyncMediaRequest(context);
+        final ImageResource image = MediaResourceManager.get().requestMediaResourceSync(
+                imageRequest);
+        if (image == null) {
+            LogUtil.w(TAG, "Could not decode the attachment for its notification");
+            imageFile.delete();
+            return null;
+        }
+
+        final File tempFile = new File(imageFile.getPath() + ".tmp");
+        boolean written = false;
+        try (OutputStream out = new FileOutputStream(tempFile)) {
+            written = orientUpright(image).compress(Bitmap.CompressFormat.JPEG,
+                    NOTIFICATION_IMAGE_QUALITY, out);
+        } catch (final IOException | RuntimeException | OutOfMemoryError e) {
+            LogUtil.e(TAG, "Failed to write the notification image", e);
+        } finally {
+            image.release();
+        }
+
+        if (!written || !tempFile.renameTo(imageFile)) {
+            tempFile.delete();
+            imageFile.delete();
+            return null;
+        }
+        return notificationImageUri;
+    }
+
+    private static Bitmap orientUpright(final ImageResource image) {
+        final Bitmap bitmap = image.getBitmap();
+        final ExifInterface.OrientationParams params =
+                ExifInterface.getOrientationParams(image.getOrientation());
+        if (params.rotation == 0 && params.scaleX == 1 && params.scaleY == 1) {
+            return bitmap;
+        }
+        final Matrix matrix = new Matrix();
+        matrix.postRotate(params.rotation);
+        matrix.postScale(params.scaleX, params.scaleY);
+        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix,
+                false);
+    }
+
+    public static void updateWithInlineReply(final String conversationId, final String message) {
+        Context context = Factory.get().getApplicationContext();
+        Notification activeNotification =
+                NotificationChannelUtil.INSTANCE.getActiveNotification(conversationId);
+        if (activeNotification != null) {
+            MessagingStyle activeStyle =
+                    MessagingStyle.extractMessagingStyleFromNotification(activeNotification);
+            if (activeStyle != null) {
+                NotificationCompat.Builder recoveredBuilder =
+                        new NotificationCompat.Builder(context, activeNotification);
+
+                String selfString = context.getString(R.string.unknown_self_participant);
+                activeStyle.addMessage(new NotificationCompat.MessagingStyle.Message(message,
+                        System.currentTimeMillis(),
+                        new Person.Builder().setName(selfString).build()));
+                recoveredBuilder.setStyle(activeStyle);
+                recoveredBuilder.setOnlyAlertOnce(true);
+
+                String tag = buildNotificationTag(PendingIntentConstants.SMS_NOTIFICATION_ID, conversationId);
+                postNotification(NotificationManagerCompat.from(context), tag,
+                        PendingIntentConstants.SMS_NOTIFICATION_ID, recoveredBuilder.build());
+            }
+        }
+    }
+
+    private static void setUpShortcuts(Context context, Conversation conversation,
+                                       NotificationCompat.Builder notifBuilder, Person person) {
+        Intent conversationActivityIntent = UIIntents.get().getShortcutIntentForConversationActivity(
+                context, conversation.mConversationId);
+        ShortcutInfoCompat.Builder shortcutBuilder =
+                new ShortcutInfoCompat.Builder(context, conversation.mConversationId)
+                        .setShortLabel(conversation.getTitle())
+                        .setLocusId(new LocusIdCompat(conversation.mConversationId))
+                        .setLongLived(true)
+                        .setPerson(person)
+                        .setIntent(conversationActivityIntent);
+
+        IconCompat icon;
+        IconCompat personIcon = person.getIcon();
+        if (personIcon != null) {
+            icon = personIcon;
+        } else {
+            icon = IconCompat.createWithResource(context, R.drawable.ic_launcher_foreground);
+        }
+        shortcutBuilder.setIcon(icon);
+
+        ShortcutManagerCompat.pushDynamicShortcut(context, shortcutBuilder.build());
+        notifBuilder.setShortcutId(conversation.mConversationId);
+
+        NotificationCompat.BubbleMetadata.Builder bubbleBuilder =
+                new NotificationCompat.BubbleMetadata.Builder(conversation.mConversationId);
+        // In dp, not a resource id: Android keeps bubbles across app updates, which can
+        // renumber resources and leave the bubble at its small default height.
+        bubbleBuilder.setDesiredHeight(TwillNotifications.BUBBLE_HEIGHT_DP);
+        notifBuilder.setBubbleMetadata(bubbleBuilder.build());
+    }
+
+    private static Person createGroupPerson(Context context, Conversation conversation) {
+        Person.Builder personBuilder = new Person.Builder()
+                .setName(conversation.getTitle())
+                .setKey(conversation.mConversationId);
+
+        if (conversation.mIconUri != null) {
+            Bitmap groupIconBitmap = getAvatarBitmap(context, Uri.parse(conversation.mIconUri));
+            if (groupIconBitmap != null) {
+                personBuilder.setIcon(IconCompat.createWithBitmap(groupIconBitmap));
+            }
+        }
+
+        return personBuilder.build();
+    }
+}

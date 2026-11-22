@@ -1,0 +1,96 @@
+name: Build installable APK
+
+on:
+  push:
+    branches:
+      - '**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build APKs
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+
+    steps:
+      - name: Check out sources
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      # Sign every test build with the same key so new APKs install as updates over old ones.
+      # This key is for test builds only; real releases use a private key kept out of the repo.
+      - name: Use the shared test signing key
+        run: |
+          mkdir -p ~/.android
+          cp .github/ci/debug.keystore ~/.android/debug.keystore
+
+      # The Delta Chat core, built from source at a pinned commit (see the script). It takes
+      # 15-30 minutes, so the result is cached until the version or the build files change.
+      # Saved right after building, so a later failure doesn't throw the work away.
+      - name: Restore Delta Chat core
+        id: deltachat-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: deltachat
+          key: deltachat-core-${{ hashFiles('scripts/build-deltachat-core.sh', 'native/deltachat/**') }}
+
+      - name: Build Delta Chat core
+        if: steps.deltachat-cache.outputs.cache-hit != 'true'
+        # On failure, the last lines become an annotation (logs aren't always reachable).
+        run: |
+          set -o pipefail
+          if ! scripts/build-deltachat-core.sh 2>&1 | tee core-build.log; then
+            { grep -iE "error|failed|could not|not found" core-build.log | grep -v "warning" | tail -n 40; echo "--- last lines ---"; tail -n 15 core-build.log; } \
+              | sed 's/%/%25/g' | awk 'BEGIN{ORS="%0A"} {print}' > core-tail.txt
+            echo "::error title=Delta Chat core build failed::$(cat core-tail.txt)"
+            exit 1
+          fi
+
+      - name: Save Delta Chat core
+        if: steps.deltachat-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: deltachat
+          key: deltachat-core-${{ hashFiles('scripts/build-deltachat-core.sh', 'native/deltachat/**') }}
+
+      - name: Assemble optimized test APK (perf)
+        run: .github/ci/gradle-report-errors.sh :app:assemblePerf --no-daemon --console=plain
+
+      # Shows the APK size and its native libraries (including the Delta Chat core) as a
+      # notice on the run, since artifacts and logs aren't always easy to inspect.
+      - name: Report APK contents
+        run: |
+          apk=$(ls app/build/outputs/apk/perf/*.apk | head -1)
+          size=$(du -h "$apk" | cut -f1)
+          libs=$(unzip -lv "$apk" | awk '/lib\// {printf "%s %s (%s)%%0A", $NF, $1, $2}')
+          echo "::notice title=APK $size::$libs"
+
+      - name: Upload optimized APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: twill-apk
+          path: |
+            app/build/outputs/apk/perf/*.apk
+            app/build/outputs/mapping/perf/mapping.txt
+          if-no-files-found: error
+
+      - name: Assemble debug APK
+        run: .github/ci/gradle-report-errors.sh :app:assembleDebug --no-daemon --console=plain
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: twill-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error

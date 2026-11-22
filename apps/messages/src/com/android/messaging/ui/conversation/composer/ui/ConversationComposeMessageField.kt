@@ -1,0 +1,246 @@
+package com.android.messaging.ui.conversation.composer.ui
+
+import android.view.WindowManager
+import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.InsertDriveFile
+import androidx.compose.material.icons.rounded.AddCircleOutline
+import androidx.compose.material.icons.rounded.Image
+import androidx.compose.material.icons.rounded.Mic
+import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.testTag
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.PopupProperties
+import com.android.messaging.R
+import com.android.messaging.domain.conversation.usecase.draft.model.ConversationDraftSendProtocol
+import com.android.messaging.ui.conversation.CONVERSATION_ATTACHMENT_AUDIO_MENU_ITEM_TEST_TAG
+import com.android.messaging.ui.conversation.CONVERSATION_ATTACHMENT_CONTACT_MENU_ITEM_TEST_TAG
+import com.android.messaging.ui.conversation.CONVERSATION_ATTACHMENT_MEDIA_MENU_ITEM_TEST_TAG
+import com.android.messaging.ui.conversation.CONVERSATION_MMS_INDICATOR_TEST_TAG
+import com.android.messaging.ui.core.MessagingPreviewColumn
+
+internal fun conversationComposeMmsSlot(
+    sendProtocol: ConversationDraftSendProtocol,
+): (@Composable () -> Unit)? {
+    return when (sendProtocol) {
+        ConversationDraftSendProtocol.MMS -> {
+            {
+                MmsIndicator()
+            }
+        }
+
+        ConversationDraftSendProtocol.SMS -> null
+    }
+}
+
+@Composable
+internal fun MmsIndicator() {
+    Text(
+        modifier = Modifier
+            .padding(end = 12.dp)
+            .clearAndSetSemantics {
+                testTag = CONVERSATION_MMS_INDICATOR_TEST_TAG
+            },
+        text = stringResource(id = R.string.mms_text),
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.tertiary,
+    )
+}
+
+@Composable
+internal fun ConversationComposeAttachmentMenu(
+    modifier: Modifier = Modifier,
+    enabled: Boolean,
+    isAudioRecordActionEnabled: Boolean,
+    onContactAttachClick: () -> Unit,
+    onMediaPickerClick: () -> Unit,
+    onAudioAttachClick: () -> Unit,
+    /** Twill: what the menu offers besides photos (Nostr and Delta Chat chats differ). */
+    items: ConversationComposeAttachmentItems = ConversationComposeAttachmentItems(),
+    onFileAttachClick: () -> Unit = {},
+) {
+    val hapticFeedback = LocalHapticFeedback.current
+    var isExpanded by rememberSaveable {
+        mutableStateOf(value = false)
+    }
+
+    fun closeMenuAndRun(action: () -> Unit) {
+        isExpanded = false
+        action()
+    }
+
+    Box(
+        modifier = modifier,
+    ) {
+        IconButton(
+            onClick = {
+                hapticFeedback.performHapticFeedback(HapticFeedbackType.ContextClick)
+                isExpanded = true
+            },
+            enabled = enabled,
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.AddCircleOutline,
+                contentDescription = stringResource(
+                    id = R.string.attachMediaButtonContentDescription,
+                ),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+
+        DropdownMenu(
+            expanded = isExpanded,
+            onDismissRequest = {
+                isExpanded = false
+            },
+            shape = MaterialTheme.shapes.large,
+            containerColor = MaterialTheme.colorScheme.surfaceBright,
+            tonalElevation = 3.dp,
+            shadowElevation = 6.dp,
+            offset = DpOffset(
+                x = 0.dp,
+                y = (-8).dp,
+            ),
+            // Raw flags because no combination of the boolean options expresses this. The menu
+            // has to be focusable, otherwise back (key or gesture) never reaches it and closes the
+            // conversation instead; ALT_FOCUSABLE_IM then keeps the keyboard up behind the menu,
+            // which the media picker relies on to know whether to bring it back. NO_LIMITS keeps
+            // the bottom anchored menu unclipped, WATCH_OUTSIDE_TOUCH keeps tap-to-dismiss.
+            properties = PopupProperties(
+                flags = WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM or
+                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
+                    WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+            ),
+        ) {
+            ConversationComposeAttachmentMenuContent(
+                isAudioRecordActionEnabled = isAudioRecordActionEnabled,
+                onMediaPickerClick = {
+                    closeMenuAndRun(action = onMediaPickerClick)
+                },
+                onAudioAttachClick = {
+                    closeMenuAndRun(action = onAudioAttachClick)
+                },
+                onContactAttachClick = {
+                    closeMenuAndRun(action = onContactAttachClick)
+                },
+                items = items,
+                onFileAttachClick = {
+                    closeMenuAndRun(action = onFileAttachClick)
+                },
+            )
+        }
+    }
+}
+
+/** Twill: which attachment menu items show. SMS shows audio and contacts; others differ. */
+@androidx.compose.runtime.Immutable
+internal data class ConversationComposeAttachmentItems(
+    val isAudioVisible: Boolean = true,
+    val isContactVisible: Boolean = true,
+    val isFileVisible: Boolean = false,
+)
+
+@Composable
+private fun ConversationComposeAttachmentMenuContent(
+    isAudioRecordActionEnabled: Boolean,
+    onMediaPickerClick: () -> Unit,
+    onAudioAttachClick: () -> Unit,
+    onContactAttachClick: () -> Unit,
+    items: ConversationComposeAttachmentItems = ConversationComposeAttachmentItems(),
+    onFileAttachClick: () -> Unit = {},
+) {
+    ConversationComposeAttachmentMenuItem(
+        modifier = Modifier.testTag(CONVERSATION_ATTACHMENT_MEDIA_MENU_ITEM_TEST_TAG),
+        imageVector = Icons.Rounded.Image,
+        textResId = R.string.mediapicker_gallery_title,
+        onClick = onMediaPickerClick,
+    )
+    if (items.isFileVisible) {
+        ConversationComposeAttachmentMenuItem(
+            imageVector = Icons.AutoMirrored.Rounded.InsertDriveFile,
+            textResId = R.string.nostr_attach_file,
+            onClick = onFileAttachClick,
+        )
+    }
+
+    if (items.isAudioVisible) {
+        ConversationComposeAttachmentMenuItem(
+            modifier = Modifier.testTag(CONVERSATION_ATTACHMENT_AUDIO_MENU_ITEM_TEST_TAG),
+            imageVector = Icons.Rounded.Mic,
+            textResId = R.string.mediapicker_audio_title,
+            enabled = isAudioRecordActionEnabled,
+            onClick = onAudioAttachClick,
+        )
+    }
+
+    if (items.isContactVisible) {
+        ConversationComposeAttachmentMenuItem(
+            modifier = Modifier.testTag(CONVERSATION_ATTACHMENT_CONTACT_MENU_ITEM_TEST_TAG),
+            imageVector = Icons.Rounded.Person,
+            textResId = R.string.mediapicker_contact_title,
+            onClick = onContactAttachClick,
+        )
+    }
+}
+
+@Composable
+private fun ConversationComposeAttachmentMenuItem(
+    modifier: Modifier = Modifier,
+    imageVector: ImageVector,
+    @StringRes textResId: Int,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+) {
+    DropdownMenuItem(
+        modifier = modifier,
+        text = {
+            Text(text = stringResource(id = textResId))
+        },
+        leadingIcon = {
+            Icon(
+                imageVector = imageVector,
+                contentDescription = null,
+                modifier = Modifier.size(size = 24.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        },
+        enabled = enabled,
+        onClick = onClick,
+    )
+}
+
+@PreviewLightDark
+@Composable
+private fun ConversationComposeAttachmentMenuContentPreview() {
+    MessagingPreviewColumn {
+        ConversationComposeAttachmentMenuContent(
+            isAudioRecordActionEnabled = false,
+            onMediaPickerClick = {},
+            onAudioAttachClick = {},
+            onContactAttachClick = {},
+        )
+    }
+}

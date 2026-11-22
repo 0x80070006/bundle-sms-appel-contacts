@@ -1,0 +1,392 @@
+package com.android.messaging.twill
+
+import android.graphics.Bitmap
+import android.net.Uri
+import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
+import androidx.compose.runtime.Immutable
+import java.io.File
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flowOf
+
+/**
+ * The messaging protocols Twill speaks besides SMS/MMS (which stays upstream's code).
+ * [key] is stored in navigation state and preferences, so never change it.
+ */
+internal enum class TwillProtocolId(
+    val key: String,
+) {
+    Nostr("nostr"),
+    DeltaChat("deltachat"),
+    ;
+
+    companion object {
+        fun from(key: String): TwillProtocolId? = entries.firstOrNull { it.key == key }
+    }
+}
+
+/** How a protocol receives messages while Twill isn't on screen. */
+internal enum class TwillDeliveryMode(
+    val key: String,
+) {
+    /** Only while Twill is open. No background network use. */
+    WhileOpen("while_open"),
+
+    /** A short check about every 15 minutes. */
+    Periodic("periodic"),
+
+    /** Stay connected, with one persistent notification for all protocols. */
+    AlwaysConnected("always"),
+    ;
+
+    companion object {
+        fun from(key: String?) = entries.firstOrNull { it.key == key } ?: WhileOpen
+    }
+}
+
+/** What to draw for a person or chat: a picture if [ref] loads, else [name]'s first letter. */
+@Immutable
+internal data class TwillAvatar(
+    val name: String,
+    /** Protocol-specific picture reference, loaded with [TwillProtocol.loadAvatar]. */
+    val ref: String? = null,
+    val isGroup: Boolean = false,
+)
+
+/**
+ * A file sent with a message: a picture, voice message, or any other file.
+ * It may still be on a server ([isDownloaded] false) until the user opens it.
+ */
+@Immutable
+internal data class TwillAttachment(
+    val mimeType: String?,
+    val fileName: String?,
+    val size: Long?,
+    val width: Int?,
+    val height: Int?,
+    /** The file on this device, once downloaded. */
+    val localPath: String?,
+) {
+    val isImage: Boolean
+        get() = mimeType?.startsWith("image/") == true
+
+    /** Voice messages and other audio: played in the chat once downloaded. */
+    val isAudio: Boolean
+        get() = mimeType?.startsWith("audio/") == true
+
+    val isDownloaded: Boolean
+        get() = localPath != null && File(localPath).exists()
+}
+
+/**
+ * One message in a Nostr or Delta Chat chat, in the shape every Twill screen understands.
+ * Each protocol turns its own messages into these.
+ */
+@Immutable
+internal data class TwillMessage(
+    val id: String,
+    val chatId: String,
+    val senderId: String,
+    val text: String,
+    val timeMillis: Long,
+    val isOutgoing: Boolean,
+    val status: Status,
+    val attachment: TwillAttachment? = null,
+    /** Centered notices such as "Alice joined the group". */
+    val isInfo: Boolean = false,
+    /** The message this one answers, if any (it may not be loaded, or known, here). */
+    val replyToId: String? = null,
+    /**
+     * How the answered message began, from the protocol, for when that message isn't loaded
+     * (Delta Chat sends this with every reply).
+     */
+    val quote: TwillQuote? = null,
+    /** Emoji reactions, most used first. */
+    val reactions: List<TwillReaction> = emptyList(),
+) {
+    enum class Status { Sending, Sent, Delivered, Read, Failed }
+}
+
+/** The start of a message being replied to, and who wrote it if known. */
+@Immutable
+internal data class TwillQuote(
+    val author: String?,
+    val text: String,
+)
+
+/** One emoji under a message: how many people sent it, and whether you're one of them. */
+@Immutable
+internal data class TwillReaction(
+    val emoji: String,
+    val count: Int,
+    val isMine: Boolean,
+)
+
+/**
+ * One conversation in the inbox list: who it's with, the latest message and its sender,
+ * the unread count, and whether it's pinned or a request from someone new.
+ */
+@Immutable
+internal data class TwillChat(
+    val protocol: TwillProtocolId,
+    val chatId: String,
+    val title: String,
+    val avatar: TwillAvatar,
+    val isGroup: Boolean,
+    val isPinned: Boolean,
+    val unreadCount: Int,
+    val lastMessage: TwillMessage?,
+    /** Shown before the preview in groups ("Alice: "); null for one-to-one chats. */
+    val lastSenderName: String? = null,
+    /** Someone new wrote; the user hasn't accepted the chat yet. */
+    val isRequest: Boolean = false,
+)
+
+/** A person in a chat, for names and pictures next to their messages. */
+@Immutable
+internal data class TwillMember(
+    val id: String,
+    val name: String,
+    /** Address, key or similar, shown under the name. */
+    val detail: String?,
+    /** [detail] is a checked address (NIP-05 or a verified key). */
+    val isVerified: Boolean = false,
+    val avatar: TwillAvatar = TwillAvatar(name),
+)
+
+/**
+ * What the open chat screen shows in its title bar and info dialog, and what the user
+ * may do there (send, rename, accept a request).
+ */
+@Immutable
+internal data class TwillChatDetails(
+    val chatId: String,
+    val title: String,
+    val subtitle: String,
+    val isSubtitleVerified: Boolean,
+    val avatar: TwillAvatar,
+    val isGroup: Boolean,
+    val canRename: Boolean,
+    val canSend: Boolean,
+    val isRequest: Boolean,
+    /** Messages in this chat are end-to-end encrypted. */
+    val isEncrypted: Boolean = true,
+    /** Everyone else in the chat, by [TwillMember.id], for sender names and the info sheet. */
+    val members: Map<String, TwillMember>,
+)
+
+/** Problems worth a toast. */
+internal enum class TwillError { UploadFailed, FileTooLarge, DownloadFailed, SendFailed }
+
+/**
+ * A message matching a search in one conversation. [rank] is how many of the conversation's
+ * newest messages must be loaded for it to be among them (1 = the newest message).
+ */
+internal data class TwillSearchHit(
+    val messageId: String,
+    val rank: Int,
+)
+
+/** A message found by searching all of a protocol's chats ([TwillProtocol.searchAllMessages]). */
+internal data class TwillMessageHit(
+    val chatId: String,
+    val messageId: String,
+    val text: String,
+    val timeMillis: Long,
+    val isOutgoing: Boolean,
+)
+
+/** Strings and options that differ between protocols in shared screens. */
+@Immutable
+internal data class TwillProtocolText(
+    @StringRes val sectionTitle: Int,
+    @StringRes val newChatTitle: Int,
+    @StringRes val newChatHint: Int,
+    @StringRes val newChatInvalid: Int,
+    @StringRes val groupMembersHint: Int,
+    @StringRes val groupMembersHelp: Int,
+    @StringRes val emptySection: Int,
+    @StringRes val composerSignedOut: Int,
+    @StringRes val composerHint: Int,
+    /** Shown in an empty chat that is end-to-end encrypted. */
+    @StringRes val emptyChat: Int,
+    /** Shown in an empty chat that isn't (e.g. Delta Chat with a plain email address). */
+    @StringRes val emptyChatUnencrypted: Int,
+    @StringRes val uploadFailed: Int,
+    @StringRes val renameHelp: Int?,
+    @DrawableRes val notificationIcon: Int,
+    /** Whether group members can be typed in (Nostr keys), besides picking known contacts. */
+    val canTypeGroupMembers: Boolean,
+)
+
+/** Result of creating a group: the new chat, or the typed entries that weren't recognised. */
+internal sealed interface TwillGroupResult {
+    data class Created(
+        val chatId: String,
+    ) : TwillGroupResult
+
+    data class Invalid(
+        val entries: List<String>,
+    ) : TwillGroupResult
+}
+
+/**
+ * A messaging protocol shown in Twill's inbox. The inbox, chat screen, notifications and
+ * background delivery are shared; each protocol only says how to read and send messages.
+ * Chat and message ids are protocol-specific strings.
+ */
+internal interface TwillProtocol {
+    val id: TwillProtocolId
+    val text: TwillProtocolText
+
+    /** Signed in / set up. A disabled protocol has no inbox section and never connects. */
+    val isEnabled: StateFlow<Boolean>
+
+    /** How it receives messages in the background, as chosen in its settings. */
+    val deliveryMode: StateFlow<TwillDeliveryMode>
+
+    val chats: Flow<List<TwillChat>>
+
+    /**
+     * The newest [limit] messages of [chatId], oldest first. Implementations should only
+     * re-read what changed: open chats stay subscribed while new messages arrive.
+     */
+    fun messages(chatId: String, limit: Int): Flow<List<TwillMessage>>
+
+    /** Messages of [chatId] whose text contains [query], newest first. */
+    suspend fun searchMessages(chatId: String, query: String): List<TwillSearchHit>
+
+    /** Messages in any chat whose text contains [query], newest first (the inbox search). */
+    suspend fun searchAllMessages(query: String): List<TwillMessageHit> = emptyList()
+
+    fun details(chatId: String): Flow<TwillChatDetails>
+
+    /** Message ids whose attachments are downloading. */
+    val downloading: StateFlow<Set<String>>
+
+    val errors: SharedFlow<TwillError>
+
+    /** Starts whatever the protocol needs while signed in. Safe to call repeatedly. */
+    fun install()
+
+    /** Called when a chat screen opens, e.g. to refresh profiles. */
+    fun onChatOpened(chatId: String) = Unit
+
+    fun send(chatId: String, text: String)
+
+    /** Long-pressing a message offers Reply and emoji reactions. */
+    val canReplyAndReact: Boolean get() = false
+
+    /** Sends [text] as an answer to [replyToId]. */
+    fun sendReply(chatId: String, text: String, replyToId: String) = send(chatId, text)
+
+    /** Reacts to [messageId] with [emoji]. */
+    fun react(chatId: String, messageId: String, emoji: String) = Unit
+
+    /** The composer's mic records voice messages (Delta Chat); otherwise it's a send button. */
+    val canSendVoice: Boolean get() = false
+
+    /**
+     * Sends the recording at [file] as a voice message, with [text] as its caption when not
+     * blank. The file may be deleted afterwards.
+     */
+    fun sendVoice(chatId: String, file: java.io.File, text: String) = Unit
+
+    fun sendFile(chatId: String, uri: Uri)
+
+    fun retry(message: TwillMessage)
+
+    fun download(message: TwillMessage)
+
+    fun markRead(chatId: String)
+
+    fun setRead(chatId: String, isRead: Boolean)
+
+    fun setPinned(chatId: String, isPinned: Boolean)
+
+    fun delete(chatId: String)
+
+    fun rename(chatId: String, name: String)
+
+    fun acceptRequest(chatId: String) = Unit
+
+    fun blockRequest(chatId: String) = Unit
+
+    /**
+     * "Mark as read" on a notification that showed [messageIds]. Unlike [markRead], it can't
+     * rely on the chat having been loaded.
+     */
+    suspend fun markReadFromNotification(chatId: String, messageIds: List<String>) =
+        markRead(chatId)
+
+    /** Deletes [messageIds] of [chatId] from this device ("Delete" on a notification). */
+    suspend fun deleteMessages(chatId: String, messageIds: List<String>) = Unit
+
+    /** Your own messages can be deleted for everyone in the chat, not only here. */
+    val canDeleteForEveryone: Boolean get() = false
+
+    /** Deletes your message [messageId] here and asks everyone else's apps to remove it. */
+    fun deleteForEveryone(chatId: String, messageId: String) = Unit
+
+    /** Chats can have disappearing messages. */
+    val canDisappear: Boolean get() = false
+
+    /** How long new messages in [chatId] last, in seconds; 0 when they don't disappear. */
+    fun disappearAfter(chatId: String): Flow<Long> = flowOf(0L)
+
+    /** Sets how long new messages in [chatId] last; 0 turns disappearing messages off. */
+    fun setDisappearAfter(chatId: String, seconds: Long) = Unit
+
+    /**
+     * Sends a reply typed in a notification, connecting for the moment if Twill isn't
+     * connected, and returns once it's sent (or failed).
+     */
+    suspend fun sendFromNotification(chatId: String, text: String) = send(chatId, text)
+
+    /** Whether the person in [chatId] can be zapped (Nostr one-to-one chats). */
+    fun canZap(chatId: String): Boolean = false
+
+    /**
+     * Zaps the person in [chatId]. Returns null once paid from the connected wallet, or the
+     * invoice for a wallet app. Throws [TwillActionError] when it can't.
+     */
+    suspend fun zap(chatId: String, sats: Long, comment: String): String? =
+        throw UnsupportedOperationException()
+
+    /** A chat id for what the user typed (address, key, invite link), or null if invalid. */
+    suspend fun startChat(input: String): String?
+
+    /**
+     * People matching what's typed in the new-chat box (name, address or key), best first.
+     * Updates as more is learned about them. Empty for protocols without suggestions.
+     */
+    fun contactSuggestions(query: String): Flow<List<TwillMember>> = flowOf(emptyList())
+
+    /** The new-chat box opened: a chance to refresh what [contactSuggestions] draws on. */
+    fun onNewChatOpened() = Unit
+
+    /**
+     * Looks further afield for [query] (a search server, if the user allowed it); anything
+     * found arrives through [contactSuggestions].
+     */
+    suspend fun searchContacts(query: String) = Unit
+
+    /** People the user can add to a group without typing anything. */
+    suspend fun knownContacts(): List<TwillMember>
+
+    suspend fun createGroup(
+        name: String,
+        contactIds: List<String>,
+        typedEntries: List<String>,
+    ): TwillGroupResult
+
+    suspend fun loadAvatar(ref: String): Bitmap?
+
+    /** Collects anything new, for the periodic background check. */
+    suspend fun syncOnce()
+
+    /** Keep receiving while Twill is in the background (the shared foreground service). */
+    fun setKeepConnectedInBackground(enabled: Boolean)
+}

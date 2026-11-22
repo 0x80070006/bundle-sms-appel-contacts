@@ -1,0 +1,22 @@
+package com.android.messaging.ui.conversation.entry.model
+
+import androidx.compose.runtime.Immutable
+import com.android.messaging.data.conversation.model.ConversationId
+import com.android.messaging.data.conversation.model.MessageId
+import com.android.messaging.data.conversation.model.ParticipantId
+import com.android.messaging.data.conversation.model.draft.ConversationDraft
+
+@Immutable
+internal data class ConversationEntryUiState(
+    val conversationId: ConversationId? = null,
+    val pendingDraft: ConversationDraft? = null,
+    val pendingScrollMessageId: MessageId? = null,
+    val pendingSelfParticipantId: ParticipantId? = null,
+    val pendingStartupAttachment: ConversationEntryStartupAttachment? = null,
+)
+
+@Immutable
+internal data class ConversationEntryStartupAttachment(
+    val contentType: String,
+    val contentUri: String,
+)

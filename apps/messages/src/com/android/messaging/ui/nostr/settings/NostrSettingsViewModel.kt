@@ -1,0 +1,233 @@
+package com.android.messaging.ui.nostr.settings
+
+import android.content.Intent
+import androidx.compose.runtime.Immutable
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.android.messaging.nostr.NostrAccount
+import com.android.messaging.nostr.NostrAccountStore
+import com.android.messaging.nostr.NostrMessageStore
+import com.android.messaging.nostr.NostrMessenger
+import com.android.messaging.nostr.NostrProfile
+import com.android.messaging.nostr.NostrSignerProvider
+import com.android.messaging.nostr.NostrWallet
+import com.android.messaging.nostr.NostrWalletInfo
+import com.android.messaging.nostr.core.normalizeRelay
+import com.android.messaging.twill.TwillDeliveryMode
+import com.android.messaging.twill.TwillRuntime
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+
+/** Everything Nostr settings shows: account, profile, relays, wallet, media and options. */
+@Immutable
+internal data class NostrSettingsUiState(
+    val account: NostrAccount? = null,
+    val relays: List<String> = emptyList(),
+    val isExternalSignerInstalled: Boolean = false,
+    val deliveryMode: TwillDeliveryMode = TwillDeliveryMode.WhileOpen,
+    val mediaServer: String = "",
+    val autoDownloadMedia: Boolean = false,
+    val loadProfilePictures: Boolean = false,
+    val searchRelays: Boolean = false,
+    val searchRelayUrls: List<String> = emptyList(),
+    val hasWallet: Boolean = false,
+    val walletInfo: NostrWalletInfo? = null,
+    val ownProfile: NostrProfile? = null,
+    val isRefreshingProfile: Boolean = false,
+)
+
+/** Reads and changes Nostr settings: sign-in, relays, wallet, media server and options. */
+@HiltViewModel
+internal class NostrSettingsViewModel @Inject constructor(
+    private val accountStore: NostrAccountStore,
+    private val signerProvider: NostrSignerProvider,
+    private val messenger: NostrMessenger,
+    private val runtime: TwillRuntime,
+    private val messageStore: NostrMessageStore,
+    private val wallet: NostrWallet,
+) : ViewModel() {
+
+    private val relaySettings = combine(
+        accountStore.relays,
+        accountStore.searchRelayUrls,
+        accountStore.hasWallet,
+        wallet.info,
+    ) { relays, searchRelays, hasWallet, info ->
+        RelaySettings(relays, searchRelays, hasWallet, info)
+    }
+
+    private data class RelaySettings(
+        val relays: List<String>,
+        val searchRelays: List<String>,
+        val hasWallet: Boolean,
+        val walletInfo: NostrWalletInfo?,
+    )
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val ownProfile = accountStore.account.flatMapLatest { account ->
+        if (account == null) {
+            flowOf(null to false)
+        } else {
+            combine(
+                messageStore.profile(account.pubKeyHex),
+                messenger.refreshingProfiles,
+            ) { profile, refreshing -> profile to (account.pubKeyHex in refreshing) }
+        }
+    }
+
+    private val mediaSettings = combine(
+        accountStore.mediaServer,
+        accountStore.autoDownloadMedia,
+        accountStore.loadProfilePictures,
+        accountStore.searchRelays,
+    ) { server, autoDownload, loadPictures, search ->
+        MediaSettings(server, autoDownload, loadPictures, search)
+    }
+
+    private data class MediaSettings(
+        val server: String,
+        val autoDownload: Boolean,
+        val loadPictures: Boolean,
+        val searchRelays: Boolean,
+    )
+
+    val uiState: StateFlow<NostrSettingsUiState> = combine(
+        accountStore.account,
+        relaySettings,
+        accountStore.deliveryMode,
+        mediaSettings,
+        ownProfile,
+    ) {
+            account,
+            (relays, searchRelayUrls, hasWallet, walletInfo),
+            deliveryMode,
+            (server, autoDownload, loadPictures, search),
+            (profile, refreshing),
+        ->
+        NostrSettingsUiState(
+            account = account,
+            relays = relays,
+            isExternalSignerInstalled = signerProvider.isExternalSignerInstalled(),
+            deliveryMode = deliveryMode,
+            mediaServer = server,
+            autoDownloadMedia = autoDownload,
+            loadProfilePictures = loadPictures,
+            searchRelays = search,
+            searchRelayUrls = searchRelayUrls,
+            hasWallet = hasWallet,
+            walletInfo = walletInfo,
+            ownProfile = profile,
+            isRefreshingProfile = refreshing,
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = NostrSettingsUiState(),
+    )
+
+    init {
+        // Settings can be the first screen opened after sign-in.
+        runtime.start(markVisible = true)
+        accountStore.account.value?.let { messenger.refreshProfile(it.pubKeyHex) }
+        if (accountStore.hasWallet.value) refreshWallet()
+    }
+
+    /** Fetches the user's own profile again, ignoring the cache. */
+    fun refreshOwnProfile() {
+        accountStore.account.value?.let { messenger.refreshProfile(it.pubKeyHex, force = true) }
+    }
+
+    fun externalSignerLoginIntent(): Intent = signerProvider.externalSignerLoginIntent()
+
+    fun onExternalSignerResult(data: Intent?, resultCode: Int): Boolean =
+        signerProvider.completeExternalSignerLogin(data, resultCode)
+
+    fun signInWithPrivateKey(input: String): Boolean = signerProvider.signInWithPrivateKey(input)
+
+    fun createNewKey() {
+        viewModelScope.launch(Dispatchers.IO) { signerProvider.createNewKey() }
+    }
+
+    fun exportLocalNsec(): String? = signerProvider.exportLocalNsec()
+
+    fun signOut() {
+        viewModelScope.launch(Dispatchers.IO) { signerProvider.signOut() }
+    }
+
+    /** Adds a message relay, or a search relay; returns false if [input] isn't a relay address. */
+    fun addRelay(input: String, isSearch: Boolean = false): Boolean {
+        val trimmed = input.trim()
+        val withScheme = when {
+            trimmed.startsWith("wss://") || trimmed.startsWith("ws://") -> trimmed
+            else -> "wss://$trimmed"
+        }
+        val normalized = normalizeRelay(withScheme) ?: return false
+        viewModelScope.launch(Dispatchers.IO) {
+            if (isSearch) {
+                accountStore.addSearchRelay(normalized)
+            } else {
+                accountStore.addRelay(normalized)
+            }
+        }
+        return true
+    }
+
+    fun removeSearchRelay(url: String) {
+        viewModelScope.launch(Dispatchers.IO) { accountStore.removeSearchRelay(url) }
+    }
+
+    /** Connects a Nostr Wallet Connect link; throws [TwillActionError] if it doesn't work. */
+    suspend fun connectWallet(link: String) = wallet.connect(link)
+
+    fun disconnectWallet() {
+        viewModelScope.launch(Dispatchers.IO) { wallet.disconnect() }
+    }
+
+    fun refreshWallet() {
+        viewModelScope.launch { runCatching { wallet.refresh() } }
+    }
+
+    fun setDeliveryMode(mode: TwillDeliveryMode) {
+        viewModelScope.launch(Dispatchers.IO) { accountStore.setDeliveryMode(mode) }
+    }
+
+    fun setAutoDownloadMedia(enabled: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) { accountStore.setAutoDownloadMedia(enabled) }
+    }
+
+    fun setSearchRelays(enabled: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) { accountStore.setSearchRelays(enabled) }
+    }
+
+    fun setLoadProfilePictures(enabled: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) { accountStore.setLoadProfilePictures(enabled) }
+    }
+
+    /** Returns false if [input] isn't an https address. */
+    fun setMediaServer(input: String): Boolean {
+        val trimmed = input.trim().trimEnd('/')
+        val withScheme = if ("://" in trimmed) trimmed else "https://$trimmed"
+        if (!withScheme.startsWith("https://") ||
+            withScheme.length <= "https://".length
+        ) {
+            return false
+        }
+        val host = runCatching { java.net.URI(withScheme).host }.getOrNull()
+        if (host.isNullOrBlank() || '.' !in host) return false
+        viewModelScope.launch(Dispatchers.IO) { accountStore.setMediaServer(withScheme) }
+        return true
+    }
+
+    fun removeRelay(url: String) {
+        viewModelScope.launch(Dispatchers.IO) { accountStore.removeRelay(url) }
+    }
+}

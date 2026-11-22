@@ -1,0 +1,396 @@
+package com.android.messaging.nostr
+
+import android.content.Context
+import android.graphics.Bitmap
+import android.net.Uri
+import com.android.messaging.R
+import com.android.messaging.di.core.ApplicationCoroutineScope
+import com.android.messaging.twill.TwillAttachment
+import com.android.messaging.twill.TwillAvatar
+import com.android.messaging.twill.TwillChat
+import com.android.messaging.twill.TwillChatDetails
+import com.android.messaging.twill.TwillDeliveryMode
+import com.android.messaging.twill.TwillError
+import com.android.messaging.twill.TwillGroupResult
+import com.android.messaging.twill.TwillMember
+import com.android.messaging.twill.TwillMessage
+import com.android.messaging.twill.TwillMessageHit
+import com.android.messaging.twill.TwillProtocol
+import com.android.messaging.twill.TwillProtocolId
+import com.android.messaging.twill.TwillProtocolText
+import com.android.messaging.twill.TwillReaction
+import com.android.messaging.twill.TwillSearchHit
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+/** Nostr private messages (NIP-17) as one of Twill's protocols. */
+@OptIn(ExperimentalCoroutinesApi::class)
+@Singleton
+internal class NostrProtocol @Inject constructor(
+    @param:ApplicationContext private val context: Context,
+    private val accountStore: NostrAccountStore,
+    private val store: NostrMessageStore,
+    private val messenger: NostrMessenger,
+    private val media: NostrMedia,
+    private val directory: NostrDirectory,
+    private val wallet: NostrWallet,
+    @param:ApplicationCoroutineScope private val appScope: CoroutineScope,
+) : TwillProtocol {
+
+    override val id = TwillProtocolId.Nostr
+
+    override val text = TwillProtocolText(
+        sectionTitle = R.string.inbox_section_nostr,
+        newChatTitle = R.string.inbox_new_nostr_chat,
+        newChatHint = R.string.inbox_new_nostr_chat_hint,
+        newChatInvalid = R.string.inbox_new_nostr_chat_invalid,
+        groupMembersHint = R.string.inbox_group_members_hint,
+        groupMembersHelp = R.string.inbox_group_members_help,
+        emptySection = R.string.inbox_nostr_empty,
+        composerSignedOut = R.string.nostr_composer_signed_out,
+        composerHint = R.string.nostr_composer_hint,
+        emptyChat = R.string.nostr_chat_empty,
+        emptyChatUnencrypted = R.string.nostr_chat_empty,
+        uploadFailed = R.string.nostr_upload_failed,
+        renameHelp = R.string.nostr_group_rename_help,
+        notificationIcon = R.drawable.ic_notification_nostr,
+        canTypeGroupMembers = true,
+    )
+
+    override val isEnabled: StateFlow<Boolean> = accountStore.account
+        .map { it != null }
+        .stateIn(appScope, SharingStarted.Eagerly, accountStore.account.value != null)
+
+    override val deliveryMode: StateFlow<TwillDeliveryMode> = accountStore.deliveryMode
+
+    override val downloading: StateFlow<Set<String>> = messenger.downloading
+
+    override val errors: SharedFlow<TwillError> = messenger.errors
+
+    override val chats: Flow<List<TwillChat>> = accountStore.account.flatMapLatest { account ->
+        if (account == null) {
+            flowOf(emptyList())
+        } else {
+            combine(store.conversations(), accountStore.loadProfilePictures) { list, pictures ->
+                list.map { it.toTwill(showPictures = pictures) }
+            }
+        }
+    }
+
+    override fun messages(chatId: String, limit: Int): Flow<List<TwillMessage>> =
+        store.messages(chatId, limit).map { list -> list.map { it.toTwill() } }
+
+    override suspend fun searchMessages(chatId: String, query: String): List<TwillSearchHit> =
+        store.search(chatId, query)
+
+    override suspend fun searchAllMessages(query: String): List<TwillMessageHit> =
+        if (isEnabled.value) store.searchAll(query) else emptyList()
+
+    override fun details(chatId: String): Flow<TwillChatDetails> {
+        val members = NostrChatKey.members(chatId)
+        val isGroup = NostrChatKey.isGroup(chatId)
+        return combine(
+            store.profiles(members),
+            store.group(chatId),
+            accountStore.loadProfilePictures,
+            accountStore.account,
+        ) { profiles, group, pictures, account ->
+            fun nameOf(pubKey: String) =
+                profiles[pubKey]?.name ?: NostrSignerProvider.shortNpub(pubKey)
+
+            val memberMap = members.associateWith { pubKey ->
+                val profile = profiles[pubKey]
+                val verified = profile?.takeIf { it.isNip05Verified }?.nip05
+                TwillMember(
+                    id = pubKey,
+                    name = nameOf(pubKey),
+                    detail = verified?.removePrefix("_@") ?: NostrSignerProvider.npubOf(pubKey),
+                    isVerified = verified != null,
+                    avatar = TwillAvatar(
+                        name = nameOf(pubKey),
+                        ref = profile?.picture?.takeIf { pictures },
+                    ),
+                )
+            }
+            val title = when {
+                isGroup -> group.name ?: joinNames(members.map(::nameOf))
+                else -> nameOf(chatId)
+            }
+            val peer = memberMap[chatId]
+            TwillChatDetails(
+                chatId = chatId,
+                title = title,
+                subtitle = when {
+                    isGroup -> context.getString(R.string.nostr_group_subtitle, members.size + 1)
+                    peer?.isVerified == true -> peer.detail.orEmpty()
+                    else -> context.getString(
+                        R.string.nostr_chat_subtitle,
+                        NostrSignerProvider.shortNpub(chatId),
+                    )
+                },
+                isSubtitleVerified = !isGroup && peer?.isVerified == true,
+                avatar = TwillAvatar(
+                    name = title,
+                    ref = if (isGroup) null else peer?.avatar?.ref,
+                    isGroup = isGroup,
+                ),
+                isGroup = isGroup,
+                canRename = isGroup,
+                canSend = account != null,
+                isRequest = false,
+                members = memberMap,
+            )
+        }
+    }
+
+    override fun install() {
+        messenger.install()
+        directory.install()
+    }
+
+    override fun onChatOpened(chatId: String) {
+        NostrChatKey.members(chatId).forEach { messenger.refreshProfile(it) }
+    }
+
+    override fun send(chatId: String, text: String) = messenger.send(chatKey = chatId, text = text)
+
+    override val canReplyAndReact: Boolean get() = true
+
+    override fun sendReply(chatId: String, text: String, replyToId: String) =
+        messenger.send(chatKey = chatId, text = text, replyTo = replyToId)
+
+    override fun react(chatId: String, messageId: String, emoji: String) =
+        messenger.react(chatKey = chatId, messageId = messageId, emoji = emoji)
+
+    override suspend fun sendFromNotification(chatId: String, text: String) =
+        messenger.sendNow(chatKey = chatId, text = text)
+
+    override suspend fun deleteMessages(chatId: String, messageIds: List<String>) =
+        withContext(Dispatchers.IO) { messageIds.forEach(store::deleteMessage) }
+
+    override val canDeleteForEveryone: Boolean get() = true
+
+    override fun deleteForEveryone(chatId: String, messageId: String) =
+        messenger.deleteForEveryone(chatKey = chatId, messageId = messageId)
+
+    /**
+     * NIP-17 disappearing messages. Nostr has no setting shared by the chat, so the timer only
+     * applies to what's sent from here; each message carries its own expiration.
+     */
+    override val canDisappear: Boolean get() = true
+
+    override fun disappearAfter(chatId: String): Flow<Long> = messenger.disappearAfter(chatId)
+
+    override fun setDisappearAfter(chatId: String, seconds: Long) =
+        messenger.setDisappearAfter(chatId, seconds)
+
+    override fun sendFile(chatId: String, uri: Uri) = messenger.sendFile(
+        chatKey = chatId,
+        uri = uri
+    )
+
+    override fun retry(message: TwillMessage) {
+        appScope.launch(Dispatchers.IO) { store.message(message.id)?.let(messenger::retry) }
+    }
+
+    override fun download(message: TwillMessage) {
+        appScope.launch(Dispatchers.IO) { store.message(message.id)?.let(messenger::download) }
+    }
+
+    override fun markRead(chatId: String) {
+        appScope.launch(Dispatchers.IO) { store.markConversationRead(chatId) }
+    }
+
+    override fun setRead(chatId: String, isRead: Boolean) {
+        appScope.launch(Dispatchers.IO) { store.setConversationRead(chatId, isRead) }
+    }
+
+    override fun setPinned(chatId: String, isPinned: Boolean) {
+        appScope.launch(Dispatchers.IO) { store.setPinned(chatId, isPinned) }
+    }
+
+    override fun delete(chatId: String) {
+        appScope.launch(Dispatchers.IO) { store.deleteConversation(chatId) }
+    }
+
+    override fun rename(chatId: String, name: String) = messenger.renameGroup(chatId, name)
+
+    override suspend fun startChat(input: String): String? = messenger.resolveIdentifier(input)
+
+    override fun contactSuggestions(query: String): Flow<List<TwillMember>> = combine(
+        store.suggestPeople(query, MAX_SUGGESTIONS),
+        accountStore.loadProfilePictures,
+    ) { people, pictures ->
+        directory.checkShown(people)
+        people.map { person ->
+            val profile = person.profile
+            val name = profile?.name ?: NostrSignerProvider.shortNpub(person.pubKey)
+            // Only a checked address is shown; otherwise the key, which can't be faked.
+            val verified = profile?.takeIf { it.isNip05Verified }?.nip05
+            TwillMember(
+                id = person.pubKey,
+                name = name,
+                // The name is already the npub when there's no profile name.
+                detail = verified ?: if (profile?.name != null) {
+                    NostrSignerProvider.shortNpub(person.pubKey)
+                } else {
+                    null
+                },
+                isVerified = verified != null,
+                avatar = TwillAvatar(name, profile?.picture?.takeIf { pictures }),
+            )
+        }
+    }
+
+    override fun onNewChatOpened() = directory.refreshIfStale()
+
+    override fun canZap(chatId: String): Boolean {
+        val me = accountStore.account.value?.pubKeyHex ?: return false
+        return !NostrChatKey.isGroup(chatId) && chatId != me
+    }
+
+    override suspend fun zap(chatId: String, sats: Long, comment: String): String? {
+        val name = store.profile(chatId).first()?.name ?: NostrSignerProvider.shortNpub(chatId)
+        return wallet.zap(pubKey = chatId, name = name, sats = sats, comment = comment)
+    }
+
+    override suspend fun searchContacts(query: String) = directory.search(query)
+
+    override suspend fun knownContacts(): List<TwillMember> = withContext(Dispatchers.IO) {
+        val pictures = accountStore.loadProfilePictures.value
+        store.conversations().first()
+            .filter { !it.isGroup }
+            .map { conversation ->
+                val name = conversationTitle(conversation)
+                TwillMember(
+                    id = conversation.chatKey,
+                    name = name,
+                    detail = NostrSignerProvider.shortNpub(conversation.chatKey),
+                    avatar = TwillAvatar(name, conversation.pictureUrl?.takeIf { pictures }),
+                )
+            }
+            .sortedBy { it.name.lowercase() }
+    }
+
+    override suspend fun createGroup(
+        name: String,
+        contactIds: List<String>,
+        typedEntries: List<String>,
+    ): TwillGroupResult {
+        val me = accountStore.account.value?.pubKeyHex
+            ?: return TwillGroupResult.Invalid(emptyList())
+        val resolved = typedEntries.map { entry -> entry to startChat(entry) }
+        val invalid = resolved.filter { it.second == null }.map { it.first }
+        if (invalid.isNotEmpty()) return TwillGroupResult.Invalid(invalid)
+        val members = (contactIds + resolved.mapNotNull { it.second }).distinct()
+        if (members.isEmpty()) return TwillGroupResult.Invalid(emptyList())
+        val chatKey = NostrChatKey.forParticipants(participants = members, me = me)
+        if (name.isNotBlank() && NostrChatKey.isGroup(chatKey)) messenger.renameGroup(chatKey, name)
+        return TwillGroupResult.Created(chatKey)
+    }
+
+    override suspend fun loadAvatar(ref: String): Bitmap? =
+        if (accountStore.loadProfilePictures.value) media.loadAvatar(ref) else null
+
+    override suspend fun syncOnce() = messenger.syncOnce()
+
+    override fun setKeepConnectedInBackground(enabled: Boolean) =
+        messenger.setKeepConnectedInBackground(enabled)
+
+    private fun NostrConversation.toTwill(showPictures: Boolean): TwillChat {
+        val title = conversationTitle(this)
+        val last = lastMessage
+        val senderIndex = NostrChatKey.members(chatKey).indexOf(last.senderPubKey)
+        return TwillChat(
+            protocol = id,
+            chatId = chatKey,
+            title = title,
+            avatar = TwillAvatar(
+                name = title,
+                ref = pictureUrl?.takeIf { showPictures && !isGroup },
+                isGroup = isGroup,
+            ),
+            isGroup = isGroup,
+            isPinned = isPinned,
+            unreadCount = unreadCount,
+            lastMessage = last.toTwill(),
+            lastSenderName = when {
+                !isGroup || last.isOutgoing -> null
+                else -> memberNames.getOrNull(senderIndex)
+                    ?: NostrSignerProvider.shortNpub(last.senderPubKey)
+            },
+        )
+    }
+
+    private fun NostrMessage.toTwill() = TwillMessage(
+        replyToId = replyTo,
+        // Each emoji once, with how many sent it, most used first (as in Zino).
+        reactions = reactions.groupBy { it.emoji }
+            .map { (emoji, by) ->
+                TwillReaction(
+                    emoji = emoji,
+                    count = by.distinctBy { it.sender }.size,
+                    isMine = by.any { it.isOutgoing },
+                )
+            }
+            .sortedByDescending { it.count },
+        id = id,
+        chatId = chatKey,
+        senderId = senderPubKey,
+        text = content,
+        timeMillis = createdAtSeconds * 1000,
+        isOutgoing = isOutgoing,
+        status = when (status) {
+            NostrMessage.Status.Sending -> TwillMessage.Status.Sending
+            NostrMessage.Status.Failed -> TwillMessage.Status.Failed
+            NostrMessage.Status.Sent -> TwillMessage.Status.Sent
+        },
+        attachment = attachment?.let {
+            TwillAttachment(
+                mimeType = it.mimeType,
+                fileName = it.fileName,
+                size = it.size,
+                width = it.width,
+                height = it.height,
+                localPath = it.localPath?.takeIf { path -> path.isNotEmpty() },
+            )
+        },
+    )
+
+    companion object {
+        private const val MAX_SUGGESTIONS = 8
+
+        /** A conversation's title: its name, or members' names, or short npubs. */
+        fun conversationTitle(conversation: NostrConversation): String {
+            conversation.displayName?.let { return it }
+            val members = NostrChatKey.members(conversation.chatKey)
+            return joinNames(
+                members.mapIndexed { index, pubKey ->
+                    conversation.memberNames.getOrNull(index)
+                        ?: NostrSignerProvider.shortNpub(pubKey)
+                },
+            )
+        }
+
+        private fun joinNames(names: List<String>): String = when {
+            names.size <= 3 -> names.joinToString(", ")
+            else -> names.take(3).joinToString(", ") + " +" + (names.size - 3)
+        }
+    }
+}

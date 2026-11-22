@@ -1,0 +1,453 @@
+package com.android.messaging.ui.conversationlist.common.list
+
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.VisibilityThreshold
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyItemScope
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.dp
+import com.android.messaging.data.conversation.model.ConversationId
+import com.android.messaging.ui.common.components.horizontalSafeDrawingInsets
+import com.android.messaging.ui.common.components.reorder.OverlayReorderAnimationController
+import com.android.messaging.ui.conversationlist.common.item.ConversationListItemRow
+import com.android.messaging.ui.conversationlist.common.item.ConversationSwipeAction
+import com.android.messaging.ui.conversationlist.common.item.ConversationSwipeKind
+import com.android.messaging.ui.conversationlist.common.item.SwipeableConversationListItem
+import com.android.messaging.ui.conversationlist.common.support.AppearanceAnimationToken
+import com.android.messaging.ui.conversationlist.common.support.CONVERSATION_LIST_TEST_TAG
+import com.android.messaging.ui.conversationlist.common.support.rememberAppearanceAnimationTokens
+import com.android.messaging.ui.conversationlist.model.ConversationListItemUiModel as Model
+import com.android.messaging.ui.twill.inbox.ConversationListSections
+import com.android.messaging.ui.twill.inbox.LocalTwillCardShape
+import com.android.messaging.ui.twill.inbox.TwillCards
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableSet
+
+private const val CONVERSATION_ROW_CONTENT_TYPE = "conversation_row"
+
+private val ItemPlacementSpec = spring(
+    dampingRatio = Spring.DampingRatioNoBouncy,
+    stiffness = Spring.StiffnessMediumLow,
+    visibilityThreshold = IntOffset.VisibilityThreshold,
+)
+
+// Twill: rows are separate cards (see TwillCards), 3dp apart.
+private val ListVerticalSpacing = TwillCards.RowGap
+
+private val ListContentPadding = 8.dp
+
+@Composable
+internal fun ConversationListItems(
+    items: ImmutableList<Model>,
+    restoredConversationIds: ImmutableSet<ConversationId>,
+    listState: LazyListState,
+    isSelectionMode: Boolean,
+    scaffoldContentPadding: PaddingValues,
+    fabBottomReserve: Dp,
+    pinAnimationController: OverlayReorderAnimationController<Model, ConversationId>?,
+    swipeSpec: ConversationListSwipeSpec,
+    onItemEvent: (ConversationListItemEvent) -> Unit,
+    sections: ConversationListSections? = null,
+) {
+    val rowHorizontalInsets = horizontalSafeDrawingInsets()
+
+    val appearanceTokens = rememberAppearanceAnimationTokens(
+        items = items,
+        listState = listState,
+        excludedConversationIds = restoredConversationIds,
+    )
+
+    SideEffect {
+        pinAnimationController?.updateItems(items)
+    }
+
+    KeepViewportStationaryOnPinChange(
+        listState = listState,
+        items = items,
+        restoredConversationIds = restoredConversationIds,
+    )
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .testTag(CONVERSATION_LIST_TEST_TAG),
+        state = listState,
+        contentPadding = PaddingValues(
+            top = ListContentPadding,
+            bottom = scaffoldContentPadding.calculateBottomPadding() +
+                ListContentPadding +
+                fabBottomReserve,
+        ),
+        verticalArrangement = Arrangement.spacedBy(ListVerticalSpacing),
+    ) {
+        // Twill: collapsible SMS section header when another protocol is on (none if SMS is off).
+        val smsHeader = sections?.smsHeader
+        if (sections != null && !sections.isSmsHidden && smsHeader != null) {
+            item(key = "twill_sms_header", contentType = "twill_section_header") {
+                smsHeader()
+            }
+        }
+
+        val visibleItems = if (sections?.isSmsCollapsed == true || sections?.isSmsHidden == true) {
+            emptyList()
+        } else {
+            items
+        }
+        itemsIndexed(
+            items = visibleItems,
+            key = { _, item -> item.conversationId.value },
+            contentType = { _, _ -> CONVERSATION_ROW_CONTENT_TYPE },
+        ) { index, item ->
+            val appearanceAnimationToken = appearanceTokens.tokenFor(item.conversationId)
+
+            ConversationListRow(
+                cardShape = TwillCards.shape(index, visibleItems.size),
+                item = item,
+                listState = listState,
+                isSelectionMode = isSelectionMode,
+                horizontalInsets = rowHorizontalInsets,
+                appearanceAnimationToken = appearanceAnimationToken,
+                pinAnimationController = pinAnimationController,
+                onAppearanceAnimationFinished = {
+                    if (appearanceAnimationToken != null) {
+                        appearanceTokens.onAnimationFinished(
+                            conversationId = item.conversationId,
+                            token = appearanceAnimationToken,
+                        )
+                    }
+                },
+                swipeSpec = swipeSpec,
+                onItemEvent = onItemEvent,
+            )
+        }
+
+        // Twill: the other protocols' sections.
+        sections?.trailingItems?.invoke(this)
+    }
+}
+
+@Composable
+private fun LazyItemScope.ConversationListRow(
+    cardShape: Shape,
+    item: Model,
+    listState: LazyListState,
+    isSelectionMode: Boolean,
+    horizontalInsets: PaddingValues,
+    appearanceAnimationToken: AppearanceAnimationToken?,
+    pinAnimationController: OverlayReorderAnimationController<Model, ConversationId>?,
+    onAppearanceAnimationFinished: () -> Unit,
+    swipeSpec: ConversationListSwipeSpec,
+    onItemEvent: (ConversationListItemEvent) -> Unit,
+) {
+    val isHiddenByPinAnimation = pinAnimationController?.isItemHidden(item.conversationId) == true
+
+    val startToEndAction = rememberConversationSwipeAction(
+        conversationId = item.conversationId,
+        kind = swipeSpec.startToEnd,
+        onItemEvent = onItemEvent,
+    )
+    val endToStartAction = swipeSpec.endToStart?.let { kind ->
+        rememberConversationSwipeAction(
+            conversationId = item.conversationId,
+            kind = kind,
+            onItemEvent = onItemEvent,
+        )
+    }
+
+    DisposableEffect(item.conversationId, pinAnimationController) {
+        onDispose {
+            pinAnimationController?.removeItemBounds(item.conversationId)
+        }
+    }
+
+    // Twill: each row is a card; the swipe background fills the same card.
+    CompositionLocalProvider(LocalTwillCardShape provides cardShape) {
+        SwipeableConversationListItem(
+            item = item,
+            isSelectionMode = isSelectionMode,
+            isInteractionEnabled = !isHiddenByPinAnimation,
+            appearanceAnimationToken = appearanceAnimationToken,
+            onAppearanceAnimationFinished = onAppearanceAnimationFinished,
+            startToEndAction = startToEndAction,
+            endToStartAction = endToStartAction,
+            backgroundHorizontalInsets = PaddingValues(),
+            modifier = Modifier
+                .padding(horizontalInsets)
+                .padding(horizontal = TwillCards.SideMargin)
+                .conversationItemAnimation(
+                    lazyItemScope = this,
+                    animatePlacement = !isHiddenByPinAnimation,
+                )
+                .trackPinAnimationBounds(
+                    listState = listState,
+                    conversationId = item.conversationId,
+                    pinAnimationController = pinAnimationController,
+                )
+                .graphicsLayer {
+                    alpha = when {
+                        isHiddenByPinAnimation -> 0f
+                        else -> 1f
+                    }
+                },
+        ) {
+            ConversationListItemContent(
+                item = item,
+                isSelectionMode = isSelectionMode,
+                onItemEvent = onItemEvent,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ConversationListItemContent(
+    item: Model,
+    isSelectionMode: Boolean,
+    onItemEvent: (ConversationListItemEvent) -> Unit,
+) {
+    val destination = item.avatar.normalizedDestination
+
+    ConversationListItemRow(
+        item = item,
+        onClick = {
+            onItemEvent(ConversationListItemEvent.Clicked(item.conversationId))
+        },
+        onLongClick = {
+            onItemEvent(ConversationListItemEvent.LongClicked(item.conversationId))
+        },
+        isSelectionMode = isSelectionMode,
+        onAvatarMessageClick = {
+            onItemEvent(ConversationListItemEvent.AvatarMessageClicked(item.conversationId))
+        },
+        onAvatarCallClick = {
+            if (destination != null) {
+                onItemEvent(ConversationListItemEvent.AvatarCallClicked(destination))
+            }
+        }.takeIf { item.avatar.canCall },
+        onAvatarContactClick = {
+            onItemEvent(ConversationListItemEvent.AvatarContactClicked(item))
+        }.takeIf { item.avatar.canShowContact },
+        onAvatarInfoClick = {
+            onItemEvent(ConversationListItemEvent.AvatarInfoClicked(item.conversationId))
+        },
+    )
+}
+
+@Composable
+private fun rememberConversationSwipeAction(
+    conversationId: ConversationId,
+    kind: ConversationSwipeKind,
+    onItemEvent: (ConversationListItemEvent) -> Unit,
+): ConversationSwipeAction {
+    return remember(conversationId, kind, onItemEvent) {
+        ConversationSwipeAction(
+            kind = kind,
+            onTrigger = {
+                onItemEvent(
+                    ConversationListItemEvent.Swiped(
+                        conversationId = conversationId,
+                        kind = kind,
+                    ),
+                )
+            },
+        )
+    }
+}
+
+internal fun Modifier.conversationRowHorizontalPadding(horizontalInsets: PaddingValues): Modifier {
+    return padding(horizontalInsets)
+        .padding(horizontal = ListContentPadding)
+}
+
+private fun Modifier.trackPinAnimationBounds(
+    listState: LazyListState,
+    conversationId: ConversationId,
+    pinAnimationController: OverlayReorderAnimationController<Model, ConversationId>?,
+): Modifier {
+    if (pinAnimationController == null) {
+        return this
+    }
+
+    return onGloballyPositioned { coordinates ->
+        val layoutInfo = listState.layoutInfo
+        val physicallyVisibleItems = layoutInfo.visibleItemsInfo.filter { visibleItem ->
+            visibleItem.offset < layoutInfo.viewportEndOffset &&
+                visibleItem.offset + visibleItem.size > layoutInfo.viewportStartOffset
+        }
+
+        val firstVisibleItemIndex = physicallyVisibleItems
+            .minOfOrNull { visibleItem -> visibleItem.index }
+            ?: listState.firstVisibleItemIndex
+
+        val lastVisibleItemIndex = physicallyVisibleItems
+            .maxOfOrNull { visibleItem -> visibleItem.index }
+            ?: firstVisibleItemIndex
+
+        pinAnimationController.updateItemBounds(
+            itemKey = conversationId,
+            boundsInRoot = coordinates.boundsInRoot(),
+            isPhysicallyVisible = physicallyVisibleItems.any { visibleItem ->
+                visibleItem.key == conversationId
+            },
+            firstVisibleItemIndex = firstVisibleItemIndex,
+            lastVisibleItemIndex = lastVisibleItemIndex,
+        )
+    }
+}
+
+@Composable
+private fun KeepViewportStationaryOnPinChange(
+    listState: LazyListState,
+    items: ImmutableList<Model>,
+    restoredConversationIds: ImmutableSet<ConversationId>,
+) {
+    val previousItemsState = remember { mutableStateOf(items) }
+
+    SideEffect {
+        val previousItems = previousItemsState.value
+        val firstVisibleConversationId = ConversationId.fromOrNull(
+            listState.layoutInfo
+                .visibleItemsInfo
+                .firstOrNull { visibleItem ->
+                    visibleItem.index == listState.firstVisibleItemIndex
+                }
+                ?.key as? String,
+        )
+
+        val scrollRequest = resolvePinChangeScrollRequest(
+            previousItems = previousItems,
+            currentItems = items,
+            restoredConversationIds = restoredConversationIds,
+            firstVisibleConversationId = firstVisibleConversationId,
+            firstVisibleItemIndex = listState.firstVisibleItemIndex,
+            firstVisibleItemScrollOffset = listState.firstVisibleItemScrollOffset,
+        )
+
+        if (scrollRequest != null) {
+            listState.requestScrollToItem(
+                index = scrollRequest.index,
+                scrollOffset = scrollRequest.scrollOffset,
+            )
+        }
+
+        previousItemsState.value = items
+    }
+}
+
+internal data class ConversationListScrollRequest(
+    val index: Int,
+    val scrollOffset: Int,
+)
+
+internal fun resolvePinChangeScrollRequest(
+    previousItems: List<Model>,
+    currentItems: List<Model>,
+    restoredConversationIds: Set<ConversationId>,
+    firstVisibleConversationId: ConversationId?,
+    firstVisibleItemIndex: Int,
+    firstVisibleItemScrollOffset: Int,
+): ConversationListScrollRequest? {
+    val currentItemsById = currentItems.associateBy(Model::conversationId)
+    val previousConversationIds = previousItems.mapTo(HashSet()) { it.conversationId }
+    val isAtTop = firstVisibleItemIndex == 0 && firstVisibleItemScrollOffset == 0
+    val currentTopConversationId = currentItems.firstOrNull()?.conversationId
+    val isNewTopConversation = currentTopConversationId != null &&
+        currentTopConversationId !in previousConversationIds &&
+        currentTopConversationId !in restoredConversationIds
+
+    return when {
+        isAtTop && isNewTopConversation -> {
+            ConversationListScrollRequest(
+                index = 0,
+                scrollOffset = 0,
+            )
+        }
+
+        !hasPinReorder(previousItems, currentItemsById) -> null
+
+        isAtTop -> {
+            ConversationListScrollRequest(
+                index = 0,
+                scrollOffset = 0,
+            )
+        }
+
+        else -> resolveAnchorScrollRequest(
+            previousItems = previousItems,
+            currentItemsById = currentItemsById,
+            firstVisibleConversationId = firstVisibleConversationId,
+            firstVisibleItemScrollOffset = firstVisibleItemScrollOffset,
+        )
+    }
+}
+
+private fun hasPinReorder(
+    previousItems: List<Model>,
+    currentItemsById: Map<ConversationId, Model>,
+): Boolean {
+    val hasSameConversationIds = previousItems.size == currentItemsById.size &&
+        previousItems.all { item -> item.conversationId in currentItemsById }
+
+    return hasSameConversationIds &&
+        previousItems.any { previousItem ->
+            currentItemsById.getValue(previousItem.conversationId).isPinned != previousItem.isPinned
+        }
+}
+
+private fun resolveAnchorScrollRequest(
+    previousItems: List<Model>,
+    currentItemsById: Map<ConversationId, Model>,
+    firstVisibleConversationId: ConversationId?,
+    firstVisibleItemScrollOffset: Int,
+): ConversationListScrollRequest? {
+    val previousFirstVisibleIndex = previousItems.indexOfFirst { item ->
+        item.conversationId == firstVisibleConversationId
+    }
+    val previousFirstVisibleItem = previousItems.getOrNull(previousFirstVisibleIndex)
+    val currentFirstVisibleItem = previousFirstVisibleItem
+        ?.let { currentItemsById[it.conversationId] }
+
+    val hasAnchorPinChange = previousFirstVisibleItem != null &&
+        currentFirstVisibleItem != null &&
+        previousFirstVisibleItem.isPinned != currentFirstVisibleItem.isPinned
+
+    return ConversationListScrollRequest(
+        index = previousFirstVisibleIndex,
+        scrollOffset = firstVisibleItemScrollOffset,
+    ).takeIf { hasAnchorPinChange }
+}
+
+private fun Modifier.conversationItemAnimation(
+    lazyItemScope: LazyItemScope,
+    animatePlacement: Boolean,
+): Modifier = with(lazyItemScope) {
+    this@conversationItemAnimation
+        .animateItem(
+            fadeInSpec = null,
+            fadeOutSpec = null,
+            placementSpec = when {
+                animatePlacement -> ItemPlacementSpec
+                else -> null
+            },
+        )
+}
