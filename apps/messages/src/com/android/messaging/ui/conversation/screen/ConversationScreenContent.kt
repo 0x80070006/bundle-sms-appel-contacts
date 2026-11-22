@@ -1,5 +1,9 @@
 package com.android.messaging.ui.conversation.screen
 
+import com.android.messaging.ui.bundle.ChatBackground
+import com.android.messaging.ui.bundle.ChatWallpaper
+import com.android.messaging.ui.bundle.LocalChatStyle
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.Box
@@ -109,6 +113,15 @@ internal fun ConversationScreenContent(
     }
 
     Box(modifier = modifier) {
+        // Bundle: the chat's background (built-in or photo, blurred and dimmed as set), under
+        // the messages, in the same area and corners as the message list.
+        ChatBackground(
+            style = LocalChatStyle.current,
+            modifier = Modifier
+                .matchParentSize()
+                .padding(top = contentPadding.calculateTopPadding(), bottom = contentPadding.calculateBottomPadding())
+                .clip(shape = MaterialTheme.contentSurfaceShape),
+        )
         when {
             shouldShowConversationScreenLoadingContent(uiState = uiState) -> {
                 ConversationScreenLoadingContent(
@@ -293,9 +306,14 @@ private fun Modifier.conversationScreenContentModifier(
             top = contentPadding.calculateTopPadding(),
             bottom = contentPadding.calculateBottomPadding(),
         )
-        .background(color = backdropColor)
+        .background(color = if (LocalChatStyle.current.wallpaper == ChatWallpaper.None) backdropColor else Color.Transparent)
         .clip(shape = MaterialTheme.contentSurfaceShape)
-        .background(color = MaterialTheme.colorScheme.background)
+        .background(
+            color = when (LocalChatStyle.current.wallpaper) {
+                ChatWallpaper.None -> MaterialTheme.colorScheme.background
+                else -> Color.Transparent
+            },
+        )
 }
 
 @Composable

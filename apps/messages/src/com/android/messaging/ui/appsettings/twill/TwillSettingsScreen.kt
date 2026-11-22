@@ -1,5 +1,18 @@
 package com.android.messaging.ui.appsettings.twill
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Palette
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import bundle.core.appearance.AppIconConfig
+import bundle.core.appearance.AppearanceDialog
+import bundle.core.appearance.IconColor
+import bundle.core.appearance.appearanceStrings
+import com.android.messaging.ui.bundle.DefaultChatStyleSection
+import com.android.messaging.ui.bundle.chatStrings
+
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -41,6 +54,20 @@ internal fun TwillSettingsScreen(
     onBottomBarChange: (Boolean) -> Unit = {},
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    // Bundle: the look shared with Contacts and Phone, this app's icon, and the chats' style.
+    var showAppearance by rememberSaveable { mutableStateOf(false) }
+    if (showAppearance) {
+        AppearanceDialog(
+            onDismiss = { showAppearance = false },
+            appIcon = AppIconConfig(
+                glyph = R.drawable.bundle_icon_glyph,
+                appName = stringResource(R.string.app_name),
+                defaultColor = IconColor.Blue,
+                defaultAlias = "com.android.messaging.ui.conversationlist.ConversationListActivity",
+            ),
+            extra = { item(key = "chat-style") { DefaultChatStyleSection() } },
+        )
+    }
 
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -56,6 +83,15 @@ internal fun TwillSettingsScreen(
             modifier = Modifier.fillMaxSize(),
             contentPadding = contentPadding,
         ) {
+            item(key = "appearance") {
+                val strings = appearanceStrings()
+                SettingsClickableItem(
+                    title = strings.appearance,
+                    summary = chatStrings().appearanceSummary,
+                    icon = Icons.Rounded.Palette,
+                    onClick = { showAppearance = true },
+                )
+            }
             item(key = "services_header", contentType = SettingsGroupTitle) {
                 SettingsCategoryHeader(title = stringResource(R.string.twill_settings_services))
             }

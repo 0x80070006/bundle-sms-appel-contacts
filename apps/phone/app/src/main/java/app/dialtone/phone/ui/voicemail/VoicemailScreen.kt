@@ -1,5 +1,7 @@
 package app.dialtone.phone.ui.voicemail
 
+import app.dialtone.phone.util.tr
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateIntAsState
@@ -129,9 +131,9 @@ fun VoicemailScreen(
                 val unread = voicemails.count { !it.isRead }
                 Text(
                     when {
-                        voicemails.isEmpty() -> "Voicemail"
+                        voicemails.isEmpty() -> tr("Voicemail")
                         unread > 0 -> "$unread new"
-                        else -> "All caught up"
+                        else -> tr("All caught up")
                     },
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.primary,
@@ -152,8 +154,8 @@ fun VoicemailScreen(
             item(key = "empty") {
                 EmptyState(
                     Icons.Rounded.Voicemail,
-                    "No voicemails",
-                    "New messages download here automatically. You can always dial in to listen.",
+                    tr("No voicemails"),
+                    tr("New messages download here automatically. You can always dial in to listen."),
                     Modifier.padding(top = 24.dp),
                 )
             }
@@ -190,7 +192,7 @@ fun VoicemailScreen(
                 Button(onClick = { Dialer.callVoicemail(context) }) {
                     Icon(Icons.Rounded.Call, null, Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("Call voicemail")
+                    Text(tr("Call voicemail"))
                 }
             }
         }
@@ -218,7 +220,7 @@ private fun VoicemailRow(
     }
     val context = LocalContext.current
     val scheme = MaterialTheme.colorScheme
-    val display = contact?.name ?: if (vm.number.isBlank()) "Unknown" else formatNumber(vm.number)
+    val display = contact?.name ?: if (vm.number.isBlank()) tr("Unknown") else formatNumber(vm.number)
     val active = player.currentId == vm.id
     val container by animateColorAsState(
         scheme.surfaceBright, // cards: surfaceBright, as in Contacts
@@ -254,7 +256,7 @@ private fun VoicemailRow(
                         )
                     } else if (!expanded && transcribing) {
                         Text(
-                            "Transcribing…",
+                            tr("Transcribing…"),
                             style = MaterialTheme.typography.bodySmall,
                             fontStyle = FontStyle.Italic,
                             color = scheme.onSurfaceVariant,
@@ -275,7 +277,7 @@ private fun VoicemailRow(
                                 if (transcribedOnDevice) {
                                     Spacer(Modifier.height(6.dp))
                                     Text(
-                                        "Transcribed by Dialtone",
+                                        tr("Transcribed on this phone"),
                                         style = MaterialTheme.typography.labelSmall,
                                         color = scheme.onSurfaceVariant,
                                     )
@@ -285,7 +287,7 @@ private fun VoicemailRow(
                         Spacer(Modifier.height(12.dp))
                     } else if (transcribing) {
                         Text(
-                            "Transcribing…",
+                            tr("Transcribing…"),
                             style = MaterialTheme.typography.bodyMedium,
                             fontStyle = FontStyle.Italic,
                             color = scheme.onSurfaceVariant,
@@ -322,7 +324,7 @@ private fun VoicemailRow(
                         }
                     } else {
                         Text(
-                            "Downloading audio…",
+                            tr("Downloading audio…"),
                             style = MaterialTheme.typography.bodySmall,
                             color = scheme.onSurfaceVariant,
                         )
@@ -333,18 +335,18 @@ private fun VoicemailRow(
                         if (vm.number.isNotBlank()) {
                             AssistChip(
                                 onClick = { onCall(vm.number) },
-                                label = { Text("Call back") },
+                                label = { Text(tr("Call back")) },
                                 leadingIcon = { Icon(Icons.Rounded.Call, null, Modifier.size(18.dp)) },
                             )
                             AssistChip(
                                 onClick = { Dialer.sms(context, vm.number) },
-                                label = { Text("Message") },
+                                label = { Text(tr("Message")) },
                                 leadingIcon = { Icon(Icons.AutoMirrored.Rounded.Message, null, Modifier.size(18.dp)) },
                             )
                         }
                         AssistChip(
                             onClick = onDelete,
-                            label = { Text("Delete") },
+                            label = { Text(tr("Delete")) },
                             leadingIcon = { Icon(Icons.Rounded.Delete, null, Modifier.size(18.dp)) },
                         )
                     }
@@ -368,7 +370,7 @@ private fun PlayButton(playing: Boolean, onClick: () -> Unit) {
         modifier = Modifier.size(56.dp),
     ) {
         Box(contentAlignment = Alignment.Center) {
-            Icon(if (playing) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, if (playing) "Pause" else "Play")
+            Icon(if (playing) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, if (playing) tr("Pause") else tr("Play"))
         }
     }
 }

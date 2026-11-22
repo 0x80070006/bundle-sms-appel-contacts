@@ -50,22 +50,9 @@ import app.dialtone.phone.util.initialOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-private val expressiveShapes by lazy {
-    listOf(
-        MaterialShapes.Cookie9Sided,
-        MaterialShapes.Cookie7Sided,
-        MaterialShapes.Sunny,
-        MaterialShapes.Clover4Leaf,
-        MaterialShapes.Pentagon,
-        MaterialShapes.Arch,
-        MaterialShapes.Gem,
-        MaterialShapes.Puffy,
-    )
-}
-
 /**
- * Contact avatar. Lists use circles; [expressive] picks a stable Material shape
- * per contact (favorites, call screen), the signature M3 Expressive touch.
+ * Contact avatar. Bundle: shared with Contacts and Messages, in core/design, so one person looks
+ * the same in every app. Lists use circles; [expressive] picks a stable Material shape.
  */
 @Composable
 fun Avatar(
@@ -75,51 +62,11 @@ fun Avatar(
     size: Dp,
     modifier: Modifier = Modifier,
     expressive: Boolean = false,
-) {
-    val scheme = MaterialTheme.colorScheme
-    val index = seed.hashCode() and Int.MAX_VALUE
-    // toShape() is composable (and remembers internally) in Material 3 1.5.
-    val shape: Shape =
-        if (expressive) expressiveShapes[index % expressiveShapes.size].toShape() else CircleShape
-    val (bg, fg) = when (index % 3) {
-        0 -> scheme.primaryContainer to scheme.onPrimaryContainer
-        1 -> scheme.secondaryContainer to scheme.onSecondaryContainer
-        else -> scheme.tertiaryContainer to scheme.onTertiaryContainer
-    }
-    val context = LocalContext.current
-    val photo by produceState<ImageBitmap?>(null, photoUri) {
-        value = photoUri?.let { uri ->
-            withContext(Dispatchers.IO) {
-                runCatching {
-                    context.contentResolver.openInputStream(Uri.parse(uri))?.use {
-                        BitmapFactory.decodeStream(it)?.asImageBitmap()
-                    }
-                }.getOrNull()
-            }
-        }
-    }
-    val initial = initialOf(name)
-    Box(modifier.size(size).clip(shape).background(bg), contentAlignment = Alignment.Center) {
-        val p = photo
-        when {
-            p != null -> Image(p, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-            initial != null -> Text(
-                initial,
-                color = fg,
-                style = TextStyle(fontSize = (size.value * 0.42f).sp, fontWeight = FontWeight.Medium),
-            )
-            else -> Icon(Icons.Rounded.Person, null, tint = fg, modifier = Modifier.size(size * 0.55f))
-        }
-    }
-}
+) = bundle.core.design.Avatar(name, photoUri, seed, size, modifier, expressive)
 
-/** Corner radii for M3 Expressive grouped lists: big outer corners, tight inner ones. */
-fun segmentShape(index: Int, count: Int, large: Dp = 24.dp, small: Dp = 6.dp): Shape = when {
-    count == 1 -> RoundedCornerShape(large)
-    index == 0 -> RoundedCornerShape(topStart = large, topEnd = large, bottomStart = small, bottomEnd = small)
-    index == count - 1 -> RoundedCornerShape(topStart = small, topEnd = small, bottomStart = large, bottomEnd = large)
-    else -> RoundedCornerShape(small)
-}
+/** Corner radii for M3 Expressive grouped lists. Bundle: shared, in core/design. */
+fun segmentShape(index: Int, count: Int, large: Dp = 24.dp, small: Dp = 6.dp): Shape =
+    bundle.core.design.segmentShape(index, count, large, small)
 
 @Composable
 fun SectionHeader(text: String, modifier: Modifier = Modifier) {

@@ -1,0 +1,8 @@
+[submodule "apps/messages/lib/platform_external_giflib"]
+	path = apps/messages/lib/platform_external_giflib
+	url = https://android.googlesource.com/platform/external/giflib
+	branch = android15-qpr1-release
+[submodule "apps/messages/lib/platform_frameworks_opt_vcard"]
+	path = apps/messages/lib/platform_frameworks_opt_vcard
+	url = https://github.com/GrapheneOS/platform_frameworks_opt_vcard
+	branch = main

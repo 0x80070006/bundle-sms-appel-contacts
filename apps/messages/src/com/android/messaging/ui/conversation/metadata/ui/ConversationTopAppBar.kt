@@ -1,5 +1,9 @@
 package com.android.messaging.ui.conversation.metadata.ui
 
+import androidx.compose.material.icons.rounded.Palette
+import com.android.messaging.ui.bundle.LocalConversationCustomizeAction
+import com.android.messaging.ui.bundle.chatStrings
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -122,6 +126,7 @@ internal fun ConversationTopAppBar(
         isShowSubjectFieldVisible = isShowSubjectFieldVisible,
         isSimSelectorVisible = simSelector.isAvailable,
         onBubbleClick = LocalConversationBubbleAction.current,
+        onCustomizeClick = LocalConversationCustomizeAction.current,
     )
 
     TopAppBar(
@@ -439,6 +444,16 @@ private fun ConversationTopAppBarOverflowMenuContent(
         )
     }
 
+    visibility.onCustomizeClick?.let { onCustomizeClick ->
+        ConversationTopAppBarOverflowMenuItem(
+            isVisible = true,
+            testTag = "bundle_customize_chat",
+            label = chatStrings().customize,
+            icon = Icons.Rounded.Palette,
+            onClick = { onItemClick(onCustomizeClick) },
+        )
+    }
+
     ConversationTopAppBarOverflowMenuItem(
         isVisible = visibility.isArchiveVisible,
         testTag = CONVERSATION_ARCHIVE_BUTTON_TEST_TAG,
@@ -672,10 +687,13 @@ private data class ConversationTopAppBarOverflowVisibility(
     val isSimSelectorVisible: Boolean,
     /** Twill: floats the conversation in a bubble; null when it can't (already in one). */
     val onBubbleClick: (() -> Unit)? = null,
+    /** Bundle: opens the chat's style sheet (background, bubbles). */
+    val onCustomizeClick: (() -> Unit)? = null,
 ) {
     val isOverflowVisible: Boolean
         get() {
             return onBubbleClick != null ||
+                onCustomizeClick != null ||
                 isAddPeopleVisible ||
                 isArchiveVisible ||
                 isUnarchiveVisible ||

@@ -1,5 +1,7 @@
 package app.dialtone.phone.ui.components
 
+import app.dialtone.phone.util.tr
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -76,7 +78,7 @@ fun ContactPickerSheet(
                     modifier = Modifier.weight(1f),
                     decorationBox = { inner ->
                         Box(contentAlignment = Alignment.CenterStart) {
-                            if (filter.isEmpty()) Text("Search contacts", color = scheme.onSurfaceVariant, style = MaterialTheme.typography.bodyLarge)
+                            if (filter.isEmpty()) Text(tr("Search contacts"), color = scheme.onSurfaceVariant, style = MaterialTheme.typography.bodyLarge)
                             inner()
                         }
                     },
@@ -91,7 +93,7 @@ fun ContactPickerSheet(
             if (shown.isEmpty()) {
                 item(key = "none") {
                     Text(
-                        if (contacts.isEmpty()) emptyText else "No matching contacts",
+                        if (contacts.isEmpty()) emptyText else tr("No matching contacts"),
                         style = MaterialTheme.typography.bodyMedium,
                         color = scheme.onSurfaceVariant,
                         modifier = Modifier.padding(16.dp),

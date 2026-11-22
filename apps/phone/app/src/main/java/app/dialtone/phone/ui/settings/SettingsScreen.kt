@@ -1,5 +1,9 @@
 package app.dialtone.phone.ui.settings
 
+import app.dialtone.phone.util.trf
+
+import app.dialtone.phone.util.tr
+
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Intent
@@ -24,6 +28,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.outlined.Palette
+import bundle.core.appearance.AppearanceDialog
+import bundle.core.appearance.AppIconConfig
+import bundle.core.appearance.IconColor
+import androidx.compose.ui.res.stringResource
+import app.dialtone.phone.R
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -116,6 +126,13 @@ fun SettingsScreen(
     var pickingContact by rememberSaveable { mutableStateOf(false) }
     var editingResponses by rememberSaveable { mutableStateOf(false) }
     var viewingLog by rememberSaveable { mutableStateOf(false) }
+    var showAppearance by rememberSaveable { mutableStateOf(false) }
+    if (showAppearance) {
+        AppearanceDialog(
+            onDismiss = { showAppearance = false },
+            appIcon = AppIconConfig(R.drawable.bundle_icon_glyph, stringResource(R.string.app_name), IconColor.Green),
+        )
+    }
 
     fun open(intent: Intent?) {
         if (intent == null) return
@@ -132,8 +149,8 @@ fun SettingsScreen(
             Modifier.fillMaxWidth().background(scheme.background).statusBarsPadding().height(64.dp).padding(horizontal = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back") }
-            Text("Settings", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(start = 8.dp))
+            IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, tr("Back")) }
+            Text(tr("Settings"), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(start = 8.dp))
         }
 
         LazyColumn(
@@ -142,11 +159,21 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             // ---- Visual voicemail
-            item(key = "vvm-header") { SectionHeader("Visual voicemail") }
+            // Bundle: the look shared by Contacts, Phone and Messages.
+            item(key = "appearance") {
+                SettingsRow(
+                    icon = Icons.Outlined.Palette,
+                    title = tr("Appearance"),
+                    summary = tr("Theme, colours, contact pictures and language, for all three apps"),
+                    shape = segmentShape(0, 1),
+                    onClick = { showAppearance = true },
+                )
+            }
+            item(key = "vvm-header") { SectionHeader(tr("Visual voicemail")) }
             val vvmRows = accounts.size + 1
             if (accounts.isEmpty()) {
                 item(key = "vvm-none") {
-                    SettingsRow(Icons.Outlined.Voicemail, "No SIM found", segmentShape(0, vvmRows), summary = "Visual voicemail needs a SIM from a supported carrier")
+                    SettingsRow(Icons.Outlined.Voicemail, tr("No SIM found"), segmentShape(0, vvmRows), summary = tr("Visual voicemail needs a SIM from a supported carrier"))
                 }
             }
             itemsIndexed(accounts, key = { _, a -> "vvm-${a.label}" }) { i, account ->
@@ -154,11 +181,11 @@ fun SettingsScreen(
                     icon = Icons.Outlined.Voicemail,
                     title = account.label,
                     summary = when {
-                        !account.supported -> "Not supported for this carrier"
-                        account.carrierAppInstalled -> "Handled by your carrier's voicemail app"
-                        !account.enabled -> "Off · ${protocolName(account.protocol)}"
-                        account.activated -> "On · ${protocolName(account.protocol)}"
-                        else -> "Setting up · ${protocolName(account.protocol)}"
+                        !account.supported -> tr("Not supported for this carrier")
+                        account.carrierAppInstalled -> tr("Handled by your carrier's voicemail app")
+                        !account.enabled -> trf("Off · %s", protocolName(account.protocol))
+                        account.activated -> trf("On · %s", protocolName(account.protocol))
+                        else -> trf("Setting up · %s", protocolName(account.protocol))
                     },
                     shape = segmentShape(i, vvmRows),
                     onClick = if (account.supported) ({ actions.onToggleVisualVoicemail(account, !account.enabled) }) else null,
@@ -175,30 +202,30 @@ fun SettingsScreen(
                 val canSync = accounts.any { it.supported && it.enabled }
                 SettingsRow(
                     icon = Icons.Outlined.Sync,
-                    title = "Check for new voicemail",
-                    summary = "Downloads messages and transcripts from your carrier over mobile data",
+                    title = tr("Check for new voicemail"),
+                    summary = tr("Downloads messages and transcripts from your carrier over mobile data"),
                     shape = segmentShape(vvmRows - 1, vvmRows),
                     onClick = if (canSync) ({
                         actions.onSyncNow()
-                        Toast.makeText(context, "Checking for new voicemail…", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, tr("Checking for new voicemail…"), Toast.LENGTH_SHORT).show()
                     }) else null,
                 )
             }
 
             // ---- Transcription
             if (transcription.supported) {
-                item(key = "tx-header") { SectionHeader("Transcription") }
+                item(key = "tx-header") { SectionHeader(tr("Transcription")) }
                 item(key = "tx-switch") {
                     val name = transcription.recognizerName
                     SettingsRow(
                         icon = Icons.Outlined.Subtitles,
-                        title = "Transcribe voicemail",
+                        title = tr("Transcribe voicemail"),
                         summary = if (!transcription.available) {
-                            "No speech-to-text app is set up. Install one that can transcribe recordings and choose it as your voice input"
+                            tr("No speech-to-text app is set up. Install one that can transcribe recordings and choose it as your voice input")
                         } else {
-                            "Tries to transcribe voicemails without a carrier transcript using your speech-to-text app" +
+                            tr("Tries to transcribe voicemails without a carrier transcript using your speech-to-text app") +
                                 (name?.let { " ($it)" } ?: "") +
-                                ". Whether it works depends on that app; some send audio off the phone"
+                                tr(". Whether it works depends on that app; some send audio off the phone")
                         },
                         shape = segmentShape(0, 2),
                         onClick = if (transcription.available) ({ actions.onToggleTranscription(!transcription.enabled) }) else null,
@@ -214,8 +241,8 @@ fun SettingsScreen(
                 item(key = "tx-voice-input") {
                     SettingsRow(
                         icon = Icons.Outlined.Language,
-                        title = "Change voice input",
-                        summary = "Language & region settings, where the speech-to-text app is chosen",
+                        title = tr("Change voice input"),
+                        summary = tr("Language & region settings, where the speech-to-text app is chosen"),
                         shape = segmentShape(1, 2),
                         onClick = { open(Intent(Settings.ACTION_LOCALE_SETTINGS)) },
                     )
@@ -223,7 +250,7 @@ fun SettingsScreen(
             }
 
             // ---- Send to voicemail
-            item(key = "stv-header") { SectionHeader("Send to voicemail") }
+            item(key = "stv-header") { SectionHeader(tr("Send to voicemail")) }
             val list = numbers.orEmpty()
             val stvRows = list.size + 2
             itemsIndexed(list, key = { _, n -> "stv-$n" }) { i, number ->
@@ -235,7 +262,7 @@ fun SettingsScreen(
                     shape = segmentShape(i, stvRows),
                     trailing = {
                         IconButton(onClick = { SendToVoicemail.remove(context, number) }) {
-                            Icon(Icons.Rounded.Close, "Stop sending ${name ?: number} to voicemail", tint = scheme.onSurfaceVariant)
+                            Icon(Icons.Rounded.Close, trf("Stop sending %s to voicemail", name ?: number), tint = scheme.onSurfaceVariant)
                         }
                     },
                 )
@@ -243,8 +270,8 @@ fun SettingsScreen(
             item(key = "stv-add") {
                 SettingsRow(
                     icon = Icons.Rounded.Add,
-                    title = "Add number",
-                    summary = if (list.isEmpty()) "Calls from numbers on this list don't ring; they go straight to voicemail" else null,
+                    title = tr("Add number"),
+                    summary = if (list.isEmpty()) tr("Calls from numbers on this list don't ring; they go straight to voicemail") else null,
                     shape = segmentShape(stvRows - 2, stvRows),
                     onClick = { typingNumber = true },
                 )
@@ -252,70 +279,70 @@ fun SettingsScreen(
             item(key = "stv-contacts") {
                 SettingsRow(
                     icon = Icons.Outlined.PersonAdd,
-                    title = "Add from contacts",
+                    title = tr("Add from contacts"),
                     shape = segmentShape(stvRows - 1, stvRows),
                     onClick = { pickingContact = true },
                 )
             }
 
             // ---- Calls
-            item(key = "calls-header") { SectionHeader("Calls") }
+            item(key = "calls-header") { SectionHeader(tr("Calls")) }
             item(key = "calls-blocked") {
                 SettingsRow(
-                    Icons.Outlined.Block, "Blocked numbers", segmentShape(0, 3),
-                    summary = "Calls and texts from these numbers are rejected",
+                    Icons.Outlined.Block, tr("Blocked numbers"), segmentShape(0, 3),
+                    summary = tr("Calls and texts from these numbers are rejected"),
                     onClick = { open(runCatching { telecom?.createManageBlockedNumbersIntent() }.getOrNull()) },
                 )
             }
             item(key = "calls-accounts") {
                 SettingsRow(
-                    Icons.Outlined.SimCard, "Calling accounts", segmentShape(1, 3),
-                    summary = "SIMs, call forwarding, call waiting and caller ID",
+                    Icons.Outlined.SimCard, tr("Calling accounts"), segmentShape(1, 3),
+                    summary = tr("SIMs, call forwarding, call waiting and caller ID"),
                     onClick = { open(Intent(TelecomManager.ACTION_CHANGE_PHONE_ACCOUNTS)) },
                 )
             }
             item(key = "calls-responses") {
                 SettingsRow(
-                    Icons.Outlined.ChatBubbleOutline, "Quick responses", segmentShape(2, 3),
-                    summary = "Texts you can send when declining a call",
+                    Icons.Outlined.ChatBubbleOutline, tr("Quick responses"), segmentShape(2, 3),
+                    summary = tr("Texts you can send when declining a call"),
                     onClick = { editingResponses = true },
                 )
             }
 
             // ---- Troubleshooting
-            item(key = "log-header") { SectionHeader("Troubleshooting") }
+            item(key = "log-header") { SectionHeader(tr("Troubleshooting")) }
             item(key = "log-view") {
                 SettingsRow(
-                    Icons.Outlined.Description, "View voicemail log", segmentShape(0, 3),
-                    summary = "Status: ${health.name}. Sync, transcription and call screening; stays on this phone",
+                    Icons.Outlined.Description, tr("View voicemail log"), segmentShape(0, 3),
+                    summary = trf("Status: %s. Sync, transcription and call screening; stays on this phone", health.name),
                     onClick = { viewingLog = true },
                 )
             }
             item(key = "log-copy") {
                 SettingsRow(
-                    Icons.Outlined.ContentCopy, "Copy voicemail log", segmentShape(1, 3),
-                    summary = "Passwords are removed",
+                    Icons.Outlined.ContentCopy, tr("Copy voicemail log"), segmentShape(1, 3),
+                    summary = tr("Passwords are removed"),
                     onClick = {
                         val text = actions.readLog()
                         context.getSystemService(ClipboardManager::class.java)
-                            ?.setPrimaryClip(ClipData.newPlainText("Dialtone voicemail log", text))
-                        Toast.makeText(context, "Log copied", Toast.LENGTH_SHORT).show()
+                            ?.setPrimaryClip(ClipData.newPlainText(tr("Phone voicemail log"), text))
+                        Toast.makeText(context, tr("Log copied"), Toast.LENGTH_SHORT).show()
                     },
                 )
             }
             item(key = "log-clear") {
                 SettingsRow(
-                    Icons.Outlined.DeleteSweep, "Clear voicemail log", segmentShape(2, 3),
+                    Icons.Outlined.DeleteSweep, tr("Clear voicemail log"), segmentShape(2, 3),
                     onClick = {
                         actions.clearLog()
-                        Toast.makeText(context, "Log cleared", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, tr("Log cleared"), Toast.LENGTH_SHORT).show()
                     },
                 )
             }
 
             item(key = "version") {
                 Text(
-                    listOfNotNull("Dialtone", version).joinToString(" "),
+                    listOfNotNull(tr("Phone"), version).joinToString(" "),
                     style = MaterialTheme.typography.labelMedium,
                     color = scheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
@@ -335,9 +362,9 @@ fun SettingsScreen(
                 .sortedBy { it.name.lowercase() }
         }
         ContactPickerSheet(
-            title = "Send to voicemail",
+            title = tr("Send to voicemail"),
             contacts = contacts,
-            emptyText = "All your contacts are already sent to voicemail.",
+            emptyText = tr("All your contacts are already sent to voicemail."),
             onPick = { contact ->
                 SendToVoicemail.add(context, contact.numbers.map { it.number })
                 pickingContact = false
@@ -399,12 +426,12 @@ private fun AddNumberDialog(onDismiss: () -> Unit) {
     var entry by rememberSaveable { mutableStateOf("") }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Send to voicemail") },
+        title = { Text(tr("Send to voicemail")) },
         text = {
             OutlinedTextField(
                 value = entry,
                 onValueChange = { v -> entry = v.filter { it.isDigit() || it in "+()- " } },
-                label = { Text("Phone number") },
+                label = { Text(tr("Phone number")) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
             )
@@ -416,9 +443,9 @@ private fun AddNumberDialog(onDismiss: () -> Unit) {
                     SendToVoicemail.add(context, entry)
                     onDismiss()
                 },
-            ) { Text("Add") }
+            ) { Text(tr("Add")) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(tr("Cancel")) } },
     )
 }
 
@@ -432,9 +459,9 @@ private fun QuickResponsesEditor(onDismiss: () -> Unit) {
 
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(Modifier.padding(horizontal = 20.dp).navigationBarsPadding().padding(bottom = 16.dp)) {
-            Text("Quick responses", style = MaterialTheme.typography.headlineSmall)
+            Text(tr("Quick responses"), style = MaterialTheme.typography.headlineSmall)
             Text(
-                "Offered by \"Reply with message\" on an incoming call. Tap one to edit it.",
+                tr("Offered by \"Reply with message\" on an incoming call. Tap one to edit it."),
                 style = MaterialTheme.typography.bodyMedium,
                 color = scheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
@@ -449,12 +476,12 @@ private fun QuickResponsesEditor(onDismiss: () -> Unit) {
                 ) {
                     Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text(text, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-                        Icon(Icons.Outlined.Edit, "Edit", tint = scheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+                        Icon(Icons.Outlined.Edit, tr("Edit"), tint = scheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
                     }
                 }
             }
             TextButton(onClick = { QuickResponses.resetAll(context) }, modifier = Modifier.padding(top = 8.dp)) {
-                Text("Reset to defaults")
+                Text(tr("Reset to defaults"))
             }
         }
     }
@@ -463,15 +490,15 @@ private fun QuickResponsesEditor(onDismiss: () -> Unit) {
         var entry by rememberSaveable(i) { mutableStateOf(responses.orEmpty().getOrElse(i) { "" }) }
         AlertDialog(
             onDismissRequest = { editIndex = null },
-            title = { Text("Quick response") },
+            title = { Text(tr("Quick response")) },
             text = { OutlinedTextField(value = entry, onValueChange = { entry = it }, modifier = Modifier.fillMaxWidth()) },
             confirmButton = {
                 TextButton(onClick = {
                     QuickResponses.set(context, i, entry)
                     editIndex = null
-                }) { Text("Save") }
+                }) { Text(tr("Save")) }
             },
-            dismissButton = { TextButton(onClick = { editIndex = null }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { editIndex = null }) { Text(tr("Cancel")) } },
         )
     }
 }
@@ -485,11 +512,11 @@ private fun LogDialog(health: VvmHealth, actions: VoicemailActions, onDismiss: (
     LaunchedEffect(version) { text = withContext(Dispatchers.IO) { actions.readLog() } }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Voicemail log") },
+        title = { Text(tr("Voicemail log")) },
         text = {
             Column {
                 Text(
-                    "Status: ${health.name}",
+                    trf("Status: %s", health.name),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -500,7 +527,7 @@ private fun LogDialog(health: VvmHealth, actions: VoicemailActions, onDismiss: (
                     modifier = Modifier.fillMaxWidth().heightIn(max = 360.dp),
                 ) {
                     Text(
-                        text.ifBlank { "No log entries yet." },
+                        text.ifBlank { tr("No log entries yet.") },
                         fontFamily = FontFamily.Monospace,
                         fontSize = 11.sp,
                         lineHeight = 14.sp,
@@ -515,10 +542,10 @@ private fun LogDialog(health: VvmHealth, actions: VoicemailActions, onDismiss: (
         confirmButton = {
             TextButton(onClick = {
                 context.getSystemService(ClipboardManager::class.java)
-                    ?.setPrimaryClip(ClipData.newPlainText("Dialtone voicemail log", text))
-                Toast.makeText(context, "Log copied", Toast.LENGTH_SHORT).show()
-            }) { Text("Copy") }
+                    ?.setPrimaryClip(ClipData.newPlainText(tr("Phone voicemail log"), text))
+                Toast.makeText(context, tr("Log copied"), Toast.LENGTH_SHORT).show()
+            }) { Text(tr("Copy")) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Close") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(tr("Close")) } },
     )
 }

@@ -1,5 +1,7 @@
 package app.dialtone.phone.ui.keypad
 
+import app.dialtone.phone.util.tr
+
 import android.view.HapticFeedbackConstants
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -139,13 +141,13 @@ fun KeypadTab(
             verticalArrangement = Arrangement.spacedBy(2.dp),
             modifier = Modifier.fillMaxSize(),
         ) {
-            item(key = "header") { SectionHeader(if (typing) "Contacts" else "Suggested") }
+            item(key = "header") { SectionHeader(if (typing) tr("Contacts") else tr("Suggested")) }
             if (rows.isEmpty()) {
                 item(key = "empty") {
                     EmptyState(
                         Icons.Rounded.PersonSearch,
-                        if (typing) "No matching contacts" else "No suggestions yet",
-                        if (typing) "Press call to dial the number." else "People you call often show up here.",
+                        if (typing) tr("No matching contacts") else tr("No suggestions yet"),
+                        if (typing) tr("Press call to dial the number.") else tr("People you call often show up here."),
                         Modifier.padding(top = 8.dp),
                     )
                 }
@@ -247,7 +249,7 @@ private fun DialPanel(
                     container = CallColors.container(),
                     content = CallColors.content(),
                     modifier = Modifier.align(Alignment.Center).width(120.dp).height(68.dp),
-                ) { Icon(Icons.Rounded.Call, "Call", Modifier.size(30.dp)) }
+                ) { Icon(Icons.Rounded.Call, tr("Call"), Modifier.size(30.dp)) }
 
                 if (number.isNotEmpty()) {
                     Box(
@@ -264,7 +266,7 @@ private fun DialPanel(
                             ),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Icon(Icons.AutoMirrored.Rounded.Backspace, "Delete", tint = scheme.onSurfaceVariant)
+                        Icon(Icons.AutoMirrored.Rounded.Backspace, tr("Delete"), tint = scheme.onSurfaceVariant)
                     }
                 }
             }

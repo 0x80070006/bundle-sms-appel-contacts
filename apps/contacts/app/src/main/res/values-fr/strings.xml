@@ -1,0 +1,332 @@
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- Bundle: French. -->
+    <string name="app_name">Contacts</string>
+
+    <!-- Bottom tabs -->
+    <string name="tab_contacts">Contacts</string>
+    <string name="tab_highlights">À la une</string>
+    <string name="tab_organize">Organiser</string>
+
+    <!-- Contacts access -->
+    <string name="access_title">Autoriser l\'accès à vos contacts</string>
+    <string name="access_body">Contacts a besoin d\'y accéder pour afficher, ajouter et modifier les contacts de votre téléphone.</string>
+    <string name="access_allow">Autoriser l\'accès</string>
+
+    <!-- Contacts tab -->
+    <string name="search_contacts">Rechercher des contacts</string>
+    <string name="favorites">Favoris</string>
+    <string name="no_contacts_title">Aucun contact pour l\'instant</string>
+    <string name="no_contacts_body">Les contacts que vous ajoutez s\'afficheront ici.</string>
+
+    <!-- Search -->
+    <string name="back">Retour</string>
+    <string name="clear_search">Effacer la recherche</string>
+    <string name="search_no_results_title">Aucun résultat</string>
+    <string name="search_no_results_body">Aucun contact ne correspond à « <xliff:g id="query" example="Alex">%1$s</xliff:g> ».</string>
+
+    <!-- Contact page -->
+    <string name="add_to_favorites">Ajouter aux favoris</string>
+    <string name="remove_from_favorites">Retirer des favoris</string>
+    <string name="action_call">Appeler</string>
+    <string name="action_text">SMS</string>
+    <string name="action_video">Vidéo</string>
+    <string name="action_email">E-mail</string>
+    <string name="section_contact_info">Coordonnées</string>
+    <string name="section_dates">Dates</string>
+    <string name="section_about">À propos</string>
+    <string name="section_labels">Libellés</string>
+    <string name="copied">Copié</string>
+    <string name="no_app_found">Aucune app ne peut faire cela</string>
+    <string name="more_options">Plus d\'options</string>
+    <string name="share">Partager</string>
+    <string name="delete">Supprimer</string>
+    <string name="delete_title">Supprimer ce contact ?</string>
+    <string name="delete_body"><xliff:g id="name" example="Alex Kim">%1$s</xliff:g> sera supprimé de votre téléphone et de tous les comptes où il est enregistré.</string>
+    <string name="set_ringtone">Définir une sonnerie</string>
+    <string name="move_to_account">Déplacer vers un autre compte</string>
+    <string name="move_body">Le contact est copié dans le compte choisi et retiré de son emplacement actuel. Les libellés ne suivent pas.</string>
+    <string name="move_failed">Impossible de déplacer ce contact</string>
+    <string name="labels_in_editor">Libellés</string>
+    <string name="delete_failed">Impossible de supprimer certains contacts</string>
+
+    <!-- Highlights -->
+    <string name="for_you">Pour vous</string>
+    <string name="recents">Récents</string>
+    <string name="highlights_empty_title">Rien à afficher pour l\'instant</string>
+    <string name="highlights_empty_body">Vos favoris, les anniversaires à venir et les contacts ouverts récemment s\'affichent ici.</string>
+    <string name="birthday_title">Anniversaire de <xliff:g id="name" example="Alex Kim">%1$s</xliff:g></string>
+    <string name="today">Aujourd\'hui</string>
+    <string name="tomorrow">Demain</string>
+    <plurals name="in_days">
+        <item quantity="one">Dans <xliff:g id="count" example="1">%1$d</xliff:g> jour</item>
+        <item quantity="many">Dans <xliff:g id="count" example="5">%1$d</xliff:g> jours</item>
+        <item quantity="other">Dans <xliff:g id="count" example="5">%1$d</xliff:g> jours</item>
+    </plurals>
+    <string name="turns_age"><xliff:g id="age" example="34">%1$d</xliff:g> ans</string>
+    <string name="action_message">Message</string>
+    <string name="recent_viewed">Consulté</string>
+    <string name="recent_missed">Appel manqué</string>
+    <string name="recent_incoming">Appel reçu</string>
+    <string name="recent_outgoing">Appel émis</string>
+    <string name="recent_text_received">SMS</string>
+    <string name="recent_text_sent">SMS envoyé</string>
+    <string name="recent_you">Vous : <xliff:g id="message" example="See you soon">%1$s</xliff:g></string>
+
+    <!-- Organize -->
+    <string name="fix_and_manage">Corriger et gérer</string>
+    <plurals name="contact_count">
+        <item quantity="one"><xliff:g id="count" example="1">%1$d</xliff:g> contact</item>
+        <item quantity="many"><xliff:g id="count" example="12">%1$d</xliff:g> contacts</item>
+        <item quantity="other"><xliff:g id="count" example="12">%1$d</xliff:g> contacts</item>
+    </plurals>
+    <string name="create_label">Créer un libellé</string>
+    <string name="create_label_in">Créer dans</string>
+    <string name="label_name">Nom du libellé</string>
+    <string name="create">Créer</string>
+    <string name="rename">Renommer</string>
+    <string name="rename_label">Renommer le libellé</string>
+    <string name="delete_label_title">Supprimer ce libellé ?</string>
+    <string name="delete_label_body">Le libellé « <xliff:g id="label" example="Family">%1$s</xliff:g> » sera supprimé. Ses contacts sont conservés.</string>
+    <string name="add_contacts">Ajouter des contacts</string>
+    <string name="add">Ajouter</string>
+    <plurals name="selected_count">
+        <item quantity="one"><xliff:g id="count" example="1">%1$d</xliff:g> sélectionné</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> sélectionnés</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> sélectionnés</item>
+    </plurals>
+    <string name="remove_from_label">Retirer du libellé</string>
+    <string name="label_empty_title">Aucun contact dans ce libellé</string>
+    <string name="label_empty_body">Ajoutez des contacts pour les regrouper ici.</string>
+    <string name="label_add_skipped"><xliff:g id="count" example="2">%1$d</xliff:g> n\'ont pas pu être ajoutés : un libellé ne peut contenir que des contacts de son propre compte.</string>
+    <string name="merge_duplicates">Fusionner les doublons</string>
+    <string name="merge_none">Aucun doublon trouvé</string>
+    <plurals name="merge_suggestions">
+        <item quantity="one"><xliff:g id="count" example="1">%1$d</xliff:g> suggestion</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> suggestions</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> suggestions</item>
+    </plurals>
+    <string name="merge_none_title">Aucun doublon</string>
+    <string name="merge_none_body">Les contacts qui semblent être la même personne s\'afficheront ici.</string>
+    <string name="merge_intro">Contacts avec le même nom, numéro ou e-mail. La fusion les relie en un seul contact avec toutes leurs informations ; rien n\'est supprimé.</string>
+    <string name="merge">Fusionner</string>
+    <string name="merge_all">Tout fusionner</string>
+    <string name="merge_all_title">Fusionner tous les doublons ?</string>
+    <plurals name="merge_all_body">
+        <item quantity="one">Les contacts de <xliff:g id="count" example="1">%1$d</xliff:g> suggestion seront reliés en un seul.</item>
+        <item quantity="many">Les contacts des <xliff:g id="count" example="3">%1$d</xliff:g> suggestions seront reliés, chaque groupe en un seul contact.</item>
+        <item quantity="other">Les contacts des <xliff:g id="count" example="3">%1$d</xliff:g> suggestions seront reliés, chaque groupe en un seul contact.</item>
+    </plurals>
+    <plurals name="merged">
+        <item quantity="one"><xliff:g id="count" example="1">%1$d</xliff:g> doublon fusionné</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> doublons fusionnés</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> doublons fusionnés</item>
+    </plurals>
+    <string name="merge_failed">Certains contacts n\'ont pas pu être fusionnés</string>
+    <string name="dismiss">Ignorer</string>
+    <string name="settings">Paramètres</string>
+    <string name="settings_summary">Tri, anniversaires, sauvegarde et comptes</string>
+
+    <!-- Settings -->
+    <string name="settings_display">Affichage</string>
+    <string name="sort_by">Ordre des noms</string>
+    <string name="sort_by_summary">Trie la liste, et affiche « Nom, Prénom » quand le tri est par nom</string>
+    <string name="settings_appearance_title">Apparence</string>
+    <string name="settings_appearance_summary">Thème, couleurs, photos des contacts, langue et icône, pour les trois apps</string>
+    <string name="settings_layout_title">Liste des contacts</string>
+    <string name="settings_layout_summary">Favoris puis tout le monde de A à Z, ou une section par libellé</string>
+    <string name="layout_classic">Classique</string>
+    <string name="layout_by_label">Par libellé</string>
+    <string name="settings_label_order_title">Ordre des libellés</string>
+    <string name="settings_label_order_summary">L\'ordre des sections quand la liste est par libellé</string>
+    <string name="label_order_empty">Vous n\'avez pas encore de libellé. Créez-en un dans Organiser.</string>
+    <string name="move_up">Monter %1$s</string>
+    <string name="move_down">Descendre %1$s</string>
+    <string name="other_contacts">Autres contacts</string>
+    <string name="settings_recents_title">Appels et SMS dans Récents</string>
+    <string name="settings_recents_summary">Affiche dans À la une les appels et SMS avec vos contacts plutôt que les contacts ouverts. Nécessite l\'accès au journal d\'appels et aux SMS.</string>
+    <string name="settings_accounts">Comptes</string>
+    <string name="settings_birthdays">Anniversaires</string>
+    <string name="settings_calendar_title">Agenda « Anniversaires des contacts »</string>
+    <string name="settings_calendar_summary">Ajoute les anniversaires de vos contacts à votre agenda, avec l\'âge de chacun. Nécessite l\'accès à l\'agenda.</string>
+    <string name="settings_backup">Sauvegarde et export</string>
+    <string name="export_contacts">Exporter les contacts</string>
+    <string name="export_summary">Enregistrer tous les contacts dans un fichier .vcf</string>
+    <string name="export_done">Contacts exportés</string>
+    <string name="export_failed">Impossible d\'exporter les contacts</string>
+    <string name="import_contacts">Importer des contacts</string>
+    <string name="import_summary">Ajouter des contacts depuis un fichier .vcf</string>
+    <string name="import_to">Importer dans</string>
+    <plurals name="imported">
+        <item quantity="one"><xliff:g id="count" example="1">%1$d</xliff:g> contact importé</item>
+        <item quantity="many"><xliff:g id="count" example="12">%1$d</xliff:g> contacts importés</item>
+        <item quantity="other"><xliff:g id="count" example="12">%1$d</xliff:g> contacts importés</item>
+    </plurals>
+    <string name="account_phone_summary">Enregistré sur ce téléphone</string>
+    <string name="account_on_device_summary">Compte sur l\'appareil</string>
+    <string name="add_on_device_account">Ajouter un compte sur l\'appareil</string>
+    <string name="account_name">Nom du compte</string>
+    <string name="rename_account">Renommer le compte</string>
+    <string name="delete_account_title">Supprimer « <xliff:g id="account" example="Family">%1$s</xliff:g> » ?</string>
+    <string name="delete_account_body">Tous les contacts enregistrés dans ce compte seront supprimés de votre téléphone.</string>
+
+    <!-- Your info -->
+    <string name="your_info">Vos informations</string>
+    <string name="your_info_set_up">Configurer votre profil</string>
+    <string name="your_info_set_up_body">Votre propre fiche de contact, à partager</string>
+    <string name="show_qr">Afficher le code QR</string>
+    <string name="qr_hint">Montrez ce code pour partager vos coordonnées. Il suffit de le scanner avec l\'appareil photo d\'un téléphone pour vous enregistrer.</string>
+    <string name="done">OK</string>
+    <string name="crop_photo">Recadrer la photo</string>
+    <string name="crop_photo_hint">Pincez pour zoomer et faites glisser pour choisir ce qui apparaît dans le cercle.</string>
+
+    <!-- Requests from other apps -->
+    <string name="pick_contact">Choisir un contact</string>
+    <string name="pick_phone">Choisir un numéro de téléphone</string>
+    <string name="pick_email">Choisir une adresse e-mail</string>
+    <string name="pick_address">Choisir une adresse</string>
+    <string name="add_to_contact">Ajouter à un contact</string>
+    <plurals name="import_file_title">
+        <item quantity="one">Importer <xliff:g id="count" example="1">%1$d</xliff:g> contact ?</item>
+        <item quantity="many">Importer <xliff:g id="count" example="12">%1$d</xliff:g> contacts ?</item>
+        <item quantity="other">Importer <xliff:g id="count" example="12">%1$d</xliff:g> contacts ?</item>
+    </plurals>
+    <string name="import_file_body">Choisissez où les enregistrer.</string>
+    <string name="import_into">Enregistrer dans <xliff:g id="account" example="Phone">%1$s</xliff:g></string>
+    <string name="import_nothing_title">Aucun contact dans ce fichier</string>
+    <string name="import_nothing_body">Le fichier n\'a pas pu être lu comme une liste de contacts.</string>
+
+    <!-- Editor -->
+    <string name="create_contact">Créer un contact</string>
+    <string name="edit_contact">Modifier le contact</string>
+    <string name="save">Enregistrer</string>
+    <string name="save_failed">Impossible d\'enregistrer ce contact</string>
+    <string name="cancel">Annuler</string>
+    <string name="ok">OK</string>
+    <string name="discard_title">Abandonner les modifications ?</string>
+    <string name="discard_body">Vos modifications de ce contact n\'ont pas été enregistrées.</string>
+    <string name="discard">Abandonner</string>
+    <string name="keep_editing">Continuer</string>
+    <string name="add_photo">Ajouter une photo</string>
+    <string name="change_photo">Changer la photo</string>
+    <string name="remove_photo">Supprimer</string>
+    <string name="save_to">Enregistrer dans</string>
+    <string name="account_phone">Téléphone</string>
+    <string name="name_prefix">Titre</string>
+    <string name="first_name">Prénom</string>
+    <string name="middle_name">Deuxième prénom</string>
+    <string name="last_name">Nom</string>
+    <string name="name_suffix">Suffixe</string>
+    <string name="nickname">Surnom</string>
+    <string name="more_name_fields">Plus de champs de nom</string>
+    <string name="fewer_name_fields">Moins de champs de nom</string>
+    <string name="company">Entreprise</string>
+    <string name="job_title">Poste</string>
+    <string name="notes">Notes</string>
+    <string name="phone">Téléphone</string>
+    <string name="add_phone">Ajouter un numéro</string>
+    <string name="email">E-mail</string>
+    <string name="add_email">Ajouter un e-mail</string>
+    <string name="address">Adresse</string>
+    <string name="add_address">Ajouter une adresse</string>
+    <string name="date">Date</string>
+    <string name="add_date">Ajouter une date</string>
+    <string name="website">Site Web</string>
+    <string name="add_website">Ajouter un site Web</string>
+    <string name="remove">Supprimer</string>
+    <string name="custom_label">Libellé personnalisé</string>
+    <string name="pick_date">Choisir une date</string>
+    <!-- Selecting several contacts -->
+    <string name="select_all">Tout sélectionner</string>
+    <string name="clear_selection">Effacer la sélection</string>
+    <string name="add_to_label">Ajouter à un libellé</string>
+    <string name="no_labels">Aucun libellé pour l\'instant. Créez-en un dans Organiser.</string>
+    <plurals name="delete_contacts_title">
+        <item quantity="one">Supprimer <xliff:g id="count" example="1">%1$d</xliff:g> contact ?</item>
+        <item quantity="many">Supprimer <xliff:g id="count" example="3">%1$d</xliff:g> contacts ?</item>
+        <item quantity="other">Supprimer <xliff:g id="count" example="3">%1$d</xliff:g> contacts ?</item>
+    </plurals>
+    <string name="delete_contacts_body">Ils seront supprimés de votre téléphone et de tous les comptes où ils sont enregistrés.</string>
+    <plurals name="added_to_label">
+        <item quantity="one"><xliff:g id="count" example="1">%1$d</xliff:g> contact ajouté à <xliff:g id="label" example="Family">%2$s</xliff:g></item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> contacts ajoutés à <xliff:g id="label" example="Family">%2$s</xliff:g></item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> contacts ajoutés à <xliff:g id="label" example="Family">%2$s</xliff:g></item>
+    </plurals>
+
+    <!-- Undo after deleting -->
+    <string name="deleted_one"><xliff:g id="name" example="Alex Kim">%1$s</xliff:g> supprimé</string>
+    <plurals name="deleted_count">
+        <item quantity="one"><xliff:g id="count" example="1">%1$d</xliff:g> contact supprimé</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> contacts supprimés</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> contacts supprimés</item>
+    </plurals>
+    <string name="undo">Annuler</string>
+
+    <!-- Default number and email -->
+    <string name="copy">Copier</string>
+    <string name="set_default">Définir par défaut</string>
+    <string name="clear_default">Retirer le choix par défaut</string>
+    <string name="default_label">Par défaut</string>
+
+    <!-- Unlinking -->
+    <string name="unlink">Dissocier</string>
+    <string name="unlink_title">Dissocier ce contact ?</string>
+    <plurals name="unlink_body">
+        <item quantity="one">Il est relié à <xliff:g id="count" example="1">%1$d</xliff:g> contact enregistré.</item>
+        <item quantity="many">Il est relié à <xliff:g id="count" example="2">%1$d</xliff:g> contacts enregistrés. Les dissocier les affiche de nouveau séparément ; rien n\'est supprimé.</item>
+        <item quantity="other">Il est relié à <xliff:g id="count" example="2">%1$d</xliff:g> contacts enregistrés. Les dissocier les affiche de nouveau séparément ; rien n\'est supprimé.</item>
+    </plurals>
+    <string name="unlink_failed">Impossible de dissocier ce contact</string>
+
+    <!-- Hiding contacts without a number -->
+    <string name="settings_hide_no_phone_title">Seulement les contacts avec un numéro</string>
+    <string name="settings_hide_no_phone_summary">Masquer les contacts sans numéro de téléphone</string>
+
+    <!-- More fields -->
+    <string name="phonetic_first">Prénom phonétique</string>
+    <string name="phonetic_middle">Deuxième prénom phonétique</string>
+    <string name="phonetic_last">Nom phonétique</string>
+    <string name="phonetic_name">Nom phonétique</string>
+    <string name="relationship">Relation</string>
+    <string name="add_relationship">Ajouter une relation</string>
+    <string name="sip_address">Appel Internet</string>
+    <string name="add_sip_address">Ajouter une adresse d\'appel Internet</string>
+    <string name="chat">Messagerie instantanée</string>
+    <string name="add_chat">Ajouter une messagerie</string>
+
+    <!-- Labels -->
+    <string name="text_everyone">Envoyer un SMS à tous</string>
+    <string name="email_everyone">Envoyer un e-mail à tous</string>
+    <!-- Fix contacts -->
+    <string name="fix_contacts">Corriger les contacts</string>
+    <string name="fix_summary_none">Rien à corriger</string>
+    <plurals name="fix_suggestions">
+        <item quantity="one"><xliff:g id="count" example="1">%1$d</xliff:g> suggestion</item>
+        <item quantity="many"><xliff:g id="count" example="4">%1$d</xliff:g> suggestions</item>
+        <item quantity="other"><xliff:g id="count" example="4">%1$d</xliff:g> suggestions</item>
+    </plurals>
+    <plurals name="fixed_count">
+        <item quantity="one"><xliff:g id="count" example="1">%1$d</xliff:g> numéro corrigé</item>
+        <item quantity="many"><xliff:g id="count" example="4">%1$d</xliff:g> numéros corrigés</item>
+        <item quantity="other"><xliff:g id="count" example="4">%1$d</xliff:g> numéros corrigés</item>
+    </plurals>
+    <string name="fix_failed">Certains numéros n\'ont pas pu être modifiés. Leur compte ne le permet peut-être pas.</string>
+    <string name="fix_none_title">Rien à corriger</string>
+    <string name="fix_none_body">Chaque contact a un nom, et chaque numéro est enregistré une seule fois avec son indicatif.</string>
+    <string name="fix_empty_title">Contacts vides</string>
+    <string name="fix_empty_body">Contacts sans aucune information. Ils n\'apparaissent pas dans la liste.</string>
+    <string name="delete_all">Tout supprimer</string>
+    <plurals name="fix_empty_count">
+        <item quantity="one"><xliff:g id="count" example="1">%1$d</xliff:g> contact vide</item>
+        <item quantity="many"><xliff:g id="count" example="3">%1$d</xliff:g> contacts vides</item>
+        <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> contacts vides</item>
+    </plurals>
+    <string name="fix_unnamed_title">Sans nom</string>
+    <string name="fix_unnamed_body">Ils s\'affichent sous forme de numéro ou d\'adresse e-mail, car ils n\'ont pas de nom.</string>
+    <string name="add_name">Ajouter un nom</string>
+    <string name="fix_repeated_title">Numéro enregistré deux fois</string>
+    <string name="fix_repeated_body">Le même numéro figure plusieurs fois sur ces contacts. Supprimer la copie en trop en garde un.</string>
+    <string name="fix_all">Tout corriger</string>
+    <string name="fix_codes_title">Indicatif manquant</string>
+    <string name="fix_codes_body">Ajouter l\'indicatif de votre pays est utile en voyage, et aide les autres apps à reconnaître le numéro.</string>
+    <string name="fix">Corriger</string>
+</resources>

@@ -29,6 +29,9 @@ import app.people.contacts.data.LabelStore
 import app.people.contacts.data.RecentEntry
 import app.people.contacts.data.Settings
 import app.people.contacts.data.SortOrder
+import app.people.contacts.data.ListLayout
+import app.people.contacts.data.moveLabelTitle
+import app.people.contacts.data.orderLabelTitles
 import app.people.contacts.data.UpcomingBirthday
 import app.people.contacts.data.VCardReader
 import app.people.contacts.data.VCardWriter
@@ -172,6 +175,25 @@ class ContactsViewModel(app: Application) : AndroidViewModel(app) {
         .flatMapLatest { merge(contentChanges(app, ContactsContract.Groups.CONTENT_URI), changes) }
         .mapLatest { labelStore.load() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    /** Bundle: how the Contacts tab lays out the list. */
+    val listLayout: StateFlow<ListLayout> = settings.listLayout.stateIn(viewModelScope, SharingStarted.Eagerly, ListLayout.Classic)
+
+    /** Bundle: label names in the user's order, new labels last. */
+    val labelOrder: StateFlow<List<String>> = combine(labels, settings.labelOrder) { list, saved ->
+        orderLabelTitles(list.orEmpty().map { it.title }, saved)
+    }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    fun setListLayout(layout: ListLayout) {
+        viewModelScope.launch { settings.setListLayout(layout) }
+    }
+
+    /** Moves the label named [title] [by] places in the order (negative: up). */
+    fun moveLabel(title: String, by: Int) {
+        val current = labelOrder.value
+        viewModelScope.launch { settings.setLabelOrder(moveLabelTitle(current, title, by)) }
+    }
 
     /** Sets of contacts that look like the same person, for Organize's Merge duplicates. */
     val duplicates: StateFlow<List<DuplicateSet>> = combine(shownContacts.filterNotNull(), settings.dismissedDuplicates) { list, dismissed ->

@@ -27,6 +27,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -79,6 +82,9 @@ fun RepeatingFields(kind: FieldKind, fields: List<EditField>, onChange: (List<Ed
                     if (kind.isDate) {
                         DateField(kind, field, openPicker = field.key == added, onPick = { update(field.copy(value = it)) })
                     } else {
+                        // Bundle: a field just added with the button takes the focus (and the
+                        // keyboard), as in Google Contacts, so typing goes into it.
+                        val focus = remember { FocusRequester() }
                         OutlinedTextField(
                             value = field.value,
                             onValueChange = { update(field.copy(value = it)) },
@@ -86,8 +92,11 @@ fun RepeatingFields(kind: FieldKind, fields: List<EditField>, onChange: (List<Ed
                             leadingIcon = { Icon(kind.icon, null) },
                             singleLine = !kind.multiLine,
                             keyboardOptions = KeyboardOptions(keyboardType = kind.keyboard),
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth().focusRequester(focus),
                         )
+                        if (field.key == added) {
+                            LaunchedEffect(field.key) { runCatching { focus.requestFocus() } }
+                        }
                     }
                     if (kind.types.isNotEmpty()) {
                         TypePicker(kind, field, onPick = { type, label -> update(field.copy(type = type, label = label)) })

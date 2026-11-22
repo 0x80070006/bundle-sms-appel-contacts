@@ -1,5 +1,7 @@
 package app.dialtone.phone.ui.contacts
 
+import app.dialtone.phone.util.tr
+
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Box
@@ -138,13 +140,13 @@ fun ContactsScreen(
                 Row(Modifier.padding(horizontal = 20.dp, vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Rounded.PersonAdd, null)
                     Spacer(Modifier.width(16.dp))
-                    Text("Create new contact", style = MaterialTheme.typography.titleMedium)
+                    Text(tr("Create new contact"), style = MaterialTheme.typography.titleMedium)
                 }
             }
         }
         if (contacts.isEmpty()) {
             item(key = "empty") {
-                EmptyState(Icons.Rounded.Contacts, "No contacts", "Contacts with phone numbers show up here.")
+                EmptyState(Icons.Rounded.Contacts, tr("No contacts"), tr("Contacts with phone numbers show up here."))
             }
         }
         if (favorites.isNotEmpty()) {
@@ -155,7 +157,7 @@ fun ContactsScreen(
                 ) {
                     Icon(Icons.Rounded.Star, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
                     Spacer(Modifier.width(8.dp))
-                    Text("Favorites", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                    Text(tr("Favorites"), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
                 }
             }
             contactItems(favorites, expandedFavorite, onCall, setFavorite, keyPrefix = "fav-", voicemailKeys = voicemailKeys, onSetSendToVoicemail = setVoicemail)
@@ -308,11 +310,11 @@ private fun ContactRow(
                             }
                             // Round tonal buttons, like the call button in the call log: call, then text.
                             FilledTonalIconButton(onClick = { onCall(n.number) }) {
-                                Icon(Icons.Outlined.Call, "Call")
+                                Icon(Icons.Outlined.Call, tr("Call"))
                             }
                             Spacer(Modifier.width(8.dp))
                             FilledTonalIconButton(onClick = { Dialer.sms(context, n.number) }) {
-                                Icon(Icons.Outlined.ChatBubbleOutline, "Text")
+                                Icon(Icons.Outlined.ChatBubbleOutline, tr("Text"))
                             }
                         }
                     }
@@ -323,7 +325,7 @@ private fun ContactRow(
                     if (onSetFavorite != null) {
                         AssistChip(
                             onClick = { onSetFavorite(contact.id, !contact.starred) },
-                            label = { Text(if (contact.starred) "Remove from Favorites" else "Add to Favorites") },
+                            label = { Text(if (contact.starred) tr("Remove from Favorites") else tr("Add to Favorites")) },
                             leadingIcon = {
                                 Icon(
                                     if (contact.starred) Icons.Rounded.StarOutline else Icons.Rounded.Star,
@@ -336,7 +338,7 @@ private fun ContactRow(
                     if (onSetSendToVoicemail != null) {
                         AssistChip(
                             onClick = { onSetSendToVoicemail(!sentToVoicemail) },
-                            label = { Text(if (sentToVoicemail) "Stop sending to voicemail" else "Send to voicemail") },
+                            label = { Text(if (sentToVoicemail) tr("Stop sending to voicemail") else tr("Send to voicemail")) },
                             leadingIcon = { Icon(Icons.Rounded.Voicemail, null, Modifier.size(AssistChipDefaults.IconSize)) },
                         )
                     }

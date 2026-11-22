@@ -1,5 +1,7 @@
 package app.dialtone.phone.transcription
 
+import app.dialtone.phone.util.tr
+
 import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
@@ -102,7 +104,7 @@ class VoicemailTranscriber(private val context: Context) {
         val outcome = SystemRecognizer.transcribe(context, pcm)
         // In the voicemail log (Voicemail settings), so failures can be diagnosed.
         VvmLog.i(
-            "Transcription",
+            tr("Transcription"),
             "voicemail $id, ${pcm.size / AudioDecoder.TARGET_RATE}s, " +
                 "recognizer ${recognizer?.packageName ?: "unknown"}, " +
                 "${if (Transcription.appInForeground(context)) "foreground" else "background"}: " +

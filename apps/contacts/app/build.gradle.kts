@@ -1,10 +1,38 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
 }
 
 // version.txt: line 1 is the version code, line 2 the version name.
-val versionLines = rootProject.file("version.txt").readLines().map { it.trim() }
+// Bundle: the app lives in apps/contacts/app, so version.txt is one level up.
+val versionLines = file("../version.txt").readLines().map { it.trim() }
+
+// Bundle: package prefix shared by the three apps (gradle.properties at the monorepo root).
+val appIdPrefix = providers.gradleProperty("bundle.appIdPrefix").get()
+val appId = "$appIdPrefix.contacts"
+
+// Bundle: one signing key for every app of the bundle (signing.properties at the monorepo
+// root, or BUNDLE_* environment variables in CI). Without it, builds use the debug key.
+val bundleSigning: Map<String, String?>? = rootProject.file("signing.properties").let { f ->
+    if (f.canRead()) {
+        val p = Properties().apply { f.inputStream().use { load(it) } }
+        mapOf(
+            "storeFile" to rootProject.file(p.getProperty("storeFile")).path,
+            "storePassword" to p.getProperty("storePassword"),
+            "keyAlias" to p.getProperty("keyAlias"),
+            "keyPassword" to p.getProperty("keyPassword"),
+        )
+    } else System.getenv("BUNDLE_KEYSTORE_FILE")?.let {
+        mapOf(
+            "storeFile" to it,
+            "storePassword" to System.getenv("BUNDLE_KEYSTORE_PASSWORD"),
+            "keyAlias" to System.getenv("BUNDLE_KEY_ALIAS"),
+            "keyPassword" to System.getenv("BUNDLE_KEY_PASSWORD"),
+        )
+    }
+}
 
 android {
     namespace = "app.people.contacts"
@@ -12,31 +40,28 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        // The same id and keys as the Contacts app this one replaces, so it installs as an update.
-        applicationId = "app.people.contacts"
+        // Bundle: <prefix>.contacts (upstream: app.people.contacts).
+        applicationId = appId
         minSdk = 31 // Wallpaper colours
         targetSdk = 36
         versionCode = versionLines[0].toInt()
         versionName = versionLines[1]
         ndk { abiFilters += "arm64-v8a" }
         // The app's own account type (it holds the birthday calendar): the app id, as in the old app.
-        resValue("string", "account_type", "app.people.contacts")
+        resValue("string", "account_type", appId)
     }
 
     // Unit tests run on the computer, not a phone. Android calls the tested code happens to make
     // (number formatting, say) return empty defaults instead of failing.
     testOptions { unitTests.isReturnDefaultValues = true }
 
-    // CI supplies the key through ORG_GRADLE_PROJECT_RELEASE_* (the dev key for test builds,
-    // the release key for releases). Without it, builds are signed with the debug key.
-    val storeFilePath = findProperty("RELEASE_STORE_FILE") as String?
     signingConfigs {
-        if (storeFilePath != null) {
-            create("ci") {
-                storeFile = file(storeFilePath)
-                storePassword = findProperty("RELEASE_STORE_PASSWORD") as String?
-                keyAlias = findProperty("RELEASE_KEY_ALIAS") as String?
-                keyPassword = findProperty("RELEASE_KEY_PASSWORD") as String?
+        if (bundleSigning != null) {
+            create("bundle") {
+                storeFile = file(bundleSigning.getValue("storeFile")!!)
+                storePassword = bundleSigning["storePassword"]
+                keyAlias = bundleSigning["keyAlias"]
+                keyPassword = bundleSigning["keyPassword"]
             }
         }
     }
@@ -47,7 +72,7 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            signingConfig = signingConfigs.findByName("ci") ?: signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("bundle") ?: signingConfigs.getByName("debug")
         }
         // Test builds: quick to build and inspectable, with their own app id so they install
         // beside the release.
@@ -58,7 +83,7 @@ android {
             isDebuggable = true
             applicationIdSuffix = ".dev"
             versionNameSuffix = "-dev"
-            resValue("string", "account_type", "app.people.contacts.dev")
+            resValue("string", "account_type", "$appId.dev")
             matchingFallbacks += "release"
         }
     }
@@ -83,6 +108,10 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach 
 }
 
 dependencies {
+    // Bundle: shared theme, avatars and phone-number helpers.
+    implementation(project(":core:design"))
+    implementation(project(":core:telephony"))
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)

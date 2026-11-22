@@ -1,5 +1,9 @@
 package app.dialtone.phone.ui.home
 
+import app.dialtone.phone.util.trf
+
+import app.dialtone.phone.util.tr
+
 import androidx.compose.material.icons.rounded.StarOutline
 import android.widget.Toast
 import androidx.compose.material.icons.outlined.Block
@@ -111,12 +115,17 @@ import app.dialtone.phone.util.formatShortDate
 import app.dialtone.phone.util.numberKey
 
 /** Call log filters shown above Favorites. */
-internal enum class CallFilter(val label: String, val empty: String) {
+internal enum class CallFilter(private val labelEn: String, private val emptyEn: String) {
     All("All", "No recent calls"),
     Missed("Missed", "No missed calls"),
     Dialed("Dialed", "No dialed calls"),
     Contacts("Contacts", "No calls with your contacts"),
     Unknown("Unknown", "No calls from unsaved numbers"),
+    ;
+
+    // Bundle: translated when shown, so a language change applies without a restart.
+    val label: String get() = tr(labelEn)
+    val empty: String get() = tr(emptyEn)
 }
 
 internal fun CallFilter.matches(call: RecentCall, contact: Contact?): Boolean = when (this) {
@@ -234,10 +243,10 @@ fun HomeScreen(
                             .padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text("Favorites", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                        Text(tr("Favorites"), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
                         Icon(
                             Icons.Rounded.KeyboardArrowDown,
-                            contentDescription = if (favoritesShown) "Hide favorites" else "Show favorites",
+                            contentDescription = if (favoritesShown) tr("Hide favorites") else tr("Show favorites"),
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(20.dp).rotate(rotation),
                         )
@@ -251,7 +260,7 @@ fun HomeScreen(
                 ) {
                     Icon(Icons.Rounded.Person, null, Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("Contacts")
+                    Text(tr("Contacts"))
                 }
             }
         }
@@ -279,8 +288,8 @@ fun HomeScreen(
                 EmptyState(
                     Icons.Rounded.History,
                     filter.empty,
-                    if (filter == CallFilter.All) "Calls you make and receive will show up here."
-                    else "Tap All to see every call.",
+                    if (filter == CallFilter.All) tr("Calls you make and receive will show up here.")
+                    else tr("Tap All to see every call."),
                     Modifier.padding(top = 48.dp),
                 )
             }
@@ -308,9 +317,9 @@ fun HomeScreen(
     }
     if (pickingFavorite) {
         ContactPickerSheet(
-            title = "Add to Favorites",
+            title = tr("Add to Favorites"),
             contacts = contacts.filter { !it.starred },
-            emptyText = "All your contacts are already favorites.",
+            emptyText = tr("All your contacts are already favorites."),
             onPick = { contact ->
                 onAddFavorite(contact.id)
                 pickingFavorite = false
@@ -332,10 +341,10 @@ private fun AddFavoriteTile(onClick: () -> Unit) {
             Modifier.size(68.dp).clip(CircleShape).background(scheme.surfaceContainerHighest),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(Icons.Rounded.Add, contentDescription = "Add favorite", tint = scheme.onSurfaceVariant, modifier = Modifier.size(28.dp))
+            Icon(Icons.Rounded.Add, contentDescription = tr("Add favorite"), tint = scheme.onSurfaceVariant, modifier = Modifier.size(28.dp))
         }
         Spacer(Modifier.height(8.dp))
-        Text("Add", style = MaterialTheme.typography.labelLarge, maxLines = 1, textAlign = TextAlign.Center)
+        Text(tr("Add"), style = MaterialTheme.typography.labelLarge, maxLines = 1, textAlign = TextAlign.Center)
     }
 }
 
@@ -371,7 +380,7 @@ private fun FavoriteTile(contact: Contact, onClick: () -> Unit, onRemove: () -> 
     }
     DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
         DropdownMenuItem(
-            text = { Text("Remove from Favorites") },
+            text = { Text(tr("Remove from Favorites")) },
             leadingIcon = { Icon(Icons.Rounded.StarOutline, null) },
             onClick = {
                 menu = false
@@ -409,7 +418,7 @@ private fun RecentRow(
     var menu by remember { mutableStateOf(false) }
     val missed = call.type == CallType.Missed || call.type == CallType.Rejected
     val name = contact?.name ?: call.cachedName?.takeIf { it.isNotBlank() }
-    val display = name ?: if (call.number.isBlank()) "Private number" else formatNumber(call.number)
+    val display = name ?: if (call.number.isBlank()) tr("Private number") else formatNumber(call.number)
     val label = contact?.numbers?.firstOrNull { numberKey(it.number) == numberKey(call.number) }?.label
     val subtitle = listOfNotNull(label, formatShortDate(context, call.date)).joinToString(" • ")
     val container by animateColorAsState(
@@ -464,7 +473,7 @@ private fun RecentRow(
                 }
                 if (call.number.isNotBlank()) {
                     FilledTonalIconButton(onClick = { onCall(call.number) }) {
-                        Icon(Icons.Outlined.Call, "Call $display")
+                        Icon(Icons.Outlined.Call, trf("Call %s", display))
                     }
                 }
             }
@@ -475,19 +484,19 @@ private fun RecentRow(
                 ) {
                     AssistChip(
                         onClick = { Dialer.sms(context, call.number) },
-                        label = { Text("Message") },
+                        label = { Text(tr("Message")) },
                         leadingIcon = { Icon(Icons.Outlined.ChatBubbleOutline, null, Modifier.size(18.dp)) },
                     )
                     if (contact == null) {
                         AssistChip(
                             onClick = { Dialer.addContact(context, call.number) },
-                            label = { Text("Add") },
+                            label = { Text(tr("Add")) },
                             leadingIcon = { Icon(Icons.Rounded.PersonAdd, null, Modifier.size(18.dp)) },
                         )
                     }
                     AssistChip(
                         onClick = { Dialer.copy(context, call.number) },
-                        label = { Text("Copy") },
+                        label = { Text(tr("Copy")) },
                         leadingIcon = { Icon(Icons.Rounded.ContentCopy, null, Modifier.size(18.dp)) },
                     )
                 }
@@ -501,7 +510,7 @@ private fun RecentRow(
     val canBlock = remember { Blocking.canBlock(context) }
     DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
         DropdownMenuItem(
-            text = { Text(if (sentToVoicemail) "Stop sending to voicemail" else "Send to voicemail") },
+            text = { Text(if (sentToVoicemail) tr("Stop sending to voicemail") else tr("Send to voicemail")) },
             leadingIcon = { Icon(Icons.Rounded.Voicemail, null) },
             onClick = {
                 menu = false
@@ -511,19 +520,19 @@ private fun RecentRow(
         if (canBlock) {
             val isBlocked = blocked == true
             DropdownMenuItem(
-                text = { Text(if (isBlocked) "Unblock" else "Block") },
+                text = { Text(if (isBlocked) tr("Unblock") else tr("Block")) },
                 leadingIcon = { Icon(Icons.Outlined.Block, null) },
                 enabled = blocked != null,
                 onClick = {
                     menu = false
                     val app = context.applicationContext
                     Thread { if (isBlocked) Blocking.unblock(app, call.number) else Blocking.block(app, call.number) }.start()
-                    Toast.makeText(context, if (isBlocked) "Unblocked" else "Blocked", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, if (isBlocked) tr("Unblocked") else tr("Blocked"), Toast.LENGTH_SHORT).show()
                 },
             )
         }
         DropdownMenuItem(
-            text = { Text("Copy number") },
+            text = { Text(tr("Copy number")) },
             leadingIcon = { Icon(Icons.Outlined.ContentCopy, null) },
             onClick = {
                 menu = false
@@ -532,7 +541,7 @@ private fun RecentRow(
         )
         if (contact == null) {
             DropdownMenuItem(
-                text = { Text("Add to contacts") },
+                text = { Text(tr("Add to contacts")) },
                 leadingIcon = { Icon(Icons.Outlined.PersonAdd, null) },
                 onClick = {
                     menu = false
@@ -541,7 +550,7 @@ private fun RecentRow(
             )
         }
         DropdownMenuItem(
-            text = { Text(if (call.ids.size > 1) "Delete ${call.ids.size} calls" else "Delete from call log") },
+            text = { Text(if (call.ids.size > 1) trf("Delete %d calls", call.ids.size) else tr("Delete from call log")) },
             leadingIcon = { Icon(Icons.Outlined.Delete, null) },
             onClick = {
                 menu = false

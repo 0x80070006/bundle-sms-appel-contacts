@@ -1,32 +1,24 @@
 package app.dialtone.phone.util
 
 import android.content.Context
-import android.content.pm.PackageManager
-import android.telephony.PhoneNumberUtils
 import android.text.format.DateUtils
-import androidx.core.content.ContextCompat
-import java.util.Locale
+import bundle.core.telephony.formatDuration as coreFormatDuration
+import bundle.core.telephony.formatNumber as coreFormatNumber
+import bundle.core.telephony.hasPermission as coreHasPermission
+import bundle.core.telephony.initialOf as coreInitialOf
+import bundle.core.telephony.numberKey as coreNumberKey
 
-fun Context.hasPermission(permission: String): Boolean =
-    ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED
+// Bundle: the number helpers now live in core/telephony, shared with Contacts and Messages, so
+// a number matches the same contact in every app. The names are kept from upstream.
 
-fun formatNumber(number: String): String {
-    if (number.isBlank()) return number
-    return PhoneNumberUtils.formatNumber(number, Locale.getDefault().country) ?: number
-}
+fun Context.hasPermission(permission: String): Boolean = coreHasPermission(permission)
 
-/** Last 10 digits — used to match one number across call log, contacts and voicemail. */
-fun numberKey(number: String): String {
-    val digits = number.filter { it.isDigit() }
-    return if (digits.length > 10) digits.takeLast(10) else digits
-}
+fun formatNumber(number: String): String = coreFormatNumber(number)
 
-fun formatDuration(seconds: Long): String {
-    val h = seconds / 3600
-    val m = (seconds % 3600) / 60
-    val s = seconds % 60
-    return if (h > 0) "%d:%02d:%02d".format(h, m, s) else "%d:%02d".format(m, s)
-}
+/** The key that says two numbers are the same line, across call log, contacts and voicemail (see core/telephony). */
+fun numberKey(number: String): String = coreNumberKey(number)
+
+fun formatDuration(seconds: Long): String = coreFormatDuration(seconds)
 
 fun formatTime(context: Context, millis: Long): String =
     DateUtils.formatDateTime(context, millis, DateUtils.FORMAT_SHOW_TIME)
@@ -38,7 +30,12 @@ fun formatShortDate(context: Context, millis: Long): String =
         DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_ABBREV_MONTH or DateUtils.FORMAT_SHOW_TIME,
     )
 
-enum class DayBucket(val label: String) { Today("Today"), Yesterday("Yesterday"), Older("Older") }
+enum class DayBucket(private val labelEn: String) {
+    Today("Today"), Yesterday("Yesterday"), Older("Older");
+
+    /** Bundle: translated when shown. */
+    val label: String get() = tr(labelEn)
+}
 
 fun dayBucket(millis: Long): DayBucket = when {
     DateUtils.isToday(millis) -> DayBucket.Today
@@ -46,5 +43,4 @@ fun dayBucket(millis: Long): DayBucket = when {
     else -> DayBucket.Older
 }
 
-fun initialOf(name: String?): String? =
-    name?.firstOrNull { it.isLetter() }?.uppercaseChar()?.toString()
+fun initialOf(name: String?): String? = coreInitialOf(name)

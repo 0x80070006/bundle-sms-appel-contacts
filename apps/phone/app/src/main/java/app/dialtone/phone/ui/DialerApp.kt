@@ -1,5 +1,9 @@
 package app.dialtone.phone.ui
 
+import app.dialtone.phone.util.trf
+
+import app.dialtone.phone.util.tr
+
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideInHorizontally
 import androidx.activity.compose.BackHandler
@@ -93,10 +97,10 @@ import app.dialtone.phone.data.PhoneNumber
 
 // Matches the Contacts app: outlined icons, filled while the tab is selected.
 private enum class Tab(val label: String, val icon: ImageVector, val selectedIcon: ImageVector) {
-    Home("Home", Icons.Outlined.Home, Icons.Filled.Home),
+    Home(tr("Home"), Icons.Outlined.Home, Icons.Filled.Home),
     // The FAB's dial pad glyph; it's the same in every icon style.
-    Keypad("Keypad", Icons.Rounded.Dialpad, Icons.Rounded.Dialpad),
-    Voicemail("Voicemail", Icons.Outlined.Voicemail, Icons.Filled.Voicemail),
+    Keypad(tr("Keypad"), Icons.Rounded.Dialpad, Icons.Rounded.Dialpad),
+    Voicemail(tr("Voicemail"), Icons.Outlined.Voicemail, Icons.Filled.Voicemail),
 }
 
 /**
@@ -216,7 +220,7 @@ fun DialerApp(
             val days = ((now - call.date) / 86_400_000.0).coerceAtLeast(0.0)
             val weight = 1.0 / (1.0 + days / 7.0)
             val pn = contact.numbers.firstOrNull { numberKey(it.number) == numberKey(call.number) }
-                ?: PhoneNumber(call.number, "Mobile")
+                ?: PhoneNumber(call.number, tr("Mobile"))
             val old = scores[contact.id]
             scores[contact.id] = ((old?.first ?: 0.0) + weight) to (old?.second ?: pn)
             byId[contact.id] = contact
@@ -244,7 +248,7 @@ fun DialerApp(
                     // Settings, in the search bar on every tab (and the contacts list).
                     trailing = {
                         IconButton(onClick = { voicemailSettingsOpen = true }) {
-                            Icon(Icons.Rounded.Settings, "Settings")
+                            Icon(Icons.Rounded.Settings, tr("Settings"))
                         }
                     },
                 )
@@ -376,7 +380,7 @@ private fun SearchBarPill(
         Row(Modifier.fillMaxSize().padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             if (query == null) {
                 if (onBack != null) {
-                    IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back to Home") }
+                    IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, tr("Back to Home")) }
                     Spacer(Modifier.width(4.dp))
                 } else {
                     Spacer(Modifier.width(8.dp))
@@ -384,7 +388,7 @@ private fun SearchBarPill(
                     Spacer(Modifier.width(12.dp))
                 }
                 Text(
-                    "Search contacts",
+                    tr("Search contacts"),
                     style = MaterialTheme.typography.bodyLarge,
                     color = scheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f),
@@ -392,7 +396,7 @@ private fun SearchBarPill(
                 trailing?.invoke()
             } else {
                 IconButton(onClick = { onActiveChange(false) }) {
-                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Close search")
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, tr("Close search"))
                 }
                 BasicTextField(
                     value = query,
@@ -404,14 +408,14 @@ private fun SearchBarPill(
                     decorationBox = { inner ->
                         Box(contentAlignment = Alignment.CenterStart) {
                             if (query.isEmpty()) {
-                                Text("Search contacts or type a number", color = scheme.onSurfaceVariant, style = MaterialTheme.typography.bodyLarge)
+                                Text(tr("Search contacts or type a number"), color = scheme.onSurfaceVariant, style = MaterialTheme.typography.bodyLarge)
                             }
                             inner()
                         }
                     },
                 )
                 if (query.isNotEmpty()) {
-                    IconButton(onClick = { onQueryChange("") }) { Icon(Icons.Rounded.Close, "Clear") }
+                    IconButton(onClick = { onQueryChange("") }) { Icon(Icons.Rounded.Close, tr("Clear")) }
                 }
                 LaunchedEffect(Unit) { focus.requestFocus() }
             }
@@ -452,18 +456,18 @@ private fun SearchResults(
                     Row(Modifier.padding(horizontal = 20.dp, vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Rounded.Call, null)
                         Spacer(Modifier.width(16.dp))
-                        Text("Call ${formatNumber(query)}", style = MaterialTheme.typography.titleMedium)
+                        Text(trf("Call %s", formatNumber(query)), style = MaterialTheme.typography.titleMedium)
                     }
                 }
             }
         }
         if (query.isNotBlank() && results.isEmpty()) {
             item(key = "none") {
-                EmptyState(Icons.Rounded.Search, "No matches", "No contacts match \"$query\".")
+                EmptyState(Icons.Rounded.Search, tr("No matches"), "No contacts match \"$query\".")
             }
         }
         if (results.isNotEmpty()) {
-            item(key = "h") { SectionHeader("Contacts") }
+            item(key = "h") { SectionHeader(tr("Contacts")) }
             contactItems(results, expanded, onCall)
         }
     }

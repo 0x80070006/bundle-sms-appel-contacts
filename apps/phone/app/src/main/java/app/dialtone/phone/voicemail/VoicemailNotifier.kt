@@ -1,5 +1,9 @@
 package app.dialtone.phone.voicemail
 
+import app.dialtone.phone.util.trf
+
+import app.dialtone.phone.util.tr
+
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.NotificationChannel
@@ -37,7 +41,7 @@ object VoicemailNotifier {
 
     fun ensureChannel(context: Context) {
         context.getSystemService(NotificationManager::class.java)?.createNotificationChannel(
-            NotificationChannel(CHANNEL, "Voicemail", NotificationManager.IMPORTANCE_DEFAULT),
+            NotificationChannel(CHANNEL, tr("Voicemail"), NotificationManager.IMPORTANCE_DEFAULT),
         )
     }
 
@@ -86,12 +90,12 @@ object VoicemailNotifier {
 
         val name = CallerLookup.lookup(context, newest.number).name
             ?: newest.number.takeIf { it.isNotBlank() }?.let(::formatNumber)
-            ?: "Unknown"
-        val title = if (unread.size == 1) "New voicemail from $name" else "${unread.size} new voicemails"
+            ?: tr("Unknown")
+        val title = if (unread.size == 1) trf("New voicemail from %s", name) else trf("%d new voicemails", unread.size)
         val body = if (unread.size == 1) {
-            newest.transcript?.takeIf { it.isNotBlank() } ?: "Tap to listen"
+            newest.transcript?.takeIf { it.isNotBlank() } ?: tr("Tap to listen")
         } else {
-            "Latest from $name"
+            trf("Latest from %s", name)
         }
 
         val builder = NotificationCompat.Builder(context, CHANNEL)
@@ -108,7 +112,7 @@ object VoicemailNotifier {
             .setOnlyAlertOnce(!hasNew)
             .setContentIntent(openVoicemailTab(context))
         if (unread.size == 1 && newest.number.isNotBlank()) {
-            builder.addAction(0, "Call back", callIntent(context, Uri.fromParts("tel", newest.number, null), 1))
+            builder.addAction(0, tr("Call back"), callIntent(context, Uri.fromParts("tel", newest.number, null), 1))
         }
         NotificationManagerCompat.from(context).notify(ID_VISUAL, builder.build())
     }
@@ -124,13 +128,13 @@ object VoicemailNotifier {
         }
         if (!canNotify(context)) return
         ensureChannel(context)
-        val title = if (count == 1) "New voicemail" else "$count new voicemails"
+        val title = if (count == 1) tr("New voicemail") else "$count new voicemails"
         val dial = callVoicemail ?: callIntent(context, Uri.fromParts("voicemail", "", null), 2)
         val notification = NotificationCompat.Builder(context, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_voicemail)
             .setCategory(NotificationCompat.CATEGORY_STATUS)
             .setContentTitle(title)
-            .setContentText("Tap to call voicemail")
+            .setContentText(tr("Tap to call voicemail"))
             .setNumber(count)
             .setOngoing(false)
             .setOnlyAlertOnce(true)

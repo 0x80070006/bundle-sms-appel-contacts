@@ -55,6 +55,13 @@ tasks.withType<Detekt>().configureEach {
     exclude("**/com/android/messaging/debug/**")
 }
 
+// Bundle: this build lives in apps/messages; the monorepo root holds the shared package
+// prefix (gradle.properties) and the shared signing key (signing.properties).
+val bundleRoot = rootProject.file("../..")
+val appIdPrefix: String = Properties().apply {
+    bundleRoot.resolve("gradle.properties").inputStream().use { load(it) }
+}.getProperty("bundle.appIdPrefix")
+
 android {
     compileSdk = 37
     buildToolsVersion = "37.0.0"
@@ -66,7 +73,8 @@ android {
         // Messaging app (com.android.messaging) instead of replacing it.
         // Releases are renamed to app.twill.messages below; test builds keep app.twill.perf
         // and app.twill.debug.
-        applicationId = "app.twill"
+        // Bundle: <prefix>.messages; debug and perf builds add .debug / .perf.
+        applicationId = "$appIdPrefix.messages"
         // versionCode only has to keep increasing (test installs started at 20000016);
         // versionName is Twill's own version, shown to users and used as the release tag.
         versionCode = 20000000 + 38
@@ -109,6 +117,9 @@ android {
         manifest.srcFile("../AndroidManifest.xml")
         java.srcDirs("../src")
         kotlin.srcDirs("../src")
+        // Bundle: the shared look (theme, colours, language, app icon, sync with Contacts and
+        // Phone), compiled from core/appearance's sources: this build keeps its own Gradle setup.
+        kotlin.srcDir("../../../core/appearance/src/main/java")
         res.srcDir("../res")
         // Twill: the Delta Chat core and its JNI bridge, built by
         // scripts/build-deltachat-core.sh (not in git). Loaded straight from the APK.
@@ -123,7 +134,8 @@ android {
         kotlin.srcDir("src/sharedTest/kotlin")
     }
 
-    val keystorePropertiesFile = rootProject.file("keystore.properties")
+    // Bundle: signing.properties at the monorepo root (the same key as Contacts and Phone).
+    val keystorePropertiesFile = bundleRoot.resolve("signing.properties")
     val useKeystoreProperties = keystorePropertiesFile.canRead()
     val keystoreProperties = Properties()
     if (useKeystoreProperties) {
@@ -133,7 +145,7 @@ android {
     if (useKeystoreProperties) {
         signingConfigs {
             create("release") {
-                storeFile = rootProject.file(keystoreProperties["storeFile"]!!)
+                storeFile = bundleRoot.resolve(keystoreProperties["storeFile"] as String)
                 storePassword = keystoreProperties["storePassword"] as String
                 keyAlias = keystoreProperties["keyAlias"] as String
                 keyPassword = keystoreProperties["keyPassword"] as String
@@ -159,7 +171,7 @@ android {
 
         getByName("debug") {
             applicationIdSuffix = ".debug"
-            resValue("string", "app_name", "Twill d")
+            resValue("string", "app_name", "SMS d")
             enableUnitTestCoverage = true
             enableAndroidTestCoverage = true
         }
@@ -170,8 +182,10 @@ android {
             initWith(getByName("release"))
             applicationIdSuffix = ".perf"
             matchingFallbacks += listOf("release")
-            resValue("string", "app_name", "Twill")
-            signingConfig = signingConfigs.getByName("debug")
+            resValue("string", "app_name", "SMS")
+            // Bundle: signed with the bundle's key when there is one, so it shares the look with
+            // Contacts and Phone (they only talk to apps signed like them).
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
         }
     }
 
@@ -210,7 +224,7 @@ android {
 // Twill: release builds are app.twill.messages (installs alongside the system Messaging app).
 androidComponents {
     onVariants(selector().withBuildType("release")) { variant ->
-        variant.applicationId.set("app.twill.messages")
+        variant.applicationId.set("$appIdPrefix.messages")
     }
 }
 

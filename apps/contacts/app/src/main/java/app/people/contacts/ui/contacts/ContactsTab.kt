@@ -51,7 +51,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.people.contacts.R
 import app.people.contacts.data.ContactSummary
+import app.people.contacts.data.ListLayout
 import app.people.contacts.data.SortOrder
+import app.people.contacts.data.sectionsByLabel
 import app.people.contacts.data.sortName
 import app.people.contacts.ui.ContactsViewModel
 import app.people.contacts.ui.components.ContactRow
@@ -78,8 +80,20 @@ fun ContactsTab(
     val contacts by viewModel.contacts.collectAsStateWithLifecycle()
     val profile by viewModel.profile.collectAsStateWithLifecycle()
     val order by viewModel.sortOrder.collectAsStateWithLifecycle()
+    // Bundle: Classic (A–Z letter groups) or one section per label, in the user's label order.
+    val layout by viewModel.listLayout.collectAsStateWithLifecycle()
+    val labels by viewModel.labels.collectAsStateWithLifecycle()
+    val labelOrder by viewModel.labelOrder.collectAsStateWithLifecycle()
+    val otherContacts = stringResource(R.string.other_contacts)
     val list = contacts
-    val sections = remember(list, order) { list?.let { byFirstLetter(it, order) }.orEmpty() }
+    val byLabel = layout == ListLayout.ByLabel
+    val sections = remember(list, order, byLabel, labels, labelOrder, otherContacts) {
+        when {
+            list == null -> emptyList()
+            byLabel -> sectionsByLabel(list, labels.orEmpty(), labelOrder).map { (title, members) -> (title ?: otherContacts) to members }
+            else -> byFirstLetter(list, order)
+        }
+    }
     val favorites = remember(list) { list?.filter { it.starred }.orEmpty() }
     // Where each letter's header sits in the list, for the A–Z strip.
     val headerIndex = remember(sections, favorites) {
@@ -129,14 +143,15 @@ fun ContactsTab(
                         item(key = "favorites-header") { FavoritesHeader() }
                         group("fav", favorites, selected, onTap, onLongPress)
                     }
-                    sections.forEach { (letter, members) ->
-                        item(key = "h-$letter") { SectionHeader(letter) }
-                        group("c", members, selected, onTap, onLongPress)
+                    // A contact in two labels shows in both, so keys carry the section's position.
+                    sections.forEachIndexed { index, (title, members) ->
+                        item(key = "h-$index-$title") { SectionHeader(title) }
+                        group("c$index", members, selected, onTap, onLongPress)
                     }
                 }
             }
         }
-        if (sections.size > 1) {
+        if (!byLabel && sections.size > 1) {
             LetterScroller(
                 letters = sections.map { it.first },
                 onLetter = { letter -> headerIndex[letter]?.let { scope.launch { listState.scrollToItem(it) } } },

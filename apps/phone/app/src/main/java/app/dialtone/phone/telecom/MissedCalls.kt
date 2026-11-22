@@ -1,5 +1,7 @@
 package app.dialtone.phone.telecom
 
+import app.dialtone.phone.util.tr
+
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.NotificationChannel
@@ -42,7 +44,7 @@ object MissedCalls {
 
     fun ensureChannel(context: Context) {
         context.getSystemService(NotificationManager::class.java)?.createNotificationChannel(
-            NotificationChannel(CHANNEL, "Missed calls", NotificationManager.IMPORTANCE_DEFAULT),
+            NotificationChannel(CHANNEL, tr("Missed calls"), NotificationManager.IMPORTANCE_DEFAULT),
         )
     }
 
@@ -83,7 +85,7 @@ object MissedCalls {
         fun label(m: Missed): String {
             val name = m.name?.takeIf { it.isNotBlank() }
                 ?: CallerLookup.lookup(context, m.number).name
-            return name ?: m.number.takeIf { it.isNotBlank() }?.let(::formatNumber) ?: "Unknown caller"
+            return name ?: m.number.takeIf { it.isNotBlank() }?.let(::formatNumber) ?: tr("Unknown caller")
         }
 
         val byCaller = calls.groupBy { numberKey(it.number).ifEmpty { "?" } }
@@ -102,11 +104,11 @@ object MissedCalls {
             val name = label(latest)
             builder
                 .setContentTitle(if (calls.size > 1) "$name (${calls.size})" else name)
-                .setContentText(if (calls.size > 1) "${calls.size} missed calls" else "Missed call")
+                .setContentText(if (calls.size > 1) "${calls.size} missed calls" else tr("Missed call"))
             if (latest.number.isNotBlank()) {
-                builder.addAction(0, "Call back", broadcast(context, CallActionReceiver.ACTION_CALL_BACK, latest.number))
+                builder.addAction(0, tr("Call back"), broadcast(context, CallActionReceiver.ACTION_CALL_BACK, latest.number))
                 builder.addAction(
-                    0, "Message",
+                    0, tr("Message"),
                     PendingIntent.getActivity(
                         context, 2,
                         Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:${Uri.encode(latest.number)}")),

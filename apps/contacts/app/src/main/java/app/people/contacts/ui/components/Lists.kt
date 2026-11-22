@@ -25,13 +25,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-/** Corner radii for M3 Expressive grouped lists, as in Dialtone: big outer corners, tight inner ones. */
-fun segmentShape(index: Int, count: Int, large: Dp = 24.dp, small: Dp = 6.dp): Shape = when {
-    count == 1 -> RoundedCornerShape(large)
-    index == 0 -> RoundedCornerShape(topStart = large, topEnd = large, bottomStart = small, bottomEnd = small)
-    index == count - 1 -> RoundedCornerShape(topStart = small, topEnd = small, bottomStart = large, bottomEnd = large)
-    else -> RoundedCornerShape(small)
-}
+/** Corner radii for M3 Expressive grouped lists. Bundle: shared, in core/design. */
+fun segmentShape(index: Int, count: Int, large: Dp = 24.dp, small: Dp = 6.dp): Shape =
+    bundle.core.design.segmentShape(index, count, large, small)
 
 /** Space between the rows of a grouped list. */
 val SEGMENT_GAP = 2.dp

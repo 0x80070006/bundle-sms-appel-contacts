@@ -1,0 +1,551 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bundle: French for the texts GrapheneOS Messaging and Twill added after upstream's
+     translations (values-fr/strings.xml is upstream's and stays as it is). -->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="conversation_picker_open_failed">Impossible d\'ouvrir la conversation. Réessayez.</string>
+    <string name="sms_warning_title">Les SMS ne sont pas privés</string>
+    <string name="sms_warning_description">Les SMS ne sont pas chiffrés. Pour tout ce qui est sensible, utilisez une app avec chiffrement de bout en bout.</string>
+    <string name="set_default_sms_app_procedure">Définissez <xliff:g id="app_name" example="Messaging">%1$s</xliff:g> comme app SMS par défaut dans Paramètres > Applications > <xliff:g id="app_name" example="Messaging">%1$s</xliff:g> > Application SMS.</string>
+    <string name="set_default_sms_app_procedure_description">Définissez <xliff:g id="app_name" example="Messaging">%1$s</xliff:g> comme app SMS par défaut dans Paramètres, Applications, <xliff:g id="app_name" example="Messaging">%1$s</xliff:g>, Application SMS.</string>
+    <string name="missing_permissions_list">Encore nécessaire : <xliff:g id="permissions" example="SMS, Contacts">%1$s</xliff:g></string>
+    <string name="conversation_message_selection_title">%d</string>
+    <string name="conversation_message_select">Sélectionner</string>
+    <string name="conversation_attachment_open">Ouvrir</string>
+    <string name="mediapicker_contact_title">Choisir un contact</string>
+    <string name="conversation_media_picker_allow_camera">Autoriser l\'appareil photo</string>
+    <string name="conversation_media_picker_add_more_content_description">Ajouter une autre photo ou vidéo</string>
+    <string name="conversation_media_picker_camera_permission_message">L\'accès à l\'appareil photo est nécessaire pour prendre des photos et des vidéos ici.</string>
+    <string name="conversation_media_picker_caption_hint">Ajouter une légende</string>
+    <string name="conversation_media_picker_close_content_description">Fermer le sélecteur de médias</string>
+    <string name="conversation_media_picker_photo_mode">Photo</string>
+    <string name="conversation_media_picker_remove_attachment_content_description">Retirer la pièce jointe</string>
+    <string name="conversation_media_picker_cycle_flash_mode_content_description">Changer le mode flash</string>
+    <string name="conversation_media_picker_video_mode">Vidéo</string>
+    <string name="action_save_attachment">Enregistrer la pièce jointe</string>
+    <string name="message_title_download_secondary_user">MMS indisponible pour cet utilisateur</string>
+    <string name="message_status_download_secondary_user">Téléchargez-le depuis l\'utilisateur principal</string>
+    <string name="close_selection">Fermer la sélection</string>
+    <string name="more_options">Plus d\'options</string>
+    <string name="action_pin">Épingler</string>
+    <string name="action_unpin">Désépingler</string>
+    <plurals name="delete_messages_confirmation_dialog_title">
+        <item quantity="one">Supprimer ce message ?</item>
+        <item quantity="many">Supprimer ces %d messages ?</item>
+        <item quantity="other">Supprimer ces %d messages ?</item>
+    </plurals>
+    <string name="new_chat_query_hint">Saisissez un nom ou un numéro</string>
+    <string name="recipient_selection_query_hint_more">Quelqu\'un d\'autre ?</string>
+    <string name="recipient_selection_selected_recipient_content_description">Destinataire sélectionné : <xliff:g id="recipient">%1$s</xliff:g></string>
+    <string name="recipient_selection_remove_selected_recipient_content_description">Retirer <xliff:g id="recipient">%1$s</xliff:g></string>
+    <string name="new_chat_sim_selector_prefix">Avec :</string>
+    <string name="new_chat_sim_selector_chip_content_description"><xliff:g id="sim">%1$s</xliff:g> sélectionnée, choisir la SIM</string>
+    <string name="notification_location">Position</string>
+    <string name="notification_file">Fichier</string>
+    <string name="notification_unsupported_file">Fichier non pris en charge</string>
+    <string name="notification_retry_prompt">Réessayer</string>
+    <plurals name="notification_more_conversations">
+        <item quantity="one"><xliff:g id="count">%d</xliff:g> autre conversation avec de nouveaux messages</item>
+        <item quantity="many"><xliff:g id="count">%d</xliff:g> autres conversations avec de nouveaux messages</item>
+        <item quantity="other"><xliff:g id="count">%d</xliff:g> autres conversations avec de nouveaux messages</item>
+    </plurals>
+    <string name="photo_viewer_image_content_description">Image en pièce jointe</string>
+    <string name="photo_viewer_load_error">Impossible de charger l\'image</string>
+    <string name="photo_viewer_empty">Aucune image</string>
+    <string name="photo_viewer_details_title">Détails de l\'image</string>
+    <plurals name="photos_saved">
+        <item quantity="one"><xliff:g id="quantity">%d</xliff:g> photo enregistrée</item>
+        <item quantity="many"><xliff:g id="quantity">%d</xliff:g> photos enregistrées</item>
+        <item quantity="other"><xliff:g id="quantity">%d</xliff:g> photos enregistrées</item>
+    </plurals>
+    <plurals name="videos_saved">
+        <item quantity="one"><xliff:g id="quantity">%d</xliff:g> vidéo enregistrée</item>
+        <item quantity="many"><xliff:g id="quantity">%d</xliff:g> vidéos enregistrées</item>
+        <item quantity="other"><xliff:g id="quantity">%d</xliff:g> vidéos enregistrées</item>
+    </plurals>
+    <string name="auto_retrieve_mms_secondary_user_summary">Seul l\'utilisateur principal peut télécharger les MMS</string>
+    <string name="default_sms_app"><xliff:g id="app_name">%s</xliff:g></string>
+    <string name="invalid_self_phone_number">Numéro de téléphone non valide. Essayez le format international, commençant par +.</string>
+    <string name="in_conversation_sound_pref_title">Sons dans la conversation</string>
+    <string name="in_conversation_sound_pref_summary">Émet un son discret pour un message reçu dans la conversation affichée. Les conversations muettes ou en pause restent silencieuses.</string>
+    <string name="message_details_unavailable">Les détails du message ne sont pas disponibles.</string>
+    <string name="message_details_message_label">Message</string>
+    <string name="message_details_status_label">État</string>
+    <string name="message_details_delivery_label">Distribution</string>
+    <string name="message_details_type_label">Type</string>
+    <string name="message_details_from_label">De</string>
+    <string name="message_details_to_label">À</string>
+    <string name="message_details_sent_label">Envoyé</string>
+    <string name="message_details_received_label">Reçu</string>
+    <string name="message_details_size_label">Taille</string>
+    <string name="message_details_priority_label">Priorité</string>
+    <string name="message_details_debug_label">Débogage</string>
+    <string name="cant_send_group_mms_without_self_phone_number">Les messages de groupe nécessitent votre numéro de téléphone. Ajoutez-le dans les paramètres.</string>
+    <string name="conversation_add_people">Ajouter des personnes</string>
+    <string name="conversation_new_group">Nouveau groupe</string>
+    <string name="action_more_options">Plus d\'options</string>
+    <string name="action_contact_info">Infos du contact</string>
+    <string name="action_send_message">Envoyer le message</string>
+    <string name="conversation_cannot_reply">Vous ne pouvez pas répondre à cet expéditeur</string>
+    <string name="conversation_audio_recording_slide_to_cancel">Faites glisser pour annuler</string>
+    <string name="subject_dialog_title">Objet</string>
+    <string name="conversation_show_subject_field">Afficher le champ Objet</string>
+    <string name="conversation_switch_sims">Changer de SIM</string>
+    <string name="failed_saving_vcard_to_contacts">Impossible d\'ajouter le contact</string>
+    <string name="forward_picker_empty_text">Saisissez le nom ou le numéro du destinataire</string>
+    <string name="conversation_detail_no_selection_text">Aucune conversation sélectionnée</string>
+    <string name="conversation_pane_title">Conversation</string>
+    <string name="conversation_list_start_chat">Nouvelle discussion</string>
+    <string name="conversation_list_scroll_to_top">Revenir en haut</string>
+    <string name="conversation_list_status_unread">Non lu</string>
+    <string name="conversation_list_status_pinned">Épinglée</string>
+    <string name="conversation_list_status_notifications_off">Notifications désactivées</string>
+    <string name="conversation_list_status_snoozed">En pause</string>
+    <string name="conversation_list_status_work_profile">Profil professionnel</string>
+    <string name="conversation_list_show_conversation_actions">Afficher les actions pour <xliff:g id="conversation">%1$s</xliff:g></string>
+    <string name="conversation_list_toggle_selection">Sélectionner ou désélectionner <xliff:g id="contact">%1$s</xliff:g></string>
+    <string name="conversation_segment_counter_multi"><xliff:g id="remaining" example="154">%1$d</xliff:g>/<xliff:g id="segments" example="2">%2$d</xliff:g></string>
+    <plurals name="conversation_segment_counter_content_description">
+        <item quantity="one"><xliff:g id="remaining" example="3">%1$d</xliff:g> caractère restant dans la partie en cours, le message sera envoyé en <xliff:g id="segments" example="2">%2$d</xliff:g> SMS</item>
+        <item quantity="many"><xliff:g id="remaining" example="154">%1$d</xliff:g> caractères restants dans la partie en cours, le message sera envoyé en <xliff:g id="segments" example="2">%2$d</xliff:g> SMS</item>
+        <item quantity="other"><xliff:g id="remaining" example="154">%1$d</xliff:g> caractères restants dans la partie en cours, le message sera envoyé en <xliff:g id="segments" example="2">%2$d</xliff:g> SMS</item>
+    </plurals>
+    <plurals name="conversation_segment_counter_single_content_description">
+        <item quantity="one"><xliff:g id="remaining" example="1">%1$d</xliff:g> caractère restant avant que le message soit divisé en plusieurs SMS</item>
+        <item quantity="many"><xliff:g id="remaining" example="9">%1$d</xliff:g> caractères restants avant que le message soit divisé en plusieurs SMS</item>
+        <item quantity="other"><xliff:g id="remaining" example="9">%1$d</xliff:g> caractères restants avant que le message soit divisé en plusieurs SMS</item>
+    </plurals>
+    <string name="recipient_picker_no_results_text">Aucun contact trouvé</string>
+    <string name="conversation_blocked_banner_title">Bloqué</string>
+    <string name="conversation_blocked_banner_message">Débloquez cet expéditeur pour recevoir ses messages</string>
+    <string name="conversation_blocked_banner_action">Débloquer</string>
+    <plurals name="snooze_chat_dialog_title">
+        <item quantity="one">Mettre la conversation en pause</item>
+        <item quantity="many">Mettre les conversations en pause</item>
+        <item quantity="other">Mettre les conversations en pause</item>
+    </plurals>
+    <plurals name="snooze_chat_dialog_message">
+        <item quantity="one">Vous ne recevrez pas de notifications de cette conversation pendant la durée choisie.</item>
+        <item quantity="many">Vous ne recevrez pas de notifications de ces conversations pendant la durée choisie.</item>
+        <item quantity="other">Vous ne recevrez pas de notifications de ces conversations pendant la durée choisie.</item>
+    </plurals>
+    <string name="snooze_chat_dialog_confirm">Mettre en pause</string>
+    <string name="snooze_chat_option_one_hour">1 heure</string>
+    <string name="snooze_chat_option_eight_hours">8 heures</string>
+    <string name="snooze_chat_option_twenty_four_hours">24 heures</string>
+    <string name="snooze_chat_option_always">Toujours</string>
+    <string name="snooze_chat_setting_title">Mettre en pause</string>
+    <string name="unsnooze_chat_setting_title">Réactiver les notifications</string>
+    <string name="blocked_contacts_empty">Aucun contact bloqué</string>
+    <string name="blocked_contacts_selection_title"><xliff:g id="count">%d</xliff:g> sélectionné(s)</string>
+    <string name="blocked_contacts_clear_selection_content_description">Effacer la sélection</string>
+    <string name="share_search">Rechercher</string>
+    <string name="share_search_hint">Rechercher des conversations</string>
+    <string name="share_search_clear">Effacer la recherche</string>
+    <string name="share_selection_count">%1$d sélectionné(s)</string>
+    <string name="share_selection_clear">Effacer la sélection</string>
+    <string name="share_selection_next">Suivant</string>
+    <string name="share_selection_remove">Retirer %1$s de la sélection</string>
+    <string name="share_recent_conversations_title">Conversations récentes</string>
+    <string name="share_recent_show_more_action">Afficher plus</string>
+    <string name="share_recent_show_less_action">Afficher moins</string>
+    <string name="share_contacts_permission_title">Partager avec vos contacts</string>
+    <string name="share_contacts_permission_rationale">Autorisez l\'accès à vos contacts pour retrouver et écrire rapidement aux personnes que vous connaissez.</string>
+    <string name="share_contacts_permission_action">Autoriser l\'accès</string>
+    <string name="share_dropped_content">Une partie du contenu partagé n\'a pas pu être ajoutée</string>
+    <string name="share_no_shareable_content">Impossible de partager le contenu</string>
+    <string name="privacy_settings_activity_title">Confidentialité</string>
+    <string name="youtube_link_previews_pref_title">Aperçus des liens YouTube</string>
+    <string name="youtube_link_previews_pref_summary">Affiche les miniatures des liens YouTube dans les conversations. Elles sont alors récupérées auprès de YouTube, ce qui peut réduire la confidentialité</string>
+    <string name="sim_selector_item_title">Envoyer avec</string>
+    <string name="sim_selector_sheet_title">Envoyer depuis</string>
+    <string name="sim_selector_item_selected">Sélectionnée</string>
+    <string name="debug_emulated_sim_display_name">SIM de test <xliff:g id="sim_slot_number">%s</xliff:g></string>
+    <string name="conversation_message_sim_annotation">via <xliff:g id="sim_name" example="SIM 2">%1$s</xliff:g></string>
+    <string name="conversation_send_sim_annotation">Envoi avec <xliff:g id="sim_name" example="SIM 2">%1$s</xliff:g></string>
+    <string name="audio_record_stop_content_description">Arrêter l\'enregistrement et joindre l\'audio</string>
+    <string name="audio_recording_finalizing_attachment_label">Finalisation de l\'audio</string>
+    <string name="widget_picker_empty_text">Saisissez un nom ou un numéro pour choisir une conversation</string>
+    <plurals name="conversations_deleted">
+        <item quantity="one">@string/conversation_deleted</item>
+        <item quantity="many">%d conversations supprimées</item>
+        <item quantity="other">%d conversations supprimées</item>
+    </plurals>
+    <plurals name="failed_to_delete_conversations">
+        <item quantity="one">Impossible de supprimer une conversation</item>
+        <item quantity="many">Impossible de supprimer %d conversations</item>
+        <item quantity="other">Impossible de supprimer %d conversations</item>
+    </plurals>
+    <string name="incoming_messages_channel">Messages reçus</string>
+    <string name="alerts_channel">Alertes</string>
+    <string name="mark_as_read">Marquer comme lu</string>
+    <string name="mark_as_unread">Marquer comme non lu</string>
+    <string name="web_link_previews_pref_title">Aperçus des liens Web</string>
+    <string name="web_link_previews_pref_summary">Affiche un titre, une description et une image pour les liens dans les conversations. La page liée est alors chargée, ce qui révèle votre adresse IP à ce site et peut réduire la confidentialité</string>
+    <string name="send_delay_pref_title">Différer l\'envoi</string>
+    <string name="send_delay_pref_summary">Attend 3 secondes avant d\'envoyer. Appuyez sur le bouton d\'envoi pendant le compte à rebours pour annuler</string>
+    <string name="send_delay_cancel">Annuler l\'envoi</string>
+    <string name="send_long_press_options">Autres options d\'envoi</string>
+    <string name="unread_on_top_pref_title">Non lus en haut</string>
+    <string name="unread_on_top_pref_summary">Affiche les conversations non lues, y compris celles marquées comme non lues, au-dessus des autres. Les conversations épinglées restent en premier</string>
+    <string name="long_sms_as_mms_pref_title">Envoyer les longs messages en MMS</string>
+    <string name="long_sms_as_mms_pref_summary">Envoie un texte plus long qu\'un SMS en un seul MMS plutôt qu\'en plusieurs SMS</string>
+    <string name="schedule_message_menu">Programmer le message</string>
+    <string name="schedule_message_title">Programmer le message</string>
+    <string name="schedule_message_empty_draft">Écrivez d\'abord un message, puis programmez-le ici</string>
+    <string name="schedule_message_attachments_unsupported">Les messages programmés ne peuvent contenir que du texte. Retirez les pièces jointes pour programmer</string>
+    <string name="schedule_message_pick_time">Heure</string>
+    <string name="schedule_message_confirm">Programmer</string>
+    <string name="schedule_message_time_in_past">Choisissez une heure à venir</string>
+    <string name="schedule_message_scheduled_header">Programmés</string>
+    <string name="schedule_message_none">Aucun message programmé</string>
+    <string name="schedule_message_cancel">Annuler le message programmé</string>
+    <string name="schedule_message_scheduled_toast">Message programmé</string>
+    <string name="schedule_message_send_failed">Un message programmé n\'a pas pu être envoyé</string>
+    <string name="schedule_message_failed_channel">Messages programmés</string>
+    <string name="sms_settings_title">Paramètres SMS</string>
+    <string name="sms_settings_summary">SMS et MMS via votre opérateur</string>
+    <string name="scheduled_messages_title">Messages programmés</string>
+    <plurals name="scheduled_messages_indicator_description">
+        <item quantity="one">%d message programmé</item>
+        <item quantity="many">%d messages programmés</item>
+        <item quantity="other">%d messages programmés</item>
+    </plurals>
+    <string name="nostr_settings_title">Paramètres Nostr</string>
+    <string name="nostr_settings_summary">Messages privés via Nostr</string>
+    <string name="nostr_account_header">Compte</string>
+    <string name="nostr_signed_out_summary">Nostr reste désactivé tant que vous n\'êtes pas connecté. La connexion relie l\'app aux relais ci-dessous, qui peuvent voir votre adresse IP.</string>
+    <string name="nostr_sign_in_amber">Se connecter avec Amber</string>
+    <string name="nostr_sign_in_amber_summary">Votre clé privée reste dans Amber</string>
+    <string name="nostr_sign_in_amber_missing">Installez l\'app de signature Amber pour utiliser cette option</string>
+    <string name="nostr_sign_in_key">Utiliser une clé privée</string>
+    <string name="nostr_sign_in_key_summary">Collez une nsec existante ou créez une clé, stockée chiffrée sur cet appareil</string>
+    <string name="nostr_private_key_explainer">Votre clé est chiffrée par le matériel sécurisé de ce téléphone et ne le quitte jamais.</string>
+    <string name="nostr_private_key_hint">Clé privée (nsec…)</string>
+    <string name="nostr_private_key_invalid">Cette clé privée n\'est pas valide</string>
+    <string name="nostr_create_new_key">Créer plutôt une nouvelle clé</string>
+    <string name="nostr_sign_in">Se connecter</string>
+    <string name="nostr_sign_in_failed">La connexion avec Amber n\'a pas abouti</string>
+    <string name="nostr_signed_in_as">Connecté en tant que</string>
+    <string name="nostr_npub_copied">Clé publique copiée</string>
+    <string name="nostr_sign_in_method">Méthode de connexion</string>
+    <string name="nostr_method_amber">Amber (la clé reste dans Amber)</string>
+    <string name="nostr_method_local">Clé privée stockée sur cet appareil</string>
+    <string name="nostr_sign_out">Se déconnecter</string>
+    <string name="nostr_sign_out_local_warning">Votre clé privée sera supprimée de ce téléphone. Si vous ne l\'avez pas sauvegardée, vous perdrez définitivement cette identité Nostr.</string>
+    <string name="nostr_sign_out_amber_note">L\'app cessera d\'envoyer et de recevoir des messages Nostr. Votre clé reste en sécurité dans Amber.</string>
+    <string name="nostr_copy_nsec">Copier la clé privée pour la sauvegarder</string>
+    <string name="nostr_nsec_copied">Clé privée copiée. Rangez-la en lieu sûr et videz le presse-papiers</string>
+    <string name="nostr_relays_header">Relais des messages</string>
+    <string name="nostr_relays_summary">Les serveurs qui transportent vos messages. Ils ne peuvent pas les lire, mais voient votre adresse IP</string>
+    <string name="nostr_add_relay">Ajouter un relais de messages</string>
+    <string name="nostr_relays_section">Relais</string>
+    <string name="nostr_add">Ajouter</string>
+    <string name="nostr_remove_relay">Retirer le relais</string>
+    <string name="nostr_relay_invalid">Cette adresse de relais n\'est pas valide</string>
+    <string name="nostr_chat_subtitle">Nostr · %s</string>
+    <string name="nostr_chat_empty">Les messages sont chiffrés de bout en bout avec Nostr (NIP-17). Dites bonjour.</string>
+    <string name="nostr_status_sending">Envoi…</string>
+    <string name="nostr_status_failed">Non envoyé. Appuyez pour réessayer</string>
+    <string name="nostr_composer_hint">Message Nostr</string>
+    <string name="nostr_composer_signed_out">Connectez-vous à Nostr dans les paramètres pour répondre</string>
+    <string name="inbox_section_sms">SMS</string>
+    <string name="inbox_section_nostr">Nostr</string>
+    <string name="inbox_section_expand">Développer</string>
+    <string name="inbox_section_collapse">Réduire</string>
+    <string name="inbox_new_nostr_chat">Nouvelle discussion Nostr</string>
+    <string name="inbox_new_nostr_chat_hint">Nom, nom@domaine ou npub</string>
+    <string name="inbox_new_nostr_chat_invalid">Utilisateur Nostr introuvable. Vérifiez l\'adresse ou collez sa npub</string>
+    <string name="inbox_start_chat">Nouvelle discussion</string>
+    <string name="inbox_nostr_empty">Aucune discussion Nostr pour l\'instant. Appuyez de manière prolongée sur Nouvelle discussion pour démarrer une discussion ou un groupe.</string>
+    <string name="inbox_you_prefix">"Vous : "</string>
+    <string name="inbox_pinned">Épinglées</string>
+    <string name="inbox_pin">Épingler</string>
+    <string name="inbox_unpin">Désépingler</string>
+    <string name="inbox_mark_read">Marquer comme lu</string>
+    <string name="inbox_mark_unread">Marquer comme non lu</string>
+    <string name="inbox_delete_conversation">Supprimer la conversation</string>
+    <string name="nostr_delivery_header">Réception des messages</string>
+    <string name="nostr_delivery_while_open">Seulement quand l\'app est ouverte</string>
+    <string name="nostr_delivery_while_open_summary">Aucune utilisation du réseau en arrière-plan. Les messages arrivent à l\'ouverture de l\'app</string>
+    <string name="nostr_delivery_periodic">Vérifier toutes les 15 minutes</string>
+    <string name="nostr_delivery_periodic_summary">Consomme peu de batterie. Les nouveaux messages peuvent mettre jusqu\'à 15 minutes à arriver</string>
+    <string name="nostr_delivery_always">Toujours connecté</string>
+    <string name="nostr_delivery_always_summary">Les messages arrivent instantanément. Affiche une notification permanente et consomme plus de batterie</string>
+    <string name="nostr_channel_messages">Messages Nostr</string>
+    <string name="nostr_photo">Photo</string>
+    <string name="nostr_file">Fichier</string>
+    <string name="inbox_group_name_hint">Nom du groupe (facultatif)</string>
+    <string name="inbox_group_members_hint">Membres</string>
+    <string name="inbox_group_members_help">Un par ligne : nom@domaine, npub ou clé publique. Au moins deux personnes</string>
+    <string name="inbox_group_members_invalid">Introuvable : %s</string>
+    <string name="inbox_create_group">Créer le groupe</string>
+    <string name="nostr_group_subtitle">Groupe Nostr · %d personnes</string>
+    <string name="nostr_group_info">Groupe</string>
+    <string name="nostr_contact_info">Contact</string>
+    <string name="nostr_group_rename_help">Tout le monde verra le nouveau nom avec votre prochain message</string>
+    <string name="nostr_group_members">%d personnes</string>
+    <string name="nostr_group_you">…et vous</string>
+    <string name="nostr_nip05_verified">Adresse Nostr vérifiée</string>
+    <string name="nostr_nip05_not_verified">non vérifiée</string>
+    <string name="nostr_profile_not_found">Aucun profil trouvé sur vos relais pour l\'instant</string>
+    <string name="nostr_refresh_profile">Actualiser le profil</string>
+    <string name="nostr_notifications_off">Les notifications sont désactivées</string>
+    <string name="nostr_notifications_off_summary">Appuyez pour autoriser les notifications, afin d\'être alerté des nouveaux messages Nostr</string>
+    <string name="nostr_attach">Joindre</string>
+    <string name="nostr_attach_photo">Photo</string>
+    <string name="nostr_attach_file">Fichier</string>
+    <string name="nostr_tap_to_load_photo">Appuyez pour charger la photo</string>
+    <string name="nostr_tap_to_download">Appuyez pour télécharger</string>
+    <string name="nostr_tap_to_save">Appuyez pour enregistrer</string>
+    <string name="nostr_file_saved">Fichier enregistré</string>
+    <string name="nostr_file_save_failed">Impossible d\'enregistrer le fichier</string>
+    <string name="nostr_upload_failed">Impossible d\'envoyer la pièce jointe. Vérifiez votre serveur de médias dans les paramètres Nostr</string>
+    <string name="nostr_file_too_large">Ce fichier est trop volumineux. La limite est de 25 Mo</string>
+    <string name="nostr_download_failed">Impossible de télécharger la pièce jointe</string>
+    <string name="nostr_media_header">Médias</string>
+    <string name="twill_invoice_title">Facture Lightning</string>
+    <string name="twill_invoice_summary">Facture Lightning de <xliff:g id="amount">%s</xliff:g></string>
+    <string name="twill_invoice_any_amount">Montant libre</string>
+    <string name="twill_invoice_expired">Expirée</string>
+    <string name="twill_invoice_expires_in">Expire dans <xliff:g id="time">%s</xliff:g></string>
+    <string name="twill_invoice_open">Ouvrir dans le portefeuille</string>
+    <string name="twill_invoice_copy">Copier</string>
+    <string name="twill_invoice_copied">Facture copiée</string>
+    <string name="twill_invoice_paid">Payée</string>
+    <string name="twill_invoice_paying">Paiement…</string>
+    <string name="twill_invoice_pay">Payer</string>
+    <string name="twill_invoice_pay_title">Payer <xliff:g id="amount">%s</xliff:g> ?</string>
+    <string name="twill_invoice_pay_warning">Le paiement se fait depuis votre portefeuille connecté et ne peut pas être annulé.</string>
+    <string name="twill_invoice_paid_amount"><xliff:g id="amount">%s</xliff:g> payés</string>
+    <string name="twill_invoice_no_wallet">Aucune app de portefeuille trouvée. Copiez plutôt la facture.</string>
+    <string name="nostr_search_relays">Rechercher des personnes inconnues</string>
+    <string name="nostr_search_relays_summary">Dans Nouvelle discussion, interroge aussi vos relais de recherche pour trouver des personnes que vous ne suivez pas. Ils voient ce que vous tapez</string>
+    <string name="nostr_search_relays_header">Relais de recherche</string>
+    <string name="nostr_add_search_relay">Ajouter un relais de recherche</string>
+    <string name="nostr_search_relays_list_summary">Servent à trouver des personnes et leurs profils</string>
+    <string name="nostr_paste">Coller</string>
+    <string name="nostr_wallet_header">Portefeuille</string>
+    <string name="nostr_wallet_connect">Connecter un portefeuille</string>
+    <string name="nostr_wallet_connect_summary">Payez des factures Lightning et envoyez des zaps depuis l\'app, avec Nostr Wallet Connect</string>
+    <string name="nostr_wallet_connect_explanation">Collez un lien Nostr Wallet Connect fourni par votre portefeuille (Alby Hub, Primal ou Coinos par exemple). Vos fonds restent dans votre portefeuille ; l\'app lui demande seulement de payer.</string>
+    <string name="nostr_wallet_connect_button">Connecter</string>
+    <string name="nostr_wallet_connected">Portefeuille connecté</string>
+    <string name="nostr_wallet_connected_summary">Paie les factures et les zaps. Appuyez pour voir le solde</string>
+    <string name="nostr_wallet_balance">Solde : <xliff:g id="amount">%s</xliff:g></string>
+    <string name="nostr_wallet_disconnect">Déconnecter le portefeuille</string>
+    <string name="nostr_wallet_disconnect_title">Déconnecter le portefeuille ?</string>
+    <string name="nostr_wallet_disconnect_text">L\'app oublie le lien de connexion. Pour payer à nouveau depuis l\'app, il faudra un nouveau lien de votre portefeuille.</string>
+    <string name="nostr_wallet_link_title">Connecter ce portefeuille ?</string>
+    <string name="nostr_wallet_link_text">Une app de portefeuille souhaite se connecter, pour que vous puissiez payer des factures et envoyer des zaps depuis l\'app. Vos fonds restent dans votre portefeuille.</string>
+    <string name="nostr_wallet_link_replaces">Il remplacera le portefeuille connecté auparavant.</string>
+    <string name="nostr_wallet_link_done">Portefeuille connecté</string>
+    <string name="nostr_wallet_bad_link">Ce n\'est pas un lien Nostr Wallet Connect.</string>
+    <string name="nostr_wallet_no_relay">Ce lien ne contient aucun relais utilisable.</string>
+    <string name="nostr_wallet_no_answer">Le service du portefeuille n\'a pas répondu. Vérifiez qu\'il est en ligne.</string>
+    <string name="nostr_wallet_nip04_only">Ce portefeuille ne propose que l\'ancien chiffrement (NIP-04), que l\'app ne prend pas en charge. Mettez-le à jour, ou utilisez-en un qui propose NIP-44.</string>
+    <string name="nostr_wallet_not_connected">Connectez d\'abord un portefeuille dans les paramètres Nostr.</string>
+    <string name="nostr_wallet_no_response">Le portefeuille n\'a pas répondu.</string>
+    <string name="nostr_wallet_error">Le portefeuille indique : <xliff:g id="message">%s</xliff:g></string>
+    <string name="nostr_wallet_signed_out">Connectez-vous d\'abord à Nostr.</string>
+    <string name="nostr_zap">Zap</string>
+    <string name="nostr_zap_title">Zapper <xliff:g id="name">%s</xliff:g></string>
+    <string name="nostr_zap_amount">Montant en sats</string>
+    <string name="nostr_zap_comment">Commentaire (facultatif)</string>
+    <string name="nostr_zap_zapping">Envoi du zap…</string>
+    <string name="nostr_zap_sent">Zap envoyé</string>
+    <string name="nostr_zap_no_wallet_note">Aucun portefeuille connecté : votre app de portefeuille s\'ouvre pour payer. Connectez-en un dans les paramètres Nostr pour zapper depuis l\'app.</string>
+    <string name="nostr_zap_no_profile">Impossible de charger le profil de <xliff:g id="name">%s</xliff:g>.</string>
+    <string name="nostr_zap_no_address"><xliff:g id="name">%s</xliff:g> n\'a pas d\'adresse Lightning.</string>
+    <string name="nostr_zap_not_supported">L\'adresse Lightning de <xliff:g id="name">%s</xliff:g> n\'accepte pas les zaps.</string>
+    <string name="nostr_zap_out_of_range">Ce montant n\'est pas accepté par cette adresse.</string>
+    <string name="nostr_zap_no_invoice">Aucune facture reçue.</string>
+    <string name="nostr_zap_refused">L\'adresse Lightning indique : <xliff:g id="message">%s</xliff:g></string>
+    <string name="nostr_zap_amount_mismatch">Le montant de la facture ne correspond pas.</string>
+    <string name="nostr_zap_sign_failed">Impossible de signer la demande de zap.</string>
+    <string name="nostr_zap_unreachable">Impossible de joindre <xliff:g id="host">%s</xliff:g>.</string>
+    <string name="nostr_load_pictures">Afficher les photos de profil</string>
+    <string name="nostr_load_pictures_summary">Charge les photos depuis les serveurs choisis par chaque personne, qui peuvent voir votre adresse IP</string>
+    <string name="nostr_auto_download">Télécharger les pièces jointes automatiquement</string>
+    <string name="nostr_auto_download_summary">Sinon, appuyez pour télécharger. Le téléchargement révèle votre adresse IP au serveur de fichiers de l\'expéditeur</string>
+    <string name="nostr_media_server">Serveur de médias</string>
+    <string name="nostr_media_server_summary">L\'endroit où vos pièces jointes sont envoyées. Les fichiers sont d\'abord chiffrés, le serveur ne peut donc pas les voir</string>
+    <string name="nostr_media_server_explainer">Un serveur Blossom qui stocke vos pièces jointes. Les fichiers sont chiffrés sur votre téléphone avant l\'envoi, et les photos perdent leurs informations de lieu et d\'appareil.</string>
+    <string name="nostr_media_server_invalid">Saisissez une adresse https</string>
+    <string name="nostr_save">Enregistrer</string>
+    <string name="twill_channel_connection">Connexion en arrière-plan</string>
+    <string name="twill_channel_connection_description">Affichée tant que l\'app reste connectée pour recevoir instantanément les messages Nostr ou Delta Chat</string>
+    <string name="twill_connection_title">Connecté à %s</string>
+    <string name="twill_connection_text">Réception des messages</string>
+    <string name="twill_send_failed">Échec de l\'envoi. Appuyez sur le message pour réessayer</string>
+    <string name="twill_chat_more_options">Plus d\'options</string>
+    <string name="twill_bubble_chat">Bulle</string>
+    <string name="twill_bubble_not_allowed">Autorisez les bulles pour les conversations de l\'app, puis réessayez</string>
+    <string name="twill_voice_needs_mic">Autorisez le micro pour enregistrer des messages vocaux</string>
+    <string name="twill_voice_failed">Impossible de démarrer l\'enregistrement</string>
+    <string name="twill_audio_play">Lire</string>
+    <string name="twill_audio_pause">Pause</string>
+    <string name="twill_message_actions">Réagir ou répondre</string>
+    <string name="twill_reply">Répondre</string>
+    <string name="twill_copy_text">Copier le texte</string>
+    <string name="twill_more_reactions">Plus de réactions</string>
+    <string name="twill_react">Réagir</string>
+    <string name="twill_any_emoji">N\'importe quel emoji</string>
+    <string name="twill_you">Vous</string>
+    <string name="twill_earlier_message">Message précédent</string>
+    <string name="twill_not_loaded">Non chargé</string>
+    <string name="twill_cancel_reply">Annuler la réponse</string>
+    <string name="twill_photo">Photo</string>
+    <string name="twill_delete_message">Supprimer</string>
+    <string name="twill_delete_message_title">Supprimer le message ?</string>
+    <string name="twill_delete_message_me_explained">Il sera supprimé de ce téléphone. Les autres membres de la discussion gardent leur copie.</string>
+    <string name="twill_delete_message_everyone_explained">Supprimez-le seulement de ce téléphone, ou demandez aux apps de tout le monde de le supprimer aussi. Les apps qui ne le gèrent pas peuvent garder leur copie.</string>
+    <string name="twill_delete_for_me">Supprimer pour moi</string>
+    <string name="twill_delete_for_everyone">Supprimer pour tout le monde</string>
+    <string name="twill_disappearing_messages">Messages éphémères</string>
+    <string name="twill_disappearing_explained_shared">Les nouveaux messages de cette discussion sont supprimés après la durée choisie, pour tous ses membres. Tout le monde voit le changement.</string>
+    <string name="twill_disappearing_explained_own">Les messages que vous envoyez dans cette discussion sont supprimés après la durée choisie, des relais et des apps qui le gèrent. Chacun choisit pour ses propres messages.</string>
+    <string name="twill_disappearing_off">Désactivés</string>
+    <string name="twill_disappearing_5_minutes">5 minutes</string>
+    <string name="twill_disappearing_1_hour">1 heure</string>
+    <string name="twill_disappearing_1_day">1 jour</string>
+    <string name="twill_disappearing_1_week">1 semaine</string>
+    <string name="twill_disappearing_5_weeks">5 semaines</string>
+    <string name="twill_disappearing_1_year">1 an</string>
+    <string name="twill_bubble_failed">Impossible d\'ouvrir une bulle</string>
+    <string name="twill_verified">Vérifié</string>
+    <string name="twill_request_explainer">Quelqu\'un de nouveau souhaite discuter. Acceptez pour répondre et lui indiquer que vous avez lu ses messages, ou bloquez-le pour ne plus jamais avoir de ses nouvelles.</string>
+    <string name="twill_request_accept">Accepter</string>
+    <string name="twill_request_block">Bloquer</string>
+    <string name="twill_chat_pane_title">Discussion</string>
+    <string name="inbox_new_chat">Nouvelle discussion</string>
+    <string name="inbox_new_group">Nouveau groupe</string>
+    <string name="inbox_new_conversation">Nouvelle discussion ou groupe %s</string>
+    <string name="inbox_request_prefix">"Demande : "</string>
+    <string name="inbox_group_no_contacts">Aucun contact pour l\'instant. Démarrez d\'abord une discussion, puis vous pourrez l\'ajouter à des groupes.</string>
+    <string name="inbox_group_member_count">Membres : %d</string>
+    <string name="deltachat_channel_messages">Messages Delta Chat</string>
+    <string name="deltachat_section">Delta Chat</string>
+    <string name="deltachat_new_chat">Nouvelle discussion Delta Chat</string>
+    <string name="deltachat_new_chat_hint">Lien d\'invitation ou adresse e-mail</string>
+    <string name="deltachat_new_chat_invalid">Ce n\'est ni un lien d\'invitation Delta Chat ni une adresse e-mail</string>
+    <string name="deltachat_empty">Aucune discussion Delta Chat pour l\'instant. Partagez votre lien d\'invitation depuis les paramètres Delta Chat, ou appuyez de manière prolongée sur Nouvelle discussion pour ouvrir celui de quelqu\'un.</string>
+    <string name="deltachat_composer_hint">Message Delta Chat</string>
+    <string name="deltachat_chat_empty">Les messages de cette discussion sont chiffrés de bout en bout. Dites bonjour.</string>
+    <string name="deltachat_chat_empty_unencrypted">Cette discussion n\'est pas chiffrée de bout en bout : c\'est un e-mail classique, lisible par les serveurs de messagerie. Les discussions ouvertes via un lien d\'invitation sont chiffrées.</string>
+    <string name="deltachat_upload_failed">Impossible d\'envoyer la pièce jointe</string>
+    <string name="deltachat_group_subtitle">Groupe · %d personnes</string>
+    <string name="deltachat_cannot_send">Vous ne pouvez pas écrire dans cette discussion</string>
+    <string name="deltachat_saved_subtitle">Notes pour vous-même, synchronisées avec vos autres appareils</string>
+    <string name="deltachat_device_subtitle">Messages du moteur Delta Chat</string>
+    <string name="deltachat_default_group_name">Groupe</string>
+    <string name="deltachat_settings_title">Paramètres Delta Chat</string>
+    <string name="deltachat_settings_summary">Discussions chiffrées par e-mail</string>
+    <string name="deltachat_profile_header">Profil</string>
+    <string name="deltachat_unavailable">Cette version de l\'app n\'inclut pas le moteur Delta Chat. Installez une version qui l\'inclut pour utiliser Delta Chat.</string>
+    <string name="deltachat_off_summary">Delta Chat reste désactivé tant que vous n\'avez pas créé de profil. Les messages sont chiffrés de bout en bout et passent par des serveurs de messagerie, qui voient votre adresse IP mais pas ce que vous écrivez.</string>
+    <string name="deltachat_setting_up">Configuration de votre profil…</string>
+    <string name="deltachat_setup_failed">La configuration a échoué</string>
+    <string name="deltachat_new_profile">Créer un profil</string>
+    <string name="deltachat_new_profile_summary">Obtenez une adresse gratuite et anonyme sur un relais. Aucun numéro ni e-mail nécessaire</string>
+    <string name="deltachat_new_profile_explainer">L\'app crée une adresse aléatoire sur le relais ci-dessous. Le nom est ce que les autres verront ; vous pouvez le laisser vide.</string>
+    <string name="deltachat_server">Relais</string>
+    <string name="deltachat_create">Créer</string>
+    <string name="deltachat_use_code">Utiliser un code de configuration</string>
+    <string name="deltachat_use_code_summary">Collez un code dcaccount: ou dclogin: fourni par le site d\'un relais</string>
+    <string name="deltachat_use_code_explainer">Collez le code (il commence par dcaccount: ou dclogin:).</string>
+    <string name="deltachat_code">Code de configuration</string>
+    <string name="deltachat_continue">Continuer</string>
+    <string name="deltachat_use_email">Utiliser une adresse e-mail existante</string>
+    <string name="deltachat_use_email_summary">Fonctionne avec la plupart des fournisseurs. Les messages aux personnes sans Delta Chat ne sont pas chiffrés</string>
+    <string name="deltachat_use_email_explainer">L\'app trouve automatiquement les serveurs de votre fournisseur. Votre mot de passe reste sur ce téléphone.</string>
+    <string name="deltachat_email">Adresse e-mail</string>
+    <string name="deltachat_password">Mot de passe</string>
+    <string name="deltachat_display_name">Votre nom</string>
+    <string name="deltachat_display_name_unset">Non défini</string>
+    <string name="deltachat_display_name_explainer">Visible par les personnes avec qui vous discutez.</string>
+    <string name="deltachat_address">Adresse</string>
+    <string name="deltachat_copied">Copié</string>
+    <string name="deltachat_share_invite">Partager le lien d\'invitation</string>
+    <string name="deltachat_share_invite_summary">Toute personne qui l\'ouvre peut démarrer avec vous une discussion chiffrée de bout en bout</string>
+    <string name="deltachat_copy_invite">Copier le lien d\'invitation</string>
+    <string name="deltachat_notifications_off_summary">Appuyez pour autoriser les notifications, afin d\'être alerté des nouveaux messages Delta Chat</string>
+    <string name="deltachat_remove_profile">Supprimer le profil</string>
+    <string name="deltachat_remove_warning">Votre profil Delta Chat, ses clés et tous les messages Delta Chat seront supprimés de ce téléphone. Sauf si le profil existe aussi sur un autre appareil, il ne pourra pas être récupéré.</string>
+    <string name="deltachat_remove">Supprimer</string>
+    <string name="deltachat_privacy_header">Confidentialité</string>
+    <string name="deltachat_read_receipts">Confirmations de lecture</string>
+    <string name="deltachat_read_receipts_summary">Indique aux autres quand vous avez lu leurs messages, et vous montre quand ils ont lu les vôtres</string>
+    <string name="twill_sms_off_summary">Désactivé. L\'app n\'est pas utilisée pour les SMS</string>
+    <string name="twill_use_without_sms">Utiliser l\'app sans les SMS</string>
+    <string name="twill_use_for_sms">Utiliser l\'app pour les SMS/MMS</string>
+    <string name="twill_use_for_sms_on">Cette app est votre app de SMS</string>
+    <string name="twill_use_for_sms_off">Désactivé. L\'app ne sert qu\'à Nostr et Delta Chat</string>
+    <string name="twill_turn_off_sms">Désactiver les SMS/MMS ?</string>
+    <string name="twill_turn_off_sms_explainer">L\'app n\'affichera plus les SMS et ne sera plus proposée comme app SMS. Vos SMS restent sur le téléphone, où votre app SMS par défaut peut les voir. Vous pourrez réactiver cette option dans les paramètres.</string>
+    <string name="twill_turn_off">Désactiver</string>
+    <string name="twill_sms_choose_other_app">Cette app est encore votre app SMS par défaut, qui reçoit tous les SMS. Choisissez une autre app SMS pour continuer à recevoir vos SMS.</string>
+    <string name="twill_choose_sms_app">Désactiver et choisir une app SMS</string>
+    <string name="twill_setup_hint">Les SMS sont désactivés dans l\'app. Configurez Nostr ou Delta Chat dans les paramètres pour commencer à discuter.</string>
+    <string name="twill_open_settings">Ouvrir les paramètres</string>
+    <string name="inbox_new_sms">Conversation SMS/MMS</string>
+    <string name="twill_search">Rechercher</string>
+    <string name="twill_search_hint">Rechercher dans cette conversation</string>
+    <string name="twill_search_close">Fermer la recherche</string>
+    <string name="twill_search_count">%1$d sur %2$d</string>
+    <string name="twill_search_no_results">Aucun résultat</string>
+    <string name="twill_search_older">Résultat précédent</string>
+    <string name="twill_search_newer">Résultat suivant</string>
+    <string name="inbox_picker_service">Discussion ou groupe %s</string>
+    <string name="inbox_start_chat_choose">Choisissez où démarrer une discussion</string>
+    <string name="twill_widget_list_name">Conversations</string>
+    <string name="twill_widget_list_description">Vos dernières conversations SMS, Nostr et Delta Chat</string>
+    <string name="twill_widget_conversation_name">Conversation</string>
+    <string name="twill_widget_conversation_description">Messages récents d\'une conversation</string>
+    <string name="twill_widget_empty">Aucune conversation pour l\'instant</string>
+    <string name="twill_widget_needs_setup">Ouvrez l\'app pour terminer la configuration</string>
+    <string name="twill_widget_choose">Appuyez pour choisir une conversation</string>
+    <string name="twill_widget_no_messages">Aucun message pour l\'instant</string>
+    <string name="twill_widget_compose">Envoyer un message</string>
+    <string name="twill_widget_pick_title">Choisir une conversation</string>
+    <string name="twill_widget_pick_empty">Aucune conversation à afficher</string>
+    <string name="twill_widget_preview_name_1">Alex</string>
+    <string name="twill_widget_preview_name_2">Sam</string>
+    <string name="twill_widget_preview_name_3">Club de lecture</string>
+    <string name="twill_widget_preview_text_1">À 19 h !</string>
+    <string name="twill_widget_preview_text_2">Vous : Ça marche</string>
+    <string name="twill_widget_preview_text_3">Jordan : Chapitre 4 pour la semaine prochaine</string>
+    <string name="twill_widget_preview_time_1">Maintenant</string>
+    <string name="twill_widget_preview_time_2">12 min</string>
+    <string name="twill_widget_preview_time_3">mar.</string>
+    <string name="twill_widget_preview_message_1">C\'est toujours bon pour ce soir ?</string>
+    <string name="twill_widget_preview_message_2">Oui ! J\'apporte le dessert</string>
+    <string name="twill_inbox_search_hint">Rechercher dans les messages</string>
+    <string name="twill_inbox_search_clear">Effacer la recherche</string>
+    <string name="twill_inbox_search_conversations">Conversations</string>
+    <string name="twill_inbox_search_messages">Messages</string>
+    <string name="twill_inbox_search_no_results">Aucune conversation ni aucun message trouvé</string>
+    <string name="twill_sms_archived_summary">Les conversations que vous avez archivées</string>
+    <string name="twill_sms_blocked_summary">Les personnes dont les messages sont bloqués</string>
+    <string name="twill_debug_summary">Options pour les développeurs de cette version de test</string>
+    <string name="twill_settings_services">Services</string>
+    <string name="twill_settings_inbox">Boîte de réception</string>
+    <string name="twill_settings_about">À propos</string>
+    <string name="twill_settings_conversations">Conversations</string>
+    <string name="twill_settings_notifications_sounds">Notifications et sons</string>
+    <string name="twill_settings_more">Plus</string>
+    <string name="deltachat_invite_header">Inviter des personnes</string>
+    <string name="twill_bottom_bar">Barre du bas</string>
+    <string name="twill_bottom_bar_summary">Quand plusieurs services sont activés, affiche un onglet par service plutôt que des sections</string>
+    <string name="deltachat_qr_title">Code QR</string>
+    <string name="deltachat_qr_mine">Mon code QR</string>
+    <string name="deltachat_qr_scan">Scanner</string>
+    <string name="deltachat_qr_mine_hint">Faites scanner ce code avec Delta Chat ou cette app pour démarrer une discussion chiffrée de bout en bout. Cela fonctionne aussi en appel vidéo.</string>
+    <string name="deltachat_qr_scan_hint">Pointez l\'appareil photo vers le code QR Delta Chat d\'une personne pour discuter avec elle ou rejoindre son groupe.</string>
+    <string name="deltachat_qr_copy">Copier le lien</string>
+    <string name="deltachat_qr_allow_camera">Autoriser l\'appareil photo</string>
+    <string name="deltachat_qr_not_invite">Ce n\'est pas un code d\'invitation Delta Chat</string>
+    <string name="deltachat_qr_group_title">Code QR du groupe</string>
+    <string name="deltachat_qr_group_invite">Inviter avec un code QR</string>
+    <string name="deltachat_qr_group_hint">Toute personne qui scanne ce code avec Delta Chat ou cette app rejoint le groupe. Ne le partagez qu\'avec les personnes que vous voulez y voir.</string>
+    <string name="deltachat_qr_settings_summary">Affichez le vôtre ou scannez celui de quelqu\'un pour démarrer une discussion</string>
+</resources>

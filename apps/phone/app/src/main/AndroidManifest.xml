@@ -34,6 +34,7 @@
     </queries>
 
     <application
+        android:localeConfig="@xml/locales_config"
         android:name=".DialtoneApplication"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
@@ -47,10 +48,7 @@
             android:exported="true"
             android:launchMode="singleTask"
             android:windowSoftInputMode="adjustResize">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+            <!-- Bundle: the launcher entry is an alias per icon colour (see the bundle icon aliases below). -->
             <!-- Android's links to the phone app's call settings and quick responses. -->
             <intent-filter>
                 <action android:name="android.telecom.action.SHOW_CALL_SETTINGS" />
@@ -234,5 +232,124 @@
             android:name=".vvm.DeviceProvisionedJobService"
             android:exported="false"
             android:permission="android.permission.BIND_JOB_SERVICE" />
+        <!-- BUNDLE-ICONS: launcher icon colours, chosen in Appearance (scripts/make_icons.py). -->
+        <activity-alias
+            android:name="bundle.launcher.Default"
+            android:targetActivity="app.dialtone.phone.MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name="bundle.launcher.Black"
+            android:targetActivity="app.dialtone.phone.MainActivity"
+            android:icon="@mipmap/bundle_ic_black"
+            android:roundIcon="@mipmap/bundle_ic_black"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name="bundle.launcher.Blue"
+            android:targetActivity="app.dialtone.phone.MainActivity"
+            android:icon="@mipmap/bundle_ic_blue"
+            android:roundIcon="@mipmap/bundle_ic_blue"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name="bundle.launcher.Orange"
+            android:targetActivity="app.dialtone.phone.MainActivity"
+            android:icon="@mipmap/bundle_ic_orange"
+            android:roundIcon="@mipmap/bundle_ic_orange"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name="bundle.launcher.Red"
+            android:targetActivity="app.dialtone.phone.MainActivity"
+            android:icon="@mipmap/bundle_ic_red"
+            android:roundIcon="@mipmap/bundle_ic_red"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name="bundle.launcher.Pink"
+            android:targetActivity="app.dialtone.phone.MainActivity"
+            android:icon="@mipmap/bundle_ic_pink"
+            android:roundIcon="@mipmap/bundle_ic_pink"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name="bundle.launcher.Purple"
+            android:targetActivity="app.dialtone.phone.MainActivity"
+            android:icon="@mipmap/bundle_ic_purple"
+            android:roundIcon="@mipmap/bundle_ic_purple"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name="bundle.launcher.Indigo"
+            android:targetActivity="app.dialtone.phone.MainActivity"
+            android:icon="@mipmap/bundle_ic_indigo"
+            android:roundIcon="@mipmap/bundle_ic_indigo"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name="bundle.launcher.Teal"
+            android:targetActivity="app.dialtone.phone.MainActivity"
+            android:icon="@mipmap/bundle_ic_teal"
+            android:roundIcon="@mipmap/bundle_ic_teal"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name="bundle.launcher.Graphite"
+            android:targetActivity="app.dialtone.phone.MainActivity"
+            android:icon="@mipmap/bundle_ic_graphite"
+            android:roundIcon="@mipmap/bundle_ic_graphite"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <!-- /BUNDLE-ICONS -->
     </application>
 </manifest>

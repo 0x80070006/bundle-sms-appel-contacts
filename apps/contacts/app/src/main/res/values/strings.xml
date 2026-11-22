@@ -124,6 +124,19 @@
     <string name="settings_display">Display</string>
     <string name="sort_by">Name order</string>
     <string name="sort_by_summary">Sorts the list, and shows names as \"Last, First\" when set to last name</string>
+    <!-- Bundle: appearance, list layout and label order -->
+    <string name="settings_appearance_title">Appearance</string>
+    <string name="settings_appearance_summary">Theme, colours, contact pictures, language and icon, for all three apps</string>
+    <string name="settings_layout_title">Contacts list</string>
+    <string name="settings_layout_summary">Favorites, then everyone A–Z, or one section per label</string>
+    <string name="layout_classic">Classic</string>
+    <string name="layout_by_label">By label</string>
+    <string name="settings_label_order_title">Label order</string>
+    <string name="settings_label_order_summary">The order of the sections when the list is by label</string>
+    <string name="label_order_empty">You have no labels yet. Create one in Organize.</string>
+    <string name="move_up">Move %1$s up</string>
+    <string name="move_down">Move %1$s down</string>
+    <string name="other_contacts">Other contacts</string>
     <string name="settings_recents_title">Calls and texts in Recents</string>
     <string name="settings_recents_summary">Show calls and texts with your saved contacts in Highlights instead of contacts you\'ve opened. Needs call log and SMS access.</string>
     <string name="settings_accounts">Accounts</string>

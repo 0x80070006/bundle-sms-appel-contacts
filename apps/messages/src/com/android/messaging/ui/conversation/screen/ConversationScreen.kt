@@ -1,5 +1,11 @@
 package com.android.messaging.ui.conversation.screen
 
+import androidx.compose.runtime.collectAsState
+import com.android.messaging.ui.bundle.ChatStyleSheet
+import com.android.messaging.ui.bundle.ChatStyleStore
+import com.android.messaging.ui.bundle.LocalChatStyle
+import com.android.messaging.ui.bundle.LocalConversationCustomizeAction
+
 import android.content.Context
 import android.widget.Toast
 import androidx.activity.compose.LocalActivity
@@ -289,7 +295,19 @@ internal fun ConversationScreenScaffold(
             null
         }
 
+    // Bundle: this chat's style (its own, or the default) and the menu's "Customise chat".
+    val chatStyleStore = ChatStyleStore.get(bubbleContext)
+    val chatOverrides by chatStyleStore.overrides.collectAsState()
+    val chatDefault by chatStyleStore.default.collectAsState()
+    val chatStyle = chatStyleStore.styleFor(conversationId?.value, chatOverrides, chatDefault)
+    var isChatStyleSheetVisible by rememberSaveable { mutableStateOf(false) }
+    if (isChatStyleSheetVisible && conversationId != null) {
+        ChatStyleSheet(conversationId = conversationId.value, onDismiss = { isChatStyleSheetVisible = false })
+    }
+
     CompositionLocalProvider(
+        LocalChatStyle provides chatStyle,
+        LocalConversationCustomizeAction provides conversationId?.let { { isChatStyleSheetVisible = true } },
         LocalConversationBubbleAction provides bubbleAction,
         LocalSendLongPressActions provides sendLongPressActions,
         LocalDelayedSendUi provides delayedSendUi,

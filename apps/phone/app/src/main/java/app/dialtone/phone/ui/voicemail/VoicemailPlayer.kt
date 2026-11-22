@@ -1,5 +1,7 @@
 package app.dialtone.phone.ui.voicemail
 
+import app.dialtone.phone.util.tr
+
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.MediaPlayer
@@ -55,12 +57,12 @@ class VoicemailPlayer(private val context: Context) {
                 }
                 setOnErrorListener { _, _, _ ->
                     this@VoicemailPlayer.isPlaying = false
-                    this@VoicemailPlayer.error = "Couldn't play this voicemail"
+                    this@VoicemailPlayer.error = tr("Couldn't play this voicemail")
                     true
                 }
                 prepareAsync()
             }
-        }.onFailure { error = "Couldn't open this voicemail" }.getOrNull()
+        }.onFailure { error = tr("Couldn't open this voicemail") }.getOrNull()
     }
 
     fun seek(vm: Voicemail, fraction: Float) {

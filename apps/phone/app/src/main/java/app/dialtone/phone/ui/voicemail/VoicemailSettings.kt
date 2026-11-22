@@ -1,5 +1,7 @@
 package app.dialtone.phone.ui.voicemail
 
+import app.dialtone.phone.util.tr
+
 import android.telecom.TelecomManager
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Edit
@@ -91,9 +93,8 @@ fun statusBannerFor(accounts: List<VvmAccount>, health: VvmHealth): StatusBanner
     if (accounts.none { it.supported }) {
         return StatusBannerModel(
             Icons.Rounded.Voicemail,
-            "Visual voicemail isn't available",
-            "Your carrier isn't in Dialtone's list yet. New voicemails still show up as a " +
-                "notification, and you can dial in to listen.",
+            tr("Visual voicemail isn't available"),
+            tr("Your carrier isn't in this app's list yet. New voicemails still show up as a notification, and you can dial in to listen."),
             actionLabel = null, retry = false, isError = false,
         )
     }
@@ -101,21 +102,21 @@ fun statusBannerFor(accounts: List<VvmAccount>, health: VvmHealth): StatusBanner
     return when (health) {
         VvmHealth.Configuring -> StatusBannerModel(
             Icons.Rounded.Sync,
-            "Setting up visual voicemail",
-            "Talking to your carrier. This can take a few minutes the first time.",
-            "Check again", retry = true, isError = false,
+            tr("Setting up visual voicemail"),
+            tr("Talking to your carrier. This can take a few minutes the first time."),
+            tr("Check again"), retry = true, isError = false,
         )
         VvmHealth.NoConnection -> StatusBannerModel(
             Icons.Rounded.CloudOff,
-            "Can't reach your voicemail",
-            "Visual voicemail needs mobile data. Check that mobile data is on, then try again.",
-            "Try again", retry = true, isError = true,
+            tr("Can't reach your voicemail"),
+            tr("Visual voicemail needs mobile data. Check that mobile data is on, then try again."),
+            tr("Try again"), retry = true, isError = true,
         )
         VvmHealth.Failed -> StatusBannerModel(
             Icons.Rounded.ErrorOutline,
-            "Visual voicemail setup failed",
-            "Your carrier didn't accept the setup request. Try again, or open settings to see the log.",
-            "Try again", retry = true, isError = true,
+            tr("Visual voicemail setup failed"),
+            tr("Your carrier didn't accept the setup request. Try again, or open settings to see the log."),
+            tr("Try again"), retry = true, isError = true,
         )
         else -> null
     }

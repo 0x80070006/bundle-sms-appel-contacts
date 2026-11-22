@@ -42,6 +42,24 @@ class Settings(context: Context) {
         store.edit { it[SORT_MODE] = order.name }
     }
 
+    /** Bundle: Classic (Favorites, then A–Z) or by label. */
+    val listLayout: Flow<ListLayout> = store.data.map { prefs ->
+        ListLayout.entries.firstOrNull { it.name == prefs[LIST_LAYOUT] } ?: ListLayout.Classic
+    }
+
+    suspend fun setListLayout(layout: ListLayout) {
+        store.edit { it[LIST_LAYOUT] = layout.name }
+    }
+
+    /** Bundle: label names in the order the user chose (see [orderLabelTitles]). */
+    val labelOrder: Flow<List<String>> = store.data.map { prefs ->
+        prefs[LABEL_ORDER].orEmpty().split(LABEL_SEPARATOR).filter { it.isNotEmpty() }
+    }
+
+    suspend fun setLabelOrder(titles: List<String>) {
+        store.edit { it[LABEL_ORDER] = titles.joinToString(LABEL_SEPARATOR.toString()) }
+    }
+
     /** The list leaves out contacts with no phone number. */
     val hideWithoutPhone: Flow<Boolean> = store.data.map { it[HIDE_WITHOUT_PHONE] ?: false }
 
@@ -129,6 +147,11 @@ class Settings(context: Context) {
         val RECENT_VIEWS = stringPreferencesKey("recent_contact_views")
         val DISMISSED_DUPLICATES = stringSetPreferencesKey("dismissed_duplicate_contacts")
         val HIDE_WITHOUT_PHONE = booleanPreferencesKey("hide_contacts_without_phone")
+        // Bundle's own.
+        val LIST_LAYOUT = stringPreferencesKey("bundle_list_layout")
+        val LABEL_ORDER = stringPreferencesKey("bundle_label_order")
+        /** Label names can hold almost anything, but not a line break. */
+        const val LABEL_SEPARATOR = '\n'
         const val MAX_RECENT_VIEWS = 30
     }
 }

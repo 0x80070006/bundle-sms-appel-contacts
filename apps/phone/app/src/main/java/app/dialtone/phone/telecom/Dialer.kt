@@ -1,5 +1,7 @@
 package app.dialtone.phone.telecom
 
+import app.dialtone.phone.util.tr
+
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.role.RoleManager
@@ -30,7 +32,7 @@ object Dialer {
     @SuppressLint("MissingPermission")
     private fun place(context: Context, uri: Uri) {
         if (!context.hasPermission(Manifest.permission.CALL_PHONE)) {
-            Toast.makeText(context, "Phone permission is needed to place calls", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, tr("Phone permission is needed to place calls"), Toast.LENGTH_SHORT).show()
             return
         }
         context.getSystemService(TelecomManager::class.java)?.placeCall(uri, Bundle())
@@ -61,11 +63,11 @@ object Dialer {
 
     fun copy(context: Context, number: String) {
         context.getSystemService(ClipboardManager::class.java)
-            ?.setPrimaryClip(ClipData.newPlainText("Phone number", number))
+            ?.setPrimaryClip(ClipData.newPlainText(tr("Phone number"), number))
     }
 
     private fun safeStart(context: Context, intent: Intent) {
         runCatching { context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
-            .onFailure { Toast.makeText(context, "No app can handle that", Toast.LENGTH_SHORT).show() }
+            .onFailure { Toast.makeText(context, tr("No app can handle that"), Toast.LENGTH_SHORT).show() }
     }
 }

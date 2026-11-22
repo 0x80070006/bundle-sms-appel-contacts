@@ -1,0 +1,8 @@
+# Copy to signing.properties (git-ignored) to sign every app of the bundle with the same key.
+# The same key is required: the apps will share data through signature-protected permissions.
+# Paths are relative to the monorepo root. CI can use BUNDLE_KEYSTORE_FILE,
+# BUNDLE_KEYSTORE_PASSWORD, BUNDLE_KEY_ALIAS and BUNDLE_KEY_PASSWORD instead.
+storeFile=keystore/bundle.jks
+storePassword=
+keyAlias=bundle
+keyPassword=

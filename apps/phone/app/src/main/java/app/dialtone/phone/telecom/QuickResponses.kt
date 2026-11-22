@@ -1,5 +1,7 @@
 package app.dialtone.phone.telecom
 
+import app.dialtone.phone.util.tr
+
 import android.content.Context
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,11 +16,12 @@ import kotlinx.coroutines.flow.asStateFlow
 object QuickResponses {
     private const val PREFS = "quick_responses"
 
-    val DEFAULTS = listOf(
-        "Can't talk now. What's up?",
-        "I'll call you right back.",
-        "I'll call you later.",
-        "Can't talk now. Call me later?",
+    // Bundle: a getter, so the defaults follow the language in use.
+    val DEFAULTS get() = listOf(
+        tr("Can't talk now. What's up?"),
+        tr("I'll call you right back."),
+        tr("I'll call you later."),
+        tr("Can't talk now. Call me later?"),
     )
 
     private val state = MutableStateFlow<List<String>?>(null)

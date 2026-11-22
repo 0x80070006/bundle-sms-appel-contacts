@@ -1,5 +1,11 @@
 package com.android.messaging.ui.conversation.messages.ui.message
 
+import com.android.messaging.ui.bundle.LocalChatStyle
+import com.android.messaging.ui.bundle.incoming
+import com.android.messaging.ui.bundle.incomingContent
+import com.android.messaging.ui.bundle.outgoing
+import com.android.messaging.ui.bundle.outgoingContent
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -299,8 +305,9 @@ internal fun messageBubbleColor(
 ): Color {
     return when {
         isSelected -> MaterialTheme.colorScheme.primary
-        message.isIncoming -> MaterialTheme.colorScheme.surfaceContainerHigh
-        else -> MaterialTheme.colorScheme.primaryContainer
+        // Bundle: the colours chosen for this chat (or by default), else the theme's.
+        message.isIncoming -> LocalChatStyle.current.incoming(MaterialTheme.colorScheme.surfaceContainerHigh)
+        else -> LocalChatStyle.current.outgoing(MaterialTheme.colorScheme.primaryContainer)
     }
 }
 
@@ -311,8 +318,8 @@ private fun messageBubbleContentColor(
 ): Color {
     return when {
         isSelected -> MaterialTheme.colorScheme.onPrimary
-        message.isIncoming -> MaterialTheme.colorScheme.onSurface
-        else -> MaterialTheme.colorScheme.onPrimaryContainer
+        message.isIncoming -> LocalChatStyle.current.incomingContent(MaterialTheme.colorScheme.onSurface)
+        else -> LocalChatStyle.current.outgoingContent(MaterialTheme.colorScheme.onPrimaryContainer)
     }
 }
 

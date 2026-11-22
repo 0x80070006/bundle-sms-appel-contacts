@@ -33,6 +33,16 @@ configure<KtlintExtension> {
 }
 
 subprojects {
+    // Bundle: -Pbundle.javaToolchain=21 builds every module with that JDK (for example the one
+    // bundled in Android Studio) when no JDK 17 is installed. Without it, upstream's 17 is kept.
+    providers.gradleProperty("bundle.javaToolchain").orNull?.let { version ->
+        afterEvaluate {
+            extensions.findByType<JavaPluginExtension>()?.toolchain?.languageVersion?.set(
+                JavaLanguageVersion.of(version.toInt()),
+            )
+        }
+    }
+
     apply(plugin = "org.jlleitschuh.gradle.ktlint")
 
     configure<KtlintExtension> {

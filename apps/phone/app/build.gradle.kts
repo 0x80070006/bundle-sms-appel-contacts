@@ -1,6 +1,32 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+}
+
+// Bundle: package prefix shared by the three apps (gradle.properties at the monorepo root).
+val appIdPrefix = providers.gradleProperty("bundle.appIdPrefix").get()
+
+// Bundle: one signing key for every app of the bundle (signing.properties at the monorepo
+// root, or BUNDLE_* environment variables in CI). Without it, builds use the debug key.
+val bundleSigning: Map<String, String?>? = rootProject.file("signing.properties").let { f ->
+    if (f.canRead()) {
+        val p = Properties().apply { f.inputStream().use { load(it) } }
+        mapOf(
+            "storeFile" to rootProject.file(p.getProperty("storeFile")).path,
+            "storePassword" to p.getProperty("storePassword"),
+            "keyAlias" to p.getProperty("keyAlias"),
+            "keyPassword" to p.getProperty("keyPassword"),
+        )
+    } else System.getenv("BUNDLE_KEYSTORE_FILE")?.let {
+        mapOf(
+            "storeFile" to it,
+            "storePassword" to System.getenv("BUNDLE_KEYSTORE_PASSWORD"),
+            "keyAlias" to System.getenv("BUNDLE_KEY_ALIAS"),
+            "keyPassword" to System.getenv("BUNDLE_KEY_PASSWORD"),
+        )
+    }
 }
 
 android {
@@ -9,7 +35,8 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "app.dialtone.phone"
+        // Bundle: <prefix>.phone (upstream: app.dialtone.phone).
+        applicationId = "$appIdPrefix.phone"
         minSdk = 29 // RoleManager.ROLE_DIALER
         targetSdk = 36
         // CI passes the run number / tag so every build installs over the previous one.
@@ -17,16 +44,13 @@ android {
         versionName = System.getenv("DIALTONE_VERSION_NAME") ?: "0.1.0"
     }
 
-    // Release signing comes from the environment (GitHub secrets in CI). Every build CI ships
-    // is an optimized release build signed with this key, so each one installs as an update.
-    val keystorePath = System.getenv("DIALTONE_KEYSTORE_FILE")
-    if (keystorePath != null) {
-        signingConfigs {
+    signingConfigs {
+        if (bundleSigning != null) {
             create("release") {
-                storeFile = file(keystorePath)
-                storePassword = System.getenv("DIALTONE_KEYSTORE_PASSWORD")
-                keyAlias = System.getenv("DIALTONE_KEY_ALIAS")
-                keyPassword = System.getenv("DIALTONE_KEY_PASSWORD")
+                storeFile = file(bundleSigning.getValue("storeFile")!!)
+                storePassword = bundleSigning["storePassword"]
+                keyAlias = bundleSigning["keyAlias"]
+                keyPassword = bundleSigning["keyPassword"]
             }
         }
     }
@@ -78,6 +102,10 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach 
 }
 
 dependencies {
+    // Bundle: shared theme, avatars and phone-number helpers.
+    implementation(project(":core:design"))
+    implementation(project(":core:telephony"))
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)

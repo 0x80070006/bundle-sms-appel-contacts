@@ -1,5 +1,7 @@
 package app.dialtone.phone.ui.onboarding
 
+import app.dialtone.phone.util.tr
+
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -69,21 +71,20 @@ fun SetDefaultScreen(onRequest: () -> Unit) {
             }
             Spacer(Modifier.height(40.dp))
             Text(
-                "Make Dialtone your phone app",
+                tr("Make this your phone app"),
                 style = MaterialTheme.typography.headlineMedium,
                 textAlign = TextAlign.Center,
             )
             Spacer(Modifier.height(12.dp))
             Text(
-                "Dialtone needs to be your default phone app to place and answer calls, " +
-                    "show your call history and play your voicemail.",
+                tr("This app needs to be your default phone app to place and answer calls, show your call history and play your voicemail."),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
             Spacer(Modifier.weight(1f))
             Button(onClick = onRequest, modifier = Modifier.fillMaxWidth().height(64.dp)) {
-                Text("Set as default", style = MaterialTheme.typography.titleMedium)
+                Text(tr("Set as default"), style = MaterialTheme.typography.titleMedium)
             }
         }
     }

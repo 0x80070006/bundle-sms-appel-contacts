@@ -2,6 +2,8 @@
 
 package app.dialtone.phone.incall
 
+import app.dialtone.phone.util.tr
+
 import android.bluetooth.BluetoothDevice
 import android.os.Build
 import androidx.compose.material.icons.rounded.AddIcCall
@@ -155,7 +157,7 @@ fun InCallRoute(onFinished: () -> Unit) {
             InCallContent(call, snap, audio, other, version)
         } else {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Call ended", style = MaterialTheme.typography.titleLarge)
+                Text(tr("Call ended"), style = MaterialTheme.typography.titleLarge)
             }
         }
     }
@@ -172,8 +174,8 @@ private fun InCallContent(call: Call, snap: CallSnapshot, audio: CallAudioState?
     var dtmf by rememberSaveable { mutableStateOf("") }
     val ringing = snap.state == Call.STATE_RINGING
     val title = when {
-        snap.isConference -> "Conference call"
-        else -> info.name ?: if (snap.number.isBlank()) "Unknown caller" else formatNumber(snap.number)
+        snap.isConference -> tr("Conference call")
+        else -> info.name ?: if (snap.number.isBlank()) tr("Unknown caller") else formatNumber(snap.number)
     }
 
     Column(
@@ -280,20 +282,20 @@ private fun InCallContent(call: Call, snap: CallSnapshot, audio: CallAudioState?
                 val muted = audio?.isMuted == true
                 val holding = snap.state == Call.STATE_HOLDING
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    MorphToggle(muted, { CallManager.setMuted(it) }, if (muted) Icons.Rounded.MicOff else Icons.Rounded.Mic, "Mute")
-                    MorphToggle(showKeypad, { showKeypad = it }, Icons.Rounded.Dialpad, "Keypad")
+                    MorphToggle(muted, { CallManager.setMuted(it) }, if (muted) Icons.Rounded.MicOff else Icons.Rounded.Mic, tr("Mute"))
+                    MorphToggle(showKeypad, { showKeypad = it }, Icons.Rounded.Dialpad, tr("Keypad"))
                     AudioRouteButton(audio)
                 }
                 Spacer(Modifier.height(16.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                     MorphToggle(
                         holding, { CallManager.toggleHold(call) }, Icons.Rounded.Pause,
-                        if (holding) "Resume" else "Hold",
+                        if (holding) tr("Resume") else tr("Hold"),
                         enabled = snap.canHold || holding,
                     )
                     // Opens Dialtone's keypad; Telecom holds this call when the new one is placed.
                     MorphToggle(
-                        false, { context.startActivity(Dialer.addCallIntent(context)) }, Icons.Rounded.AddIcCall, "Add call",
+                        false, { context.startActivity(Dialer.addCallIntent(context)) }, Icons.Rounded.AddIcCall, tr("Add call"),
                         enabled = other == null && snap.state == Call.STATE_ACTIVE,
                     )
                 }
@@ -315,14 +317,14 @@ private fun statusText(snap: CallSnapshot): String {
         }
     }
     return when (snap.state) {
-        Call.STATE_RINGING -> "Incoming call"
+        Call.STATE_RINGING -> tr("Incoming call")
         Call.STATE_ACTIVE ->
             if (snap.connectTimeMillis > 0) formatDuration(((now - snap.connectTimeMillis) / 1000).coerceAtLeast(0))
-            else "Connected"
-        Call.STATE_HOLDING -> "On hold"
-        Call.STATE_SELECT_PHONE_ACCOUNT -> "Choose a SIM"
-        Call.STATE_DISCONNECTING, Call.STATE_DISCONNECTED -> "Call ended"
-        else -> "Calling…"
+            else tr("Connected")
+        Call.STATE_HOLDING -> tr("On hold")
+        Call.STATE_SELECT_PHONE_ACCOUNT -> tr("Choose a SIM")
+        Call.STATE_DISCONNECTING, Call.STATE_DISCONNECTED -> tr("Call ended")
+        else -> tr("Calling…")
     }
 }
 
@@ -367,15 +369,15 @@ private fun IncomingActions(
     var replying by remember { mutableStateOf(false) }
     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         Row(Modifier.fillMaxWidth().padding(bottom = 12.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
-            RoundAction(Icons.Rounded.CallEnd, "Decline", MaterialTheme.colorScheme.error, MaterialTheme.colorScheme.onError, 1f, onDecline)
+            RoundAction(Icons.Rounded.CallEnd, tr("Decline"), MaterialTheme.colorScheme.error, MaterialTheme.colorScheme.onError, 1f, onDecline)
             if (onEndAndAnswer != null) {
                 RoundAction(
-                    Icons.AutoMirrored.Rounded.PhoneForwarded, "End & answer",
+                    Icons.AutoMirrored.Rounded.PhoneForwarded, tr("End & answer"),
                     MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer, 1f, onEndAndAnswer,
                 )
             }
             RoundAction(
-                Icons.Rounded.Call, if (onEndAndAnswer != null) "Hold & answer" else "Answer",
+                Icons.Rounded.Call, if (onEndAndAnswer != null) tr("Hold & answer") else tr("Answer"),
                 CallColors.container(), CallColors.content(), pulse, onAnswer,
             )
         }
@@ -383,7 +385,7 @@ private fun IncomingActions(
             FilledTonalButton(onClick = { replying = true }, modifier = Modifier.padding(bottom = 24.dp)) {
                 Icon(Icons.AutoMirrored.Rounded.Message, null, Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
-                Text("Reply with message")
+                Text(tr("Reply with message"))
             }
         } else {
             Spacer(Modifier.height(24.dp))
@@ -410,7 +412,7 @@ private fun QuickReplySheet(onSend: (String) -> Unit, onDismiss: () -> Unit) {
     ModalBottomSheet(onDismissRequest = onDismiss, containerColor = scheme.surfaceContainerLow) {
         Column(Modifier.padding(horizontal = 16.dp).padding(bottom = 24.dp)) {
             Text(
-                "Decline and send",
+                tr("Decline and send"),
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(start = 8.dp, bottom = 12.dp),
             )
@@ -429,10 +431,10 @@ private fun QuickReplySheet(onSend: (String) -> Unit, onDismiss: () -> Unit) {
             OutlinedTextField(
                 value = custom,
                 onValueChange = { custom = it },
-                label = { Text("Write your own…") },
+                label = { Text(tr("Write your own…")) },
                 trailingIcon = {
                     IconButton(enabled = custom.isNotBlank(), onClick = { onSend(custom.trim()) }) {
-                        Icon(Icons.AutoMirrored.Rounded.Send, "Send")
+                        Icon(Icons.AutoMirrored.Rounded.Send, tr("Send"))
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -469,7 +471,7 @@ private fun EndCallButton(onClick: () -> Unit) {
         container = MaterialTheme.colorScheme.error,
         content = MaterialTheme.colorScheme.onError,
         modifier = Modifier.width(176.dp).height(76.dp),
-    ) { Icon(Icons.Rounded.CallEnd, "End call", Modifier.size(34.dp)) }
+    ) { Icon(Icons.Rounded.CallEnd, tr("End call"), Modifier.size(34.dp)) }
 }
 
 /** Dual-SIM: Telecom waits for us to pick an account when there's no default. */
@@ -515,13 +517,13 @@ private fun OtherCallCard(
         value = withContext(Dispatchers.IO) { CallerLookup.lookup(context, snap.number) }
     }
     val name = when {
-        snap.isConference -> "Conference call"
-        else -> info.name ?: if (snap.number.isBlank()) "Unknown caller" else formatNumber(snap.number)
+        snap.isConference -> tr("Conference call")
+        else -> info.name ?: if (snap.number.isBlank()) tr("Unknown caller") else formatNumber(snap.number)
     }
     val status = when {
-        waiting -> "Current call"
-        snap.state == Call.STATE_HOLDING -> "On hold"
-        else -> "Calling…"
+        waiting -> tr("Current call")
+        snap.state == Call.STATE_HOLDING -> tr("On hold")
+        else -> tr("Calling…")
     }
     Surface(
         shape = MaterialTheme.shapes.extraLarge,
@@ -538,7 +540,7 @@ private fun OtherCallCard(
                     FilledTonalButton(onClick = onMerge) {
                         Icon(Icons.AutoMirrored.Rounded.CallMerge, null, Modifier.size(18.dp))
                         Spacer(Modifier.width(6.dp))
-                        Text("Merge")
+                        Text(tr("Merge"))
                     }
                     Spacer(Modifier.width(8.dp))
                 }
@@ -546,7 +548,7 @@ private fun OtherCallCard(
                     FilledTonalButton(onClick = onSwap) {
                         Icon(Icons.Rounded.SwapCalls, null, Modifier.size(18.dp))
                         Spacer(Modifier.width(6.dp))
-                        Text("Swap")
+                        Text(tr("Swap"))
                     }
                 }
             }
@@ -568,7 +570,7 @@ private fun AudioRouteButton(audio: CallAudioState?) {
         MorphToggle(
             route == CallAudioState.ROUTE_SPEAKER,
             { on -> CallManager.setAudioRoute(if (on) CallAudioState.ROUTE_SPEAKER else CallAudioState.ROUTE_WIRED_OR_EARPIECE) },
-            Icons.AutoMirrored.Rounded.VolumeUp, "Speaker",
+            Icons.AutoMirrored.Rounded.VolumeUp, tr("Speaker"),
         )
         return
     }
@@ -584,29 +586,29 @@ private fun AudioRouteButton(audio: CallAudioState?) {
     val devices: List<BluetoothDevice> = if (Build.VERSION.SDK_INT >= 28) audio?.supportedBluetoothDevices?.toList().orEmpty() else emptyList()
     val active: BluetoothDevice? = if (Build.VERSION.SDK_INT >= 28) audio?.activeBluetoothDevice else null
     Box {
-        MorphToggle(route != CallAudioState.ROUTE_EARPIECE, { menu = true }, icon, "Audio")
+        MorphToggle(route != CallAudioState.ROUTE_EARPIECE, { menu = true }, icon, tr("Audio"))
         DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
             @Composable
             fun option(label: String, optionIcon: ImageVector, selected: Boolean, onPick: () -> Unit) = DropdownMenuItem(
                 text = { Text(label) },
                 leadingIcon = { Icon(optionIcon, null) },
-                trailingIcon = if (selected) ({ Icon(Icons.Rounded.Check, "Selected") }) else null,
+                trailingIcon = if (selected) ({ Icon(Icons.Rounded.Check, tr("Selected")) }) else null,
                 onClick = {
                     menu = false
                     onPick()
                 },
             )
             if (mask and CallAudioState.ROUTE_EARPIECE != 0) {
-                option("Phone", Icons.Rounded.PhoneInTalk, route == CallAudioState.ROUTE_EARPIECE) {
+                option(tr("Phone"), Icons.Rounded.PhoneInTalk, route == CallAudioState.ROUTE_EARPIECE) {
                     CallManager.setAudioRoute(CallAudioState.ROUTE_EARPIECE)
                 }
             }
             if (mask and CallAudioState.ROUTE_WIRED_HEADSET != 0) {
-                option("Wired headset", Icons.Rounded.Headset, route == CallAudioState.ROUTE_WIRED_HEADSET) {
+                option(tr("Wired headset"), Icons.Rounded.Headset, route == CallAudioState.ROUTE_WIRED_HEADSET) {
                     CallManager.setAudioRoute(CallAudioState.ROUTE_WIRED_HEADSET)
                 }
             }
-            option("Speaker", Icons.AutoMirrored.Rounded.VolumeUp, route == CallAudioState.ROUTE_SPEAKER) {
+            option(tr("Speaker"), Icons.AutoMirrored.Rounded.VolumeUp, route == CallAudioState.ROUTE_SPEAKER) {
                 CallManager.setAudioRoute(CallAudioState.ROUTE_SPEAKER)
             }
             if (mask and CallAudioState.ROUTE_BLUETOOTH != 0) {
@@ -620,7 +622,7 @@ private fun AudioRouteButton(audio: CallAudioState?) {
                     }
                 } else {
                     @SuppressLint("MissingPermission")
-                    val label = devices.firstOrNull()?.let { d -> runCatching { d.name }.getOrNull() } ?: "Bluetooth"
+                    val label = devices.firstOrNull()?.let { d -> runCatching { d.name }.getOrNull() } ?: tr("Bluetooth")
                     option(label, Icons.Rounded.Bluetooth, route == CallAudioState.ROUTE_BLUETOOTH) {
                         CallManager.setAudioRoute(CallAudioState.ROUTE_BLUETOOTH, devices.firstOrNull())
                     }

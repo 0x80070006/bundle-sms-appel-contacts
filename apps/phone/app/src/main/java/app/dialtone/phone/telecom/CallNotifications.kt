@@ -1,5 +1,7 @@
 package app.dialtone.phone.telecom
 
+import app.dialtone.phone.util.tr
+
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.NotificationChannel
@@ -42,14 +44,14 @@ object CallNotifications {
     fun ensureChannels(context: Context) {
         val nm = context.getSystemService(NotificationManager::class.java) ?: return
         nm.createNotificationChannel(
-            NotificationChannel(CHANNEL_INCOMING, "Incoming calls", NotificationManager.IMPORTANCE_HIGH).apply {
+            NotificationChannel(CHANNEL_INCOMING, tr("Incoming calls"), NotificationManager.IMPORTANCE_HIGH).apply {
                 // Telecom plays the ringtone and vibration itself.
                 setSound(null, null)
                 enableVibration(false)
             },
         )
         nm.createNotificationChannel(
-            NotificationChannel(CHANNEL_ONGOING, "Ongoing calls", NotificationManager.IMPORTANCE_LOW),
+            NotificationChannel(CHANNEL_ONGOING, tr("Ongoing calls"), NotificationManager.IMPORTANCE_LOW),
         )
     }
 
@@ -72,7 +74,7 @@ object CallNotifications {
         val number = call.details.handle?.schemeSpecificPart.orEmpty()
         return CallerLookup.lookup(context, number).name
             ?: number.takeIf { it.isNotBlank() }?.let(::formatNumber)
-            ?: "Unknown caller"
+            ?: tr("Unknown caller")
     }
 
     private fun incoming(context: Context, call: Call) = NotificationCompat.Builder(context, CHANNEL_INCOMING)
@@ -97,9 +99,9 @@ object CallNotifications {
     private fun ongoing(context: Context, call: Call): android.app.Notification {
         val connectTime = call.details.connectTimeMillis
         val status = when (call.stateCompat) {
-            Call.STATE_ACTIVE -> "Ongoing call"
-            Call.STATE_HOLDING -> "On hold"
-            else -> "Calling…"
+            Call.STATE_ACTIVE -> tr("Ongoing call")
+            Call.STATE_HOLDING -> tr("On hold")
+            else -> tr("Calling…")
         }
         return NotificationCompat.Builder(context, CHANNEL_ONGOING)
             // Each kind of call notification has its own status bar icon.
@@ -113,7 +115,7 @@ object CallNotifications {
             .setWhen(if (connectTime > 0) connectTime else System.currentTimeMillis())
             .setUsesChronometer(connectTime > 0 && call.stateCompat == Call.STATE_ACTIVE)
             .setContentIntent(openInCall(context, answer = false))
-            .addAction(0, "Hang up", broadcast(context, CallActionReceiver.ACTION_HANGUP))
+            .addAction(0, tr("Hang up"), broadcast(context, CallActionReceiver.ACTION_HANGUP))
             .build()
     }
 

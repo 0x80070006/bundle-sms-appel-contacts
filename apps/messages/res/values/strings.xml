@@ -16,10 +16,10 @@
 -->
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- The name of the application as it appears under the main Launcher icon and in various activity titles -->
-    <string name="app_name">Twill</string>
+    <string name="app_name">SMS</string>
 
     <!-- The name of the application as it appears in external share intent dialogs -->
-    <string name="share_intent_label">Twill</string>
+    <string name="share_intent_label">SMS</string>
     <!-- The title when selecting a conversation to share to -->
     <string name="share_intent_activity_label">Select conversation</string>
     <!-- Shown when a tapped contact cannot be resolved to a conversation -->
@@ -36,7 +36,7 @@
     <string name="sms_warning_title">SMS isn\'t private</string>
     <string name="sms_warning_description">Text messages aren\'t encrypted. Use an app with end-to-end encryption for anything sensitive.</string>
     <!-- Inform user of the names of permissions that are required to use the app -->
-    <string name="required_permissions_promo">Twill needs permission to SMS, Phone and Contacts.</string>
+    <string name="required_permissions_promo">SMS needs permission to SMS, Phone and Contacts.</string>
     <!-- Guidance shown when the app is not the default SMS app and the role request was permanently dismissed -->
     <string name="set_default_sms_app_procedure">Set <xliff:g id="app_name" example="Messaging">%1$s</xliff:g> as your default SMS app in Settings > Apps > <xliff:g id="app_name" example="Messaging">%1$s</xliff:g> > SMS app.</string>
     <string name="set_default_sms_app_procedure_description">Set <xliff:g id="app_name" example="Messaging">%1$s</xliff:g> as your default SMS app in Settings, Apps, <xliff:g id="app_name" example="Messaging">%1$s</xliff:g>, SMS app.</string>
@@ -97,7 +97,7 @@
     <!-- Title for SMS storage low notification and dialog. Must match the framework's notification title, i.e. //frameworks/base/core/res/res/values/strings.xml#low_internal_storage_view_title -->
     <string name="sms_storage_low_title">Storage space running out</string>
     <!-- Text for SMS storage low notification and dialog -->
-    <string name="sms_storage_low_text">Twill might not send or receive messages until more space is available on your device.</string>
+    <string name="sms_storage_low_text">SMS might not send or receive messages until more space is available on your device.</string>
     <!-- Ticker for SMS storage low notification -->
     <string name="sms_storage_low_notification_ticker">Low SMS storage. You may need to delete messages.</string>
 
@@ -151,7 +151,7 @@
     <!-- notification line 1 for "there are some failed messages" -->
     <string name="notification_send_failures_line1_singular">Message not sent</string>
     <!-- notification line 1 for "there are some failed messages" -->
-    <string name="notification_send_failures_line1_plural">Some messages not sent in Twill</string>
+    <string name="notification_send_failures_line1_plural">Some messages not sent in SMS</string>
     <plurals name="notification_send_failures">
         <item quantity="one"><xliff:g id="messages">%d</xliff:g> messages in one conversation</item>
         <item quantity="other"><xliff:g id="messages">%d</xliff:g> messages in <xliff:g id="conversations">%d</xliff:g> conversations</item>
@@ -159,7 +159,7 @@
     <!-- notification line 1 for download failed -->
     <string name="notification_download_failures_line1_singular">Message not downloaded</string>
     <!-- notification line 1 for multiple downloads failed -->
-    <string name="notification_download_failures_line1_plural">Some messages not downloaded in Twill</string>
+    <string name="notification_download_failures_line1_plural">Some messages not downloaded in SMS</string>
     <plurals name="notification_download_failures">
         <item quantity="one"><xliff:g id="messages">%d</xliff:g> messages in one conversation</item>
         <item quantity="other"><xliff:g id="messages">%d</xliff:g> messages in <xliff:g id="conversations">%d</xliff:g> conversations</item>
@@ -279,7 +279,7 @@
     <string name="unarchived_toast_message"><xliff:g id="count">%d</xliff:g> unarchived</string>
 
     <!-- Toast shown when the user successfully sets Bugle as the default SMS app. -->
-    <string name="toast_after_setting_default_sms_app">Twill successfully set as the default SMS app.</string>
+    <string name="toast_after_setting_default_sms_app">SMS successfully set as the default SMS app.</string>
 
     <!-- Accessibility : Content descriptinon for ImageButtons and ImageViews -->
     <plurals name="attachment_preview_close_content_description">
@@ -314,7 +314,7 @@
 
     <string name="camera_switch_camera_facing">Switch between front and back camera</string>
 
-    <string name="photo_view_activity_title">Twill photos</string>
+    <string name="photo_view_activity_title">SMS photos</string>
     <string name="photo_viewer_image_content_description">Image attachment</string>
     <string name="photo_viewer_load_error">Couldn\'t load image</string>
     <string name="photo_viewer_empty">No images</string>
@@ -535,10 +535,10 @@
 
     <!-- Snackbar message that indicates users must set Messaging as their
          default SMS application in order to send messages -->
-    <string name="requires_default_sms_app_to_send">To send, set Twill as the default SMS app</string>
+    <string name="requires_default_sms_app_to_send">To send, set SMS as the default SMS app</string>
 
     <!-- Snackbar message that indicates users must set Messaging as their default SMS application in order to perform the requested action. -->
-    <string name="requires_default_sms_app">Set Twill as the default SMS app</string>
+    <string name="requires_default_sms_app">Set SMS as the default SMS app</string>
 
     <!-- Snackbar button text to switch default SMS apps shown in snackbar. -->
     <string name="requires_default_sms_change_button">Change</string>
@@ -850,9 +850,9 @@
     <!-- Content description for new conversation button in desktop widget -->
     <string name="widget_new_conversation_content_description">Start new conversation</string>
     <!-- Content description for widget title -->
-    <string name="widget_title_content_description">Twill</string>
+    <string name="widget_title_content_description">SMS</string>
     <!-- Displayed name of the desktop widget that shows a single conversation-->
-    <string name="widget_conversation_name">Twill</string>
+    <string name="widget_conversation_name">SMS</string>
     <!-- Content description for conversation list button in desktop widget -->
     <string name="widget_conversation_list_content_description">Conversation list</string>
     <!-- Text shown when no contacts are available while picking a conversation for the widget -->
@@ -877,7 +877,7 @@
     </plurals>
     <!-- Displayed when user adds a new conversation widget. Tapping on the widget in this
           mode will bring user to the conversation selection screen -->
-    <string name="tap_to_configure">Conversation deleted. Tap to show a different Twill conversation</string>
+    <string name="tap_to_configure">Conversation deleted. Tap to show a different SMS conversation</string>
 
     <!-- Toast message telling the user that someone was blocked -->
     <string name="update_destination_blocked">Blocked</string>
@@ -941,7 +941,7 @@
     <string name="nostr_settings_title">Nostr Settings</string>
     <string name="nostr_settings_summary">Private messages over Nostr</string>
     <string name="nostr_account_header">Account</string>
-    <string name="nostr_signed_out_summary">Nostr is off until you sign in. Signing in connects Twill to the relays below, which can see your IP address.</string>
+    <string name="nostr_signed_out_summary">Nostr is off until you sign in. Signing in connects the app to the relays below, which can see your IP address.</string>
     <string name="nostr_sign_in_amber">Sign in with Amber</string>
     <string name="nostr_sign_in_amber_summary">Your private key stays in Amber</string>
     <string name="nostr_sign_in_amber_missing">Install the Amber signer app to use this</string>
@@ -960,7 +960,7 @@
     <string name="nostr_method_local">Private key stored on this device</string>
     <string name="nostr_sign_out">Sign out</string>
     <string name="nostr_sign_out_local_warning">Your private key will be deleted from this phone. If you haven\'t backed it up, you will lose this Nostr identity for good.</string>
-    <string name="nostr_sign_out_amber_note">Twill will stop sending and receiving Nostr messages. Your key stays safe in Amber.</string>
+    <string name="nostr_sign_out_amber_note">The app will stop sending and receiving Nostr messages. Your key stays safe in Amber.</string>
     <string name="nostr_copy_nsec">Copy private key to back it up</string>
     <string name="nostr_nsec_copied">Private key copied. Store it somewhere safe and clear your clipboard</string>
     <string name="nostr_relays_header">Message relays</string>
@@ -993,8 +993,8 @@
     <string name="inbox_mark_unread">Mark as unread</string>
     <string name="inbox_delete_conversation">Delete conversation</string>
     <string name="nostr_delivery_header">Message delivery</string>
-    <string name="nostr_delivery_while_open">Only while Twill is open</string>
-    <string name="nostr_delivery_while_open_summary">No background network use. Messages arrive when you open Twill</string>
+    <string name="nostr_delivery_while_open">Only while the app is open</string>
+    <string name="nostr_delivery_while_open_summary">No background network use. Messages arrive when you open the app</string>
     <string name="nostr_delivery_periodic">Check every 15 minutes</string>
     <string name="nostr_delivery_periodic_summary">Low battery use. New messages can take up to 15 minutes to arrive</string>
     <string name="nostr_delivery_always">Always connected</string>
@@ -1057,23 +1057,23 @@
     <!-- Wallet (Nostr Wallet Connect) -->
     <string name="nostr_wallet_header">Wallet</string>
     <string name="nostr_wallet_connect">Connect a wallet</string>
-    <string name="nostr_wallet_connect_summary">Pay Lightning invoices and zap people from Twill, with Nostr Wallet Connect</string>
-    <string name="nostr_wallet_connect_explanation">Paste a Nostr Wallet Connect link from your wallet (such as Alby Hub, Primal or Coinos). Your funds stay in your wallet; Twill only asks it to pay.</string>
+    <string name="nostr_wallet_connect_summary">Pay Lightning invoices and zap people from the app, with Nostr Wallet Connect</string>
+    <string name="nostr_wallet_connect_explanation">Paste a Nostr Wallet Connect link from your wallet (such as Alby Hub, Primal or Coinos). Your funds stay in your wallet; the app only asks it to pay.</string>
     <string name="nostr_wallet_connect_button">Connect</string>
     <string name="nostr_wallet_connected">Wallet connected</string>
     <string name="nostr_wallet_connected_summary">Pays invoices and zaps. Tap to check the balance</string>
     <string name="nostr_wallet_balance">Balance: <xliff:g id="amount">%s</xliff:g></string>
     <string name="nostr_wallet_disconnect">Disconnect wallet</string>
     <string name="nostr_wallet_disconnect_title">Disconnect wallet?</string>
-    <string name="nostr_wallet_disconnect_text">Twill forgets the connection link. To pay from Twill again, you\'ll need a new link from your wallet.</string>
+    <string name="nostr_wallet_disconnect_text">The app forgets the connection link. To pay from the app again, you\'ll need a new link from your wallet.</string>
     <string name="nostr_wallet_link_title">Connect this wallet?</string>
-    <string name="nostr_wallet_link_text">A wallet app wants to connect to Twill, so you can pay invoices and zap from Twill. Your funds stay in your wallet.</string>
+    <string name="nostr_wallet_link_text">A wallet app wants to connect to the app, so you can pay invoices and zap from the app. Your funds stay in your wallet.</string>
     <string name="nostr_wallet_link_replaces">This replaces the wallet you connected before.</string>
     <string name="nostr_wallet_link_done">Wallet connected</string>
     <string name="nostr_wallet_bad_link">That isn\'t a Nostr Wallet Connect link.</string>
     <string name="nostr_wallet_no_relay">That link has no usable relay.</string>
     <string name="nostr_wallet_no_answer">The wallet service didn\'t answer. Check that it\'s online.</string>
-    <string name="nostr_wallet_nip04_only">This wallet only offers older (NIP-04) encryption, which Twill doesn\'t support. Update the wallet, or use one that offers NIP-44.</string>
+    <string name="nostr_wallet_nip04_only">This wallet only offers older (NIP-04) encryption, which the app doesn\'t support. Update the wallet, or use one that offers NIP-44.</string>
     <string name="nostr_wallet_not_connected">Connect a wallet in Nostr settings first.</string>
     <string name="nostr_wallet_no_response">The wallet didn\'t respond.</string>
     <string name="nostr_wallet_error">The wallet said: <xliff:g id="message">%s</xliff:g></string>
@@ -1086,7 +1086,7 @@
     <string name="nostr_zap_comment">Comment (optional)</string>
     <string name="nostr_zap_zapping">Zapping…</string>
     <string name="nostr_zap_sent">Zap sent</string>
-    <string name="nostr_zap_no_wallet_note">No wallet connected, so your wallet app opens to pay. Connect one in Nostr settings to zap from Twill.</string>
+    <string name="nostr_zap_no_wallet_note">No wallet connected, so your wallet app opens to pay. Connect one in Nostr settings to zap from the app.</string>
     <string name="nostr_zap_no_profile">Couldn\'t load <xliff:g id="name">%s</xliff:g>\'s profile.</string>
     <string name="nostr_zap_no_address"><xliff:g id="name">%s</xliff:g> has no Lightning address.</string>
     <string name="nostr_zap_not_supported"><xliff:g id="name">%s</xliff:g>\'s Lightning address doesn\'t support zaps.</string>
@@ -1108,13 +1108,13 @@
 
     <!-- Twill: shared parts of the protocol inbox, chat screen and background delivery -->
     <string name="twill_channel_connection">Background connection</string>
-    <string name="twill_channel_connection_description">Shown while Twill stays connected to receive Nostr or Delta Chat messages instantly</string>
+    <string name="twill_channel_connection_description">Shown while the app stays connected to receive Nostr or Delta Chat messages instantly</string>
     <string name="twill_connection_title">Connected to %s</string>
     <string name="twill_connection_text">Receiving messages</string>
     <string name="twill_send_failed">Couldn\'t send. Tap the message to try again</string>
     <string name="twill_chat_more_options">More options</string>
     <string name="twill_bubble_chat">Bubble</string>
-    <string name="twill_bubble_not_allowed">Allow Twill\'s conversations to bubble, then try again</string>
+    <string name="twill_bubble_not_allowed">Allow the app\'s conversations to bubble, then try again</string>
     <string name="twill_voice_needs_mic">Allow the microphone to record voice messages</string>
     <string name="twill_voice_failed">Couldn\'t start recording</string>
     <string name="twill_audio_play">Play</string>
@@ -1178,13 +1178,13 @@
     <string name="deltachat_settings_title">Delta Chat Settings</string>
     <string name="deltachat_settings_summary">Encrypted chat over email</string>
     <string name="deltachat_profile_header">Profile</string>
-    <string name="deltachat_unavailable">This build of Twill doesn\'t include the Delta Chat core. Install a build from the project\'s Actions page to use Delta Chat.</string>
+    <string name="deltachat_unavailable">This build of the app doesn\'t include the Delta Chat core. Install a build from the project\'s Actions page to use Delta Chat.</string>
     <string name="deltachat_off_summary">Delta Chat is off until you set up a profile. Messages are end-to-end encrypted and travel through email servers, which can see your IP address but not what you write.</string>
     <string name="deltachat_setting_up">Setting up your profile…</string>
     <string name="deltachat_setup_failed">Setup didn\'t work</string>
     <string name="deltachat_new_profile">Create a new profile</string>
     <string name="deltachat_new_profile_summary">Get a free, anonymous address on a relay. No phone number or email needed</string>
-    <string name="deltachat_new_profile_explainer">Twill creates a random address on the relay below. The name is what others see; you can leave it empty.</string>
+    <string name="deltachat_new_profile_explainer">The app creates a random address on the relay below. The name is what others see; you can leave it empty.</string>
     <string name="deltachat_server">Relay</string>
     <string name="deltachat_create">Create</string>
     <string name="deltachat_use_code">Use a setup code</string>
@@ -1194,7 +1194,7 @@
     <string name="deltachat_continue">Continue</string>
     <string name="deltachat_use_email">Use an existing email address</string>
     <string name="deltachat_use_email_summary">Works with most email providers. Messages to people without Delta Chat are not encrypted</string>
-    <string name="deltachat_use_email_explainer">Twill finds your provider\'s servers automatically. Your password stays on this phone.</string>
+    <string name="deltachat_use_email_explainer">The app finds your provider\'s servers automatically. Your password stays on this phone.</string>
     <string name="deltachat_email">Email address</string>
     <string name="deltachat_password">Password</string>
     <string name="deltachat_display_name">Your name</string>
@@ -1214,17 +1214,17 @@
     <string name="deltachat_read_receipts_summary">Let people know when you\'ve read their messages, and see when they\'ve read yours</string>
 
     <!-- Twill: turning SMS/MMS off -->
-    <string name="twill_sms_off_summary">Off. Twill isn\'t used for text messages</string>
-    <string name="twill_use_without_sms">Use Twill without SMS</string>
-    <string name="twill_use_for_sms">Use Twill for SMS/MMS</string>
-    <string name="twill_use_for_sms_on">Twill is your text messaging app</string>
-    <string name="twill_use_for_sms_off">Off. Twill is only used for Nostr and Delta Chat</string>
+    <string name="twill_sms_off_summary">Off. The app isn\'t used for text messages</string>
+    <string name="twill_use_without_sms">Use the app without SMS</string>
+    <string name="twill_use_for_sms">Use this app for SMS/MMS</string>
+    <string name="twill_use_for_sms_on">This app is your text messaging app</string>
+    <string name="twill_use_for_sms_off">Off. The app is only used for Nostr and Delta Chat</string>
     <string name="twill_turn_off_sms">Turn off SMS/MMS?</string>
-    <string name="twill_turn_off_sms_explainer">Twill will stop showing text messages and won\'t be offered as an SMS app. Your texts stay on the phone, where your default SMS app can see them. You can turn this back on in Settings.</string>
+    <string name="twill_turn_off_sms_explainer">The app will stop showing text messages and won\'t be offered as an SMS app. Your texts stay on the phone, where your default SMS app can see them. You can turn this back on in Settings.</string>
     <string name="twill_turn_off">Turn off</string>
-    <string name="twill_sms_choose_other_app">Twill is still your default SMS app, which receives every text. Choose a different SMS app so your texts keep arriving there.</string>
+    <string name="twill_sms_choose_other_app">This app is still your default SMS app, which receives every text. Choose a different SMS app so your texts keep arriving there.</string>
     <string name="twill_choose_sms_app">Turn off and choose SMS app</string>
-    <string name="twill_setup_hint">SMS is off in Twill. Set up Nostr or Delta Chat in Settings to start chatting.</string>
+    <string name="twill_setup_hint">SMS is off in this app. Set up Nostr or Delta Chat in Settings to start chatting.</string>
     <string name="twill_open_settings">Open Settings</string>
     <string name="inbox_new_sms">SMS/MMS conversation</string>
     <string name="twill_search">Search</string>
@@ -1242,7 +1242,7 @@
     <string name="twill_widget_conversation_name">Conversation</string>
     <string name="twill_widget_conversation_description">Recent messages from one conversation</string>
     <string name="twill_widget_empty">No conversations yet</string>
-    <string name="twill_widget_needs_setup">Open Twill to finish setting up</string>
+    <string name="twill_widget_needs_setup">Open the app to finish setting up</string>
     <string name="twill_widget_choose">Tap to choose a conversation</string>
     <string name="twill_widget_no_messages">No messages yet</string>
     <string name="twill_widget_compose">Send message</string>
@@ -1282,13 +1282,13 @@
     <string name="deltachat_qr_title">QR code</string>
     <string name="deltachat_qr_mine">My QR code</string>
     <string name="deltachat_qr_scan">Scan</string>
-    <string name="deltachat_qr_mine_hint">Let someone scan this with Delta Chat or Twill to start an end-to-end encrypted chat with you. It also works over a video call.</string>
+    <string name="deltachat_qr_mine_hint">Let someone scan this with Delta Chat or this app to start an end-to-end encrypted chat with you. It also works over a video call.</string>
     <string name="deltachat_qr_scan_hint">Point the camera at someone\'s Delta Chat QR code to start a chat with them or join their group.</string>
     <string name="deltachat_qr_copy">Copy link</string>
     <string name="deltachat_qr_allow_camera">Allow camera</string>
     <string name="deltachat_qr_not_invite">That isn\'t a Delta Chat invite code</string>
     <string name="deltachat_qr_group_title">Group QR code</string>
     <string name="deltachat_qr_group_invite">Invite with QR code</string>
-    <string name="deltachat_qr_group_hint">Anyone who scans this with Delta Chat or Twill joins the group. Only share it with people you want in the group.</string>
+    <string name="deltachat_qr_group_hint">Anyone who scans this with Delta Chat or this app joins the group. Only share it with people you want in the group.</string>
     <string name="deltachat_qr_settings_summary">Show yours or scan someone else\'s to start a chat</string>
 </resources>

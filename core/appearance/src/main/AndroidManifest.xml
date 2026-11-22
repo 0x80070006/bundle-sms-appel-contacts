@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Finds the other apps of the bundle, to share the look with them. -->
+    <queries>
+        <intent>
+            <action android:name="bundle.action.APPEARANCE_SYNC" />
+        </intent>
+    </queries>
+
+    <application>
+        <!-- Exported for the sibling apps; it only answers apps signed with the same key. -->
+        <provider
+            android:name="bundle.core.appearance.AppearanceSyncProvider"
+            android:authorities="${applicationId}.bundle.appearance"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="bundle.action.APPEARANCE_SYNC" />
+            </intent-filter>
+        </provider>
+    </application>
+</manifest>

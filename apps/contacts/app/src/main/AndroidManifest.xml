@@ -11,6 +11,7 @@
     <uses-permission android:name="android.permission.READ_SMS" />
 
     <application
+        android:localeConfig="@xml/locales_config"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -22,10 +23,7 @@
             android:exported="true"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+            <!-- Bundle: the launcher entry is an alias per icon colour (see the bundle icon aliases below). -->
 
             <!-- The system's "app settings" link goes to Settings. -->
             <intent-filter>
@@ -115,5 +113,124 @@
                 android:name="android.accounts.AccountAuthenticator"
                 android:resource="@xml/authenticator" />
         </service>
+        <!-- BUNDLE-ICONS: launcher icon colours, chosen in Appearance (scripts/make_icons.py). -->
+        <activity-alias
+            android:name="bundle.launcher.Default"
+            android:targetActivity="app.people.contacts.MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name="bundle.launcher.Black"
+            android:targetActivity="app.people.contacts.MainActivity"
+            android:icon="@mipmap/bundle_ic_black"
+            android:roundIcon="@mipmap/bundle_ic_black"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name="bundle.launcher.Blue"
+            android:targetActivity="app.people.contacts.MainActivity"
+            android:icon="@mipmap/bundle_ic_blue"
+            android:roundIcon="@mipmap/bundle_ic_blue"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name="bundle.launcher.Green"
+            android:targetActivity="app.people.contacts.MainActivity"
+            android:icon="@mipmap/bundle_ic_green"
+            android:roundIcon="@mipmap/bundle_ic_green"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name="bundle.launcher.Red"
+            android:targetActivity="app.people.contacts.MainActivity"
+            android:icon="@mipmap/bundle_ic_red"
+            android:roundIcon="@mipmap/bundle_ic_red"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name="bundle.launcher.Pink"
+            android:targetActivity="app.people.contacts.MainActivity"
+            android:icon="@mipmap/bundle_ic_pink"
+            android:roundIcon="@mipmap/bundle_ic_pink"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name="bundle.launcher.Purple"
+            android:targetActivity="app.people.contacts.MainActivity"
+            android:icon="@mipmap/bundle_ic_purple"
+            android:roundIcon="@mipmap/bundle_ic_purple"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name="bundle.launcher.Indigo"
+            android:targetActivity="app.people.contacts.MainActivity"
+            android:icon="@mipmap/bundle_ic_indigo"
+            android:roundIcon="@mipmap/bundle_ic_indigo"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name="bundle.launcher.Teal"
+            android:targetActivity="app.people.contacts.MainActivity"
+            android:icon="@mipmap/bundle_ic_teal"
+            android:roundIcon="@mipmap/bundle_ic_teal"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name="bundle.launcher.Graphite"
+            android:targetActivity="app.people.contacts.MainActivity"
+            android:icon="@mipmap/bundle_ic_graphite"
+            android:roundIcon="@mipmap/bundle_ic_graphite"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <!-- /BUNDLE-ICONS -->
     </application>
 </manifest>
