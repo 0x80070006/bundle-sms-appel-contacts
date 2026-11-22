@@ -1,0 +1,258 @@
+package app.dialtone.phone.transcription
+
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.media.AudioFormat
+import android.os.Build
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.os.ParcelFileDescriptor
+import android.provider.Settings
+import android.speech.RecognitionListener
+import android.speech.RecognitionService
+import android.speech.RecognizerIntent
+import android.speech.SpeechRecognizer
+import android.util.Log
+import java.io.File
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import java.util.Locale
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import kotlin.math.roundToInt
+
+/**
+ * Voicemail transcription through the phone's speech recognizer: whichever app the user
+ * picked as the system's voice input (e.g. Distillery). Dialtone bundles no speech engine.
+ *
+ * The audio goes in with [RecognizerIntent.EXTRA_AUDIO_SOURCE] (Android 13+) as the format
+ * the API documents: raw 16-bit mono PCM at 16 kHz, so any recognizer that accepts
+ * recordings can handle it. Recognizers that only listen to the microphone return an error,
+ * and the message is simply left without a transcript.
+ */
+object SystemRecognizer {
+    private const val TAG = "SystemRecognizer"
+
+    /** Distillery, Dialtone's companion speech app; known to accept recordings. */
+    const val DISTILLERY_PACKAGE = "app.distillery.stt"
+
+    sealed interface Outcome {
+        data class Text(val text: String) : Outcome
+        /** The recognizer heard no speech: done, no transcript. */
+        data object NoSpeech : Outcome
+        /** Can't be done with this recognizer/audio: done, no transcript, don't retry. */
+        data class Failed(val error: Int) : Outcome
+        /** Temporary (busy, model not downloaded yet, blocked in background): try again later. */
+        data class RetryLater(val error: Int) : Outcome
+    }
+
+    data class Info(val packageName: String?, val label: String?) {
+        val isDistillery: Boolean get() = packageName == DISTILLERY_PACKAGE
+    }
+
+    fun isSupported(context: Context): Boolean =
+        Build.VERSION.SDK_INT >= 33 && SpeechRecognizer.isRecognitionAvailable(context)
+
+    /** The recognizer Android will use: the user's voice input choice, else the only one installed. */
+    fun current(context: Context): Info? {
+        val pm = context.packageManager
+        val chosen = runCatching {
+            // Not a public constant, but it's what the system's voice input setting writes.
+            Settings.Secure.getString(context.contentResolver, "voice_recognition_service")
+        }.getOrNull()?.let(ComponentName::unflattenFromString)
+        val pkg = chosen?.packageName ?: run {
+            val services = pm.queryIntentServices(Intent(RecognitionService.SERVICE_INTERFACE), 0)
+            when (services.size) {
+                0 -> return null
+                1 -> services[0].serviceInfo.packageName
+                else -> return Info(null, null) // several installed, choice unknown
+            }
+        }
+        @Suppress("DEPRECATION")
+        val label = runCatching { pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString() }.getOrNull()
+        return Info(pkg, label)
+    }
+
+    /**
+     * Transcribes [pcm] (16 kHz mono float) with the system recognizer. Blocks the calling
+     * (background) thread; the recognizer itself runs on the main thread as the API requires.
+     */
+    fun transcribe(context: Context, pcm: FloatArray): Outcome {
+        if (Build.VERSION.SDK_INT < 33) return Outcome.Failed(SpeechRecognizer.ERROR_CLIENT)
+        val file = File(context.noBackupFilesDir, "transcribe-${System.nanoTime()}.pcm")
+        try {
+            writePcm16(pcm, file)
+            val seconds = pcm.size / AudioDecoder.TARGET_RATE
+            val language = Locale.getDefault().toLanguageTag()
+            // Ask in the phone's language. An engine that doesn't offer it (e.g. an English-only
+            // one on a phone set to another language) gets one more try in its own default.
+            val first = attempt(context, file, seconds, language)
+            if (first is Outcome.Failed && first.error == SpeechRecognizer.ERROR_LANGUAGE_NOT_SUPPORTED) {
+                return attempt(context, file, seconds, language = null)
+            }
+            return first
+        } finally {
+            file.delete()
+        }
+    }
+
+    private fun attempt(context: Context, file: File, seconds: Int, language: String?): Outcome =
+        ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY).use {
+            run(context, it, seconds, language)
+        }
+
+    private fun run(context: Context, audio: ParcelFileDescriptor, audioSeconds: Int, language: String?): Outcome {
+        val audioMs = audioSeconds * 1000L // whole seconds: never longer than the audio itself
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            if (language != null) putExtra(RecognizerIntent.EXTRA_LANGUAGE, language)
+            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
+            putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false)
+            putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true)
+            putExtra(RecognizerIntent.EXTRA_AUDIO_SOURCE, audio)
+            putExtra(RecognizerIntent.EXTRA_AUDIO_SOURCE_ENCODING, AudioFormat.ENCODING_PCM_16BIT)
+            putExtra(RecognizerIntent.EXTRA_AUDIO_SOURCE_SAMPLING_RATE, AudioDecoder.TARGET_RATE)
+            putExtra(RecognizerIntent.EXTRA_AUDIO_SOURCE_CHANNEL_COUNT, 1)
+            // Transcribe the whole recording, not just up to the first pause:
+            //  - a segmented session that ends when the audio ends (results arrive per segment);
+            //  - for engines that ignore that, don't stop before the audio's length, and treat
+            //    only a very long silence as the end.
+            putExtra(RecognizerIntent.EXTRA_SEGMENTED_SESSION, RecognizerIntent.EXTRA_AUDIO_SOURCE)
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, audioMs)
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 10_000L)
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 10_000L)
+        }
+        val done = CountDownLatch(1)
+        var outcome: Outcome = Outcome.RetryLater(SpeechRecognizer.ERROR_CLIENT)
+        val segments = mutableListOf<String>()
+        val main = Handler(Looper.getMainLooper())
+        var recognizer: SpeechRecognizer? = null
+
+        fun finish(result: Outcome) {
+            if (done.count == 0L) return // first answer wins
+            outcome = result
+            done.countDown()
+        }
+
+        fun firstText(bundle: Bundle?): String? = bundle
+            ?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+            ?.firstOrNull()
+            ?.trim()
+            ?.takeIf { it.isNotEmpty() }
+
+        main.post {
+            val r = runCatching { SpeechRecognizer.createSpeechRecognizer(context) }.getOrNull()
+            if (r == null) {
+                finish(Outcome.Failed(SpeechRecognizer.ERROR_CLIENT))
+                return@post
+            }
+            recognizer = r
+            r.setRecognitionListener(object : RecognitionListener {
+                override fun onResults(results: Bundle?) {
+                    // Engines that ignored the segmented request answer here, once.
+                    val text = (segments + listOfNotNull(firstText(results))).joinToString(" ")
+                    finish(if (text.isBlank()) Outcome.NoSpeech else Outcome.Text(text))
+                }
+
+                override fun onSegmentResults(segmentResults: Bundle) {
+                    firstText(segmentResults)?.let(segments::add)
+                }
+
+                override fun onEndOfSegmentedSession() {
+                    val text = segments.joinToString(" ")
+                    finish(if (text.isBlank()) Outcome.NoSpeech else Outcome.Text(text))
+                }
+
+                override fun onError(error: Int) {
+                    // Keep what was already transcribed if a segmented session breaks off late.
+                    val text = segments.joinToString(" ")
+                    finish(if (text.isNotBlank() && classify(error) !is Outcome.RetryLater) Outcome.Text(text) else classify(error))
+                }
+
+                override fun onReadyForSpeech(params: Bundle?) {}
+                override fun onBeginningOfSpeech() {}
+                override fun onRmsChanged(rmsdB: Float) {}
+                override fun onBufferReceived(buffer: ByteArray?) {}
+                override fun onEndOfSpeech() {}
+                override fun onPartialResults(partialResults: Bundle?) {}
+                override fun onEvent(eventType: Int, params: Bundle?) {}
+            })
+            runCatching { r.startListening(intent) }.onFailure {
+                Log.w(TAG, "startListening failed: $it")
+                finish(Outcome.Failed(SpeechRecognizer.ERROR_CLIENT))
+            }
+        }
+
+        // Generous: model load plus a few times real time on a slow phone.
+        val timeoutSec = (60 + audioSeconds * 4L).coerceAtMost(15 * 60L)
+        if (!done.await(timeoutSec, TimeUnit.SECONDS)) {
+            Log.w(TAG, "recognizer timed out after ${timeoutSec}s")
+            val partial = CountDownLatch(1)
+            var text = ""
+            main.post { text = segments.joinToString(" "); partial.countDown() }
+            partial.await(2, TimeUnit.SECONDS)
+            // An engine that never ends the session but sent segments still gave us the text.
+            outcome = if (text.isNotBlank()) Outcome.Text(text) else Outcome.RetryLater(SpeechRecognizer.ERROR_SPEECH_TIMEOUT)
+        }
+        val cleanup = CountDownLatch(1)
+        main.post {
+            runCatching { recognizer?.cancel() }
+            runCatching { recognizer?.destroy() }
+            cleanup.countDown()
+        }
+        cleanup.await(5, TimeUnit.SECONDS)
+        return outcome
+    }
+
+    /** Short text for the voicemail log. */
+    fun describe(outcome: Outcome): String = when (outcome) {
+        is Outcome.Text -> "transcribed (${outcome.text.length} chars)"
+        Outcome.NoSpeech -> "no speech heard"
+        is Outcome.Failed -> "failed, ${errorName(outcome.error)}; not retried"
+        is Outcome.RetryLater -> "refused, ${errorName(outcome.error)}; will retry"
+    }
+
+    private fun errorName(error: Int): String = when (error) {
+        SpeechRecognizer.ERROR_NETWORK_TIMEOUT -> "network timeout"
+        SpeechRecognizer.ERROR_NETWORK -> "network error"
+        SpeechRecognizer.ERROR_AUDIO -> "audio error"
+        SpeechRecognizer.ERROR_SERVER -> "recognizer error"
+        SpeechRecognizer.ERROR_CLIENT -> "client error"
+        SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "timed out"
+        SpeechRecognizer.ERROR_NO_MATCH -> "no match"
+        SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> "recognizer busy"
+        SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "permission denied"
+        SpeechRecognizer.ERROR_TOO_MANY_REQUESTS -> "too many requests"
+        SpeechRecognizer.ERROR_SERVER_DISCONNECTED -> "recognizer disconnected"
+        SpeechRecognizer.ERROR_LANGUAGE_NOT_SUPPORTED -> "language not supported"
+        SpeechRecognizer.ERROR_LANGUAGE_UNAVAILABLE -> "model not available"
+        SpeechRecognizer.ERROR_CANNOT_CHECK_SUPPORT -> "can't check support"
+        else -> "error $error"
+    } + " ($error)"
+
+    private fun classify(error: Int): Outcome = when (error) {
+        SpeechRecognizer.ERROR_NO_MATCH,
+        SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> Outcome.NoSpeech
+        // Temporary: model still downloading, recognizer busy or restarting, rate-limited, or
+        // the framework refused while Dialtone was in the background (retried when it's open).
+        SpeechRecognizer.ERROR_LANGUAGE_UNAVAILABLE,
+        SpeechRecognizer.ERROR_RECOGNIZER_BUSY,
+        SpeechRecognizer.ERROR_SERVER_DISCONNECTED,
+        SpeechRecognizer.ERROR_TOO_MANY_REQUESTS,
+        SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS,
+        SpeechRecognizer.ERROR_NETWORK,
+        SpeechRecognizer.ERROR_NETWORK_TIMEOUT -> Outcome.RetryLater(error)
+        else -> Outcome.Failed(error)
+    }
+
+    private fun writePcm16(pcm: FloatArray, file: File) {
+        val buffer = ByteBuffer.allocate(pcm.size * 2).order(ByteOrder.LITTLE_ENDIAN)
+        for (v in pcm) {
+            val s = if (v.isNaN()) 0f else v.coerceIn(-1f, 1f)
+            buffer.putShort((s * 32767f).roundToInt().toShort())
+        }
+        file.outputStream().use { it.write(buffer.array()) }
+    }
+}

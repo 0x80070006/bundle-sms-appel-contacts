@@ -1,0 +1,76 @@
+package app.dialtone.phone.data
+
+import android.net.Uri
+
+data class PhoneNumber(val number: String, val label: String)
+
+data class Contact(
+    val id: Long,
+    val lookupKey: String,
+    val name: String,
+    val photoUri: String?,
+    val starred: Boolean,
+    val numbers: List<PhoneNumber>,
+)
+
+enum class CallType { Incoming, Outgoing, Missed, Rejected, Blocked, Voicemail }
+
+data class RecentCall(
+    val id: Long,
+    val number: String,
+    val cachedName: String?,
+    val photoUri: String?,
+    val type: CallType,
+    val date: Long,
+    val durationSec: Long,
+    /** Consecutive calls with the same number and type are collapsed into one row. */
+    val count: Int = 1,
+    /** Call log ids of every call in this row (newest first), so Delete removes them all. */
+    val ids: List<Long> = listOf(id),
+)
+
+data class Voicemail(
+    val id: Long,
+    val number: String,
+    val date: Long,
+    val durationSec: Long,
+    val isRead: Boolean,
+    val transcription: String?,
+    val hasContent: Boolean,
+    val uri: Uri,
+    /** App that synced this message (Dialtone's engine, or a carrier voicemail app). */
+    val sourcePackage: String?,
+    /** Other apps' copies of this same message (hidden); read/delete apply to them too. */
+    val duplicateIds: List<Long> = emptyList(),
+)
+
+/** One SIM's visual voicemail state for the settings sheet. */
+data class VvmAccount(
+    val id: String,
+    val label: String,
+    val supported: Boolean,
+    val protocol: String?,
+    val enabled: Boolean,
+    val activated: Boolean,
+    val carrierAppInstalled: Boolean,
+)
+
+/** Voicemail transcription (via the system speech recognizer) state for the voicemail UI. */
+data class TranscriptionUi(
+    /** Android 13+, so recordings can be handed to a recognizer. */
+    val supported: Boolean = false,
+    /** A speech recognizer is installed. */
+    val available: Boolean = false,
+    /** Name of the recognizer that will be used, when known. */
+    val recognizerName: String? = null,
+    /** The recognizer is Distillery, which is known to accept recordings. */
+    val isDistillery: Boolean = false,
+    val enabled: Boolean = false,
+    /** Voicemails whose transcript Dialtone wrote (via the recognizer). */
+    val onDevice: Set<Long> = emptySet(),
+    /** Voicemails already processed (with or without a result). */
+    val attempted: Set<Long> = emptySet(),
+)
+
+/** Latest status the engine reported to the system voicemail store. */
+enum class VvmHealth { Unknown, Off, Ok, Configuring, NoConnection, Failed }
