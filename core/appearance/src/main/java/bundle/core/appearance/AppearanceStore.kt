@@ -13,7 +13,7 @@ import kotlin.concurrent.thread
 
 /**
  * The bundle's [Appearance] for this app, kept in its own preferences and shared with the other
- * apps of the bundle: every change is sent to each sibling's [AppearanceSyncProvider], and on
+ * apps of the bundle (all but the language, which is this app's own): every change is sent to each sibling's [AppearanceSyncProvider], and on
  * first use the newest copy among the siblings is taken. Only apps signed with the same key can
  * send or receive it.
  */
@@ -38,13 +38,15 @@ class AppearanceStore private constructor(private val context: Context) {
         thread(name = "appearance-push") { pushToSiblings(after) }
     }
 
-    /** A copy sent by a sibling app: kept if it's newer than ours. */
+    /**
+     * A copy sent by a sibling app: kept if it's newer than ours, except the language, which
+     * each app chooses for itself.
+     */
     internal fun receive(json: String?) {
         val incoming = Appearance.fromJson(json) ?: return
         val current = _state.value
         if (incoming.revision <= current.revision) return
-        save(incoming)
-        if (incoming.language != current.language) applyLanguage(incoming.language)
+        save(incoming.copy(language = current.language))
     }
 
     private fun save(appearance: Appearance) {

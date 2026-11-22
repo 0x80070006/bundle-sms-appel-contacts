@@ -28,12 +28,12 @@ enum class Palette(val seed: Long?) {
 /** Contact pictures: circles everywhere, or Material 3 Expressive shapes everywhere. */
 enum class AvatarStyle { Circle, Expressive }
 
-/** The apps' language: the phone's, or French or English whatever the phone uses. */
+/** This app's language (each app has its own): the phone's, or French or English whatever the phone uses. */
 enum class AppLanguage(val tag: String) { System(""), French("fr"), English("en") }
 
 /**
  * The bundle's look, the same in Contacts, Phone and Messages: changed in one app, it is sent to
- * the other two (see [AppearanceStore]). [revision] is when it was last changed, so the newest
+ * the other two (see [AppearanceStore]), except [language], which stays this app's. [revision] is when it was last changed, so the newest
  * copy wins.
  */
 data class Appearance(

@@ -1,6 +1,10 @@
 package com.android.messaging.ui.conversation.messages.ui
 
+import com.android.messaging.ui.bundle.ChatWallpaper
+import com.android.messaging.ui.bundle.LocalChatStyle
+
 import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -110,7 +114,13 @@ internal fun ConversationMessages(
         modifier = modifier
             .fillMaxSize()
             .testTag(CONVERSATION_MESSAGES_LIST_TEST_TAG)
-            .background(color = MaterialTheme.colorScheme.background),
+            // Bundle: see-through when the chat has a background, which is drawn underneath.
+            .background(
+                color = when (LocalChatStyle.current.wallpaper) {
+                    ChatWallpaper.None -> MaterialTheme.colorScheme.background
+                    else -> Color.Transparent
+                },
+            ),
         contentPadding = conversationMessagesContentPadding(
             shouldShowSendSimIndicator = shouldShowSendSimIndicator,
             additionalTopContentPadding = additionalTopContentPadding,

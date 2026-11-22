@@ -14,8 +14,8 @@ class AppearanceStrings(val fr: Boolean) {
     val appearance = t("Apparence", "Appearance")
     val back = t("Retour", "Back")
     val sharedNote = t(
-        "Ces réglages s'appliquent à Contacts, Téléphone et Messages.",
-        "These settings apply to Contacts, Phone and Messages.",
+        "Le thème, les couleurs et les photos des contacts s'appliquent aux trois apps. La langue et l'icône ne concernent que cette app.",
+        "Theme, colours and contact pictures apply to all three apps. Language and icon are for this app only.",
     )
     val theme = t("Thème", "Theme")
     val themeSystem = t("Système", "System")
@@ -34,7 +34,7 @@ class AppearanceStrings(val fr: Boolean) {
     val avatarExpressive = t("Formes", "Shapes")
     val language = t("Langue", "Language")
     val languageSystem = t("Téléphone", "Phone's")
-    val languageNote = t("Les trois apps changent de langue ensemble.", "All three apps switch language together.")
+    val languageNote = t("Langue de cette app uniquement", "This app's language only")
 
     val appIcon = t("Icône de l'app", "App icon")
     val appIconNote = t(
