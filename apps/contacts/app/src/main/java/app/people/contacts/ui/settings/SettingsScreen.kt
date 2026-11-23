@@ -64,6 +64,13 @@ import app.people.contacts.data.AccountKeys
 import app.people.contacts.data.ContactAccount
 import app.people.contacts.data.ListLayout
 import bundle.core.appearance.AppearanceDialog
+import bundle.core.appearance.InstallHelpDialog
+import app.people.contacts.sync.ContactSync
+import androidx.compose.material.icons.outlined.CloudSync
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import bundle.core.appearance.installStrings
+import androidx.compose.material.icons.outlined.Info
 import bundle.core.appearance.AppIconConfig
 import bundle.core.appearance.IconColor
 import androidx.compose.material.icons.outlined.Palette
@@ -92,6 +99,8 @@ fun SettingsScreen(viewModel: ContactsViewModel, onBack: () -> Unit) {
     val labelOrder by viewModel.labelOrder.collectAsStateWithLifecycle()
     var orderingLabels by remember { mutableStateOf(false) }
     var showAppearance by remember { mutableStateOf(false) }
+    var showInstallHelp by remember { mutableStateOf(false) }
+    var showSync by remember { mutableStateOf(false) }
 
     val calendarOn by viewModel.settings.birthdayCalendar.collectAsStateWithLifecycle(false)
     val calendarAccess = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
@@ -140,6 +149,29 @@ fun SettingsScreen(viewModel: ContactsViewModel, onBack: () -> Unit) {
                     summary = stringResource(R.string.settings_appearance_summary),
                     shape = segmentShape(0, 1),
                     onClick = { showAppearance = true },
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                )
+            }
+            item(key = "sync") {
+                LaunchedEffect(Unit) { ContactSync.refresh(context) }
+                val syncStatus by ContactSync.status.collectAsState()
+                ListRow(
+                    icon = Icons.Outlined.CloudSync,
+                    title = stringResource(R.string.sync_title),
+                    summary = syncSummary(syncStatus),
+                    shape = segmentShape(0, 1),
+                    onClick = { showSync = true },
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                )
+            }
+            item(key = "install-help") {
+                val help = installStrings()
+                ListRow(
+                    icon = Icons.Outlined.Info,
+                    title = help.rowTitle,
+                    summary = help.rowSummary,
+                    shape = segmentShape(0, 1),
+                    onClick = { showInstallHelp = true },
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 )
             }
@@ -216,6 +248,8 @@ fun SettingsScreen(viewModel: ContactsViewModel, onBack: () -> Unit) {
         }
     }
 
+    if (showInstallHelp) InstallHelpDialog(onDismiss = { showInstallHelp = false })
+    if (showSync) SyncDialog(onDismiss = { showSync = false })
     if (showAppearance) {
         AppearanceDialog(
             onDismiss = { showAppearance = false },

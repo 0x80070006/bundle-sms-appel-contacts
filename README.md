@@ -47,6 +47,27 @@ Elles s'appuient sur les trois applis open source de [jawsh207](https://github.c
 - Fusion des doublons, correction des fiches (numéros sans indicatif, fiches vides…), import et
   export vCard, anniversaires dans l'agenda, code QR de votre fiche.
 - **Avatars illustrés** pour les contacts sans photo, les mêmes dans les trois apps.
+- **Historique** sur la fiche d'un contact : ses appels et ses SMS dans une seule liste.
+- **Synchronisation Nextcloud chiffrée** *(bêta)* entre plusieurs téléphones : voir plus bas.
+
+## Synchronisation Nextcloud (bêta)
+
+Contacts › Paramètres › **Synchronisation Nextcloud** : adresse du serveur, nom d'utilisateur, un
+**mot de passe d'application** Nextcloud et une **phrase secrète**, la même sur tous vos téléphones.
+
+- **Chiffrée de bout en bout** : AES-256-GCM, clé tirée de la phrase secrète (PBKDF2, 600 000
+  itérations) et gardée dans l'Android Keystore. Le serveur ne voit jamais un nom ni un numéro.
+- **Fusion intelligente** : un contact modifié sur deux téléphones est fusionné champ par champ ; si
+  un téléphone n'a que le numéro et l'autre le nom, **le contact avec le nom est gardé** ; même
+  numéro sous deux noms différents : les deux restent et apparaissent dans *Fusionner les doublons*.
+- **Garde-fous** : une copie chiffrée des contacts est faite avant chaque modification, les
+  suppressions en masse sont refusées, une modification l'emporte sur une suppression, et chaque
+  téléphone n'écrit que son propre fichier sur le serveur (pas de conflit d'écriture).
+- Synchronise les contacts enregistrés **sur le téléphone** (pas ceux d'un compte Google), toutes
+  les 6 heures et une minute après un changement. Les photos ne sont pas encore synchronisées.
+
+Détails et règles : [docs/SYNC.md](docs/SYNC.md). Contacts demande pour cela la permission
+Internet ; rien n'est envoyé tant que la synchronisation n'est pas configurée.
 
 ## Apparence (dans les trois apps)
 
@@ -77,6 +98,8 @@ Android protège les autorisations SMS et journal d'appels des applications inst
 magasin d'applications : le bouton Autoriser est grisé ou renvoie « Paramètre restreint ». Ce n'est
 pas un problème de l'app, et rien dans l'app ne peut le contourner.
 
+- Dans chaque app : Paramètres › **Autorisations bloquées ?** explique la marche à suivre et ouvre
+  directement la bonne page.
 - Ouvrir **Réglages › Applications › (l'app) › ⋮ en haut à droite › Autoriser les paramètres
   restreints** (le menu apparaît après un premier refus), puis accorder les autorisations.
 - Ou installer les APK avec un installateur « par session » (Obtainium, F-Droid, Aurora Store) ou
@@ -102,6 +125,7 @@ apps/contacts, apps/phone, apps/messages   les trois applications
 core/design        thème, police, avatars (apps/…/avatars : illustrations et leur générateur)
 core/appearance    apparence partagée, langue, icônes
 core/telephony     comparaison des numéros, formats
+core/sync          synchro Nextcloud : chiffrement, WebDAV, fusion (testé sur la JVM)
 scripts/make_icons.py   génère les icônes et leurs variantes de couleur
 ```
 

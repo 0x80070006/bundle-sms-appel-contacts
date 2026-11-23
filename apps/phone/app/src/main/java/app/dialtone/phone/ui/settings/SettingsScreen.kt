@@ -30,6 +30,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.outlined.Palette
 import bundle.core.appearance.AppearanceDialog
+import bundle.core.appearance.InstallHelpDialog
+import bundle.core.appearance.installStrings
+import androidx.compose.material.icons.outlined.Info
 import bundle.core.appearance.AppIconConfig
 import bundle.core.appearance.IconColor
 import androidx.compose.ui.res.stringResource
@@ -127,6 +130,8 @@ fun SettingsScreen(
     var editingResponses by rememberSaveable { mutableStateOf(false) }
     var viewingLog by rememberSaveable { mutableStateOf(false) }
     var showAppearance by rememberSaveable { mutableStateOf(false) }
+    var showInstallHelp by rememberSaveable { mutableStateOf(false) }
+    if (showInstallHelp) InstallHelpDialog(onDismiss = { showInstallHelp = false })
     if (showAppearance) {
         AppearanceDialog(
             onDismiss = { showAppearance = false },
@@ -167,6 +172,16 @@ fun SettingsScreen(
                     summary = tr("Theme, colours, contact pictures and language, for all three apps"),
                     shape = segmentShape(0, 1),
                     onClick = { showAppearance = true },
+                )
+            }
+            item(key = "install-help") {
+                val help = installStrings()
+                SettingsRow(
+                    icon = Icons.Outlined.Info,
+                    title = help.rowTitle,
+                    summary = help.rowSummary,
+                    shape = segmentShape(0, 1),
+                    onClick = { showInstallHelp = true },
                 )
             }
             item(key = "vvm-header") { SectionHeader(tr("Visual voicemail")) }

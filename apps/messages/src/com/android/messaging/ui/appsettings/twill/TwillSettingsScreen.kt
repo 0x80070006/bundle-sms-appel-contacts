@@ -8,6 +8,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import bundle.core.appearance.AppIconConfig
 import bundle.core.appearance.AppearanceDialog
+import bundle.core.appearance.InstallHelpDialog
+import bundle.core.appearance.installStrings
+import androidx.compose.material.icons.rounded.Info
 import bundle.core.appearance.IconColor
 import bundle.core.appearance.appearanceStrings
 import com.android.messaging.ui.bundle.DefaultChatStyleSection
@@ -56,6 +59,8 @@ internal fun TwillSettingsScreen(
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     // Bundle: the look shared with Contacts and Phone, this app's icon, and the chats' style.
     var showAppearance by rememberSaveable { mutableStateOf(false) }
+    var showInstallHelp by rememberSaveable { mutableStateOf(false) }
+    if (showInstallHelp) InstallHelpDialog(onDismiss = { showInstallHelp = false })
     if (showAppearance) {
         AppearanceDialog(
             onDismiss = { showAppearance = false },
@@ -90,6 +95,15 @@ internal fun TwillSettingsScreen(
                     summary = chatStrings().appearanceSummary,
                     icon = Icons.Rounded.Palette,
                     onClick = { showAppearance = true },
+                )
+            }
+            item(key = "install_help") {
+                val help = installStrings()
+                SettingsClickableItem(
+                    title = help.rowTitle,
+                    summary = help.rowSummary,
+                    icon = Icons.Rounded.Info,
+                    onClick = { showInstallHelp = true },
                 )
             }
             item(key = "services_header", contentType = SettingsGroupTitle) {

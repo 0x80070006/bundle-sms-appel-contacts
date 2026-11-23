@@ -18,6 +18,10 @@ zxing = "3.5.3"
 # MIME parsing for the visual voicemail engine (IMAP message bodies).
 mime4j = "0.8.9"
 junit = "4.13.2"
+# Nextcloud sync: WebDAV needs PROPFIND and MKCOL, which HttpURLConnection refuses.
+okhttp = "4.12.0"
+# Real org.json for JVM unit tests (the Android stub returns nothing there).
+orgJson = "20240303"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -37,6 +41,9 @@ zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxing" 
 apache-mime4j-core = { group = "org.apache.james", name = "apache-mime4j-core", version.ref = "mime4j" }
 apache-mime4j-dom = { group = "org.apache.james", name = "apache-mime4j-dom", version.ref = "mime4j" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+okhttp-mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver", version.ref = "okhttp" }
+org-json = { group = "org.json", name = "json", version.ref = "orgJson" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
