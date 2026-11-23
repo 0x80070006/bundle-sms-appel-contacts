@@ -63,8 +63,11 @@ Contacts › Paramètres › **Synchronisation Nextcloud** : adresse du serveur,
 - **Garde-fous** : une copie chiffrée des contacts est faite avant chaque modification, les
   suppressions en masse sont refusées, une modification l'emporte sur une suppression, et chaque
   téléphone n'écrit que son propre fichier sur le serveur (pas de conflit d'écriture).
-- Synchronise les contacts enregistrés **sur le téléphone** (pas ceux d'un compte Google), toutes
-  les 6 heures et une minute après un changement. Les photos ne sont pas encore synchronisées.
+- Synchronise les contacts du téléphone **et ceux de Google** (et des autres comptes modifiables,
+  désactivable), toutes les 6 heures et une minute après un changement. Une même personne présente
+  dans deux comptes n'est synchronisée qu'une fois. Les photos ne sont pas encore synchronisées.
+- **Deuxième copie** : une sauvegarde complète et chiffrée des contacts est aussi gardée sur Nextcloud,
+  chaque jour et après chaque modification (les 10 dernières).
 
 Détails et règles : [docs/SYNC.md](docs/SYNC.md). Contacts demande pour cela la permission
 Internet ; rien n'est envoyé tant que la synchronisation n'est pas configurée.

@@ -364,5 +364,8 @@
     <string name="sync_problem_permission">Contacts access is needed.</string>
     <string name="sync_problem_format">The address isn\'t valid, or a file on the server is from a newer version of the app.</string>
     <string name="sync_problem_other">Something went wrong: %1$s</string>
-    <string name="sync_security">Encryption: AES-256-GCM, with a key made from the passphrase (PBKDF2, 600 000 rounds) and kept in the Android Keystore. Before any change, an encrypted copy of your contacts is kept on the phone. Only contacts saved on the phone are synced, not Google contacts. Photos aren\'t synced yet. Beta.</string>
+    <string name="sync_security">Encryption: AES-256-GCM, with a key made from the passphrase (PBKDF2, 600 000 rounds) and kept in the Android Keystore. Before any change, an encrypted copy of your contacts is kept on the phone. Photos aren\'t synced yet. Beta.</string>
+    <string name="sync_all_accounts">Google and other accounts too</string>
+    <string name="sync_all_accounts_summary">Also syncs the contacts of Google and of any other account whose contacts can be changed, not only those saved on the phone. The same person in two accounts is synced once.</string>
+    <string name="sync_backup_note">A full encrypted copy of your contacts is also kept on Nextcloud (BundleSync/backups), daily and after each change, the last 10.</string>
 </resources>

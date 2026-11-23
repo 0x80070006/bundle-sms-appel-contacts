@@ -29,8 +29,22 @@ n'utilisant que son propre Nextcloud. Le serveur ne voit jamais un nom, un numé
 
 Noms (dont phonétiques), surnom, société, poste, notes, numéros, e-mails, adresses, dates, sites,
 relations, adresses d'appel Internet, messageries, libellés (par leur nom) et favoris. Les photos ne
-le sont pas encore. Seuls les contacts enregistrés **sur le téléphone** (pas ceux d'un compte Google
-ou autre) sont concernés, pour ne pas dupliquer ce qu'un autre compte synchronise déjà.
+le sont pas encore. Sont concernés les contacts enregistrés **sur le téléphone** et, par défaut,
+ceux de **Google** et de tout autre compte modifiable (CardDAV…) ; les contacts en lecture seule
+ajoutés par les messageries (WhatsApp, Signal…) ne le sont jamais. Un contact venant d'un autre
+téléphone est enregistré sur le téléphone.
+
+**Une même personne dans deux comptes** (le téléphone et Google, que Android affiche comme un seul
+contact) n'est publiée qu'une fois : la deuxième copie est reconnue (même nom et un numéro ou e-mail
+en commun, ou une des deux sans nom) et n'est pas renvoyée aux autres téléphones. Ainsi, un contact
+Google qui arrive par Google sur un téléphone où la synchro l'a déjà créé ne se démultiplie pas.
+
+## Deuxième copie sur Nextcloud
+
+En plus de la synchro, chaque téléphone garde sur le serveur une **copie complète et chiffrée** de
+ses contacts (`BundleSync/backups/<id>/<date>.bsync`) : à la première synchro, chaque jour, et après
+chaque modification ; les 10 dernières sont gardées. Elle ne sert pas à la synchro : c'est le filet
+de sécurité si la synchro se trompait.
 
 ## Comparer et fusionner
 
@@ -60,10 +74,10 @@ changements locaux ne sont pas tous appliqués). Une nouvelle tentative est plan
 ## Dossier sur Nextcloud
 
 `BundleSync/vault.json` (sel, itérations, contrôle de la phrase secrète : aucune donnée) et
-`BundleSync/devices/<id>.bsync` (un fichier chiffré par téléphone). Utiliser un **mot de passe
+`BundleSync/devices/<id>.bsync` (un fichier chiffré par téléphone) et `BundleSync/backups/<id>/`
+(les copies complètes). Utiliser un **mot de passe
 d'application** Nextcloud, pas le mot de passe du compte.
 
 ## Ce que ça ne fait pas (encore)
 
-Photos, restauration en un clic d'une sauvegarde de sécurité, contacts d'autres comptes, résolution
-manuelle d'un conflit champ par champ.
+Photos, restauration en un clic d'une copie, résolution manuelle d'un conflit champ par champ.

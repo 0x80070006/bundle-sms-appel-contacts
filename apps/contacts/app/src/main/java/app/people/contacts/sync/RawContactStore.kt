@@ -1,6 +1,7 @@
 package app.people.contacts.sync
 
 import android.content.ContentProviderOperation
+import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
@@ -28,24 +29,40 @@ import bundle.core.sync.LocalContact
 import bundle.core.sync.LocalStore
 
 /**
- * The phone's own contacts for the sync, at the level Android stores them: one raw contact each,
- * in the phone's account (no account) or one of this app's on-device accounts. Contacts of Google
- * or other accounts are left out, their own sync already carries them. New contacts from other
- * phones are saved on the phone.
+ * The contacts the sync works on, at the level Android stores them (one raw contact each): the
+ * phone's own (no account, this app's on-device accounts, Samsung's "Phone"), and with
+ * [allAccounts] also Google's and those of any other account whose contacts can be changed
+ * (a CardDAV account, for example). Read-only contacts that messaging apps add (WhatsApp,
+ * Signal…) are always left out. New contacts from other phones are saved on the phone.
  *
  * Reading throws if contacts access is missing, so the sync stops instead of believing the
  * contacts are gone.
  */
-class RawContactStore(private val context: Context) : LocalStore {
+class RawContactStore(private val context: Context, private val allAccounts: Boolean = true) : LocalStore {
     private val resolver get() = context.contentResolver
 
-    private val scope = "(${RawContacts.ACCOUNT_TYPE} IS NULL OR ${RawContacts.ACCOUNT_TYPE} = '' OR ${RawContacts.ACCOUNT_TYPE} = ?) AND ${RawContacts.DELETED} = 0"
+    /** Account types in scope besides "no account". */
+    private val types: List<String> by lazy {
+        val local = listOf(ON_DEVICE_ACCOUNT_TYPE, "vnd.sec.contact.phone", "com.android.localphone", "com.local.contacts")
+        if (!allAccounts) return@lazy local
+        // Accounts whose contacts sync both ways: Google, CardDAV… (not apps that only add read-only contacts).
+        val writable = runCatching {
+            ContentResolver.getSyncAdapterTypes()
+                .filter { it.authority == ContactsContract.AUTHORITY && it.supportsUploading() && it.isUserVisible }
+                .map { it.accountType }
+        }.getOrDefault(emptyList())
+        (local + writable + "com.google").distinct()
+    }
+
+    private val scope: String
+        get() = "(${RawContacts.ACCOUNT_TYPE} IS NULL OR ${RawContacts.ACCOUNT_TYPE} = '' OR ${RawContacts.ACCOUNT_TYPE} IN (${types.joinToString { "?" }}))" +
+            " AND ${RawContacts.DELETED} = 0 AND ${RawContacts.RAW_CONTACT_IS_READ_ONLY} = 0"
 
     override fun readAll(): List<LocalContact> {
         val starred = HashMap<Long, Boolean>()
         resolver.query(
             RawContacts.CONTENT_URI, arrayOf(RawContacts._ID, RawContacts.STARRED),
-            scope, arrayOf(ON_DEVICE_ACCOUNT_TYPE), null,
+            scope, types.toTypedArray(), null,
         )?.use { c -> while (c.moveToNext()) starred[c.getLong(0)] = c.getInt(1) == 1 }
             ?: throw SecurityException("contacts are not readable")
         val groups = groupTitles()
@@ -110,10 +127,20 @@ class RawContactStore(private val context: Context) : LocalStore {
     override fun update(handle: String, fields: Fields) {
         val id = handle.toLong()
         val ops = ArrayList<ContentProviderOperation>()
-        // Replace every kind of detail the sync manages; photos and anything else stay untouched.
+        // Replace every kind of detail the sync manages; photos and anything else stay untouched. Of
+        // the group memberships, only labels: a Google contact must stay in "My Contacts".
         ops += ContentProviderOperation.newDelete(Data.CONTENT_URI)
-            .withSelection("${Data.RAW_CONTACT_ID} = ? AND ${Data.MIMETYPE} IN (${MANAGED.joinToString { "?" }})", arrayOf(id.toString()) + MANAGED)
+            .withSelection("${Data.RAW_CONTACT_ID} = ? AND ${Data.MIMETYPE} IN (${DETAILS.joinToString { "?" }})", arrayOf(id.toString()) + DETAILS)
             .build()
+        val labelIds = groupTitles().keys
+        if (labelIds.isNotEmpty()) {
+            ops += ContentProviderOperation.newDelete(Data.CONTENT_URI)
+                .withSelection(
+                    "${Data.RAW_CONTACT_ID} = ? AND ${Data.MIMETYPE} = ? AND ${GroupMembership.GROUP_ROW_ID} IN (${labelIds.joinToString()})",
+                    arrayOf(id.toString(), GroupMembership.CONTENT_ITEM_TYPE),
+                )
+                .build()
+        }
         ops += ContentProviderOperation.newUpdate(ContentUris.withAppendedId(RawContacts.CONTENT_URI, id))
             .withValue(RawContacts.STARRED, if (fields.scalar("starred") == "1") 1 else 0).build()
         rows(fields, id, accountOf(id), ops)
@@ -195,11 +222,11 @@ class RawContactStore(private val context: Context) : LocalStore {
     }
 
     private companion object {
-        val MANAGED = arrayOf(
+        /** The details the sync rewrites (group memberships are handled apart). */
+        val DETAILS = arrayOf(
             StructuredName.CONTENT_ITEM_TYPE, Nickname.CONTENT_ITEM_TYPE, Organization.CONTENT_ITEM_TYPE, Note.CONTENT_ITEM_TYPE,
             Phone.CONTENT_ITEM_TYPE, Email.CONTENT_ITEM_TYPE, StructuredPostal.CONTENT_ITEM_TYPE, Event.CONTENT_ITEM_TYPE,
             Website.CONTENT_ITEM_TYPE, Relation.CONTENT_ITEM_TYPE, SipAddress.CONTENT_ITEM_TYPE, Im.CONTENT_ITEM_TYPE,
-            GroupMembership.CONTENT_ITEM_TYPE,
         )
     }
 }

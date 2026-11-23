@@ -26,9 +26,11 @@ data class SyncState(
     val links: Map<String, String> = emptyMap(),
     val base: Map<String, Base> = emptyMap(),
     val tombstones: Map<String, Long> = emptyMap(),
+    /** When this phone last kept a full copy of its contacts on the server. */
+    val lastBackupAt: Long = 0,
 ) {
     fun toBytes(): ByteArray = JSONObject()
-        .put("v", 1).put("device", deviceId)
+        .put("v", 1).put("device", deviceId).put("backupAt", lastBackupAt)
         .put("links", JSONObject(links))
         .put("base", JSONObject(base.mapValues { (_, b) -> JSONObject().put("at", b.at).put("f", b.fields.toJson()) }))
         .put("tombstones", JSONObject(tombstones))
@@ -47,6 +49,7 @@ data class SyncState(
                 links.keys().asSequence().associateWith { links.getString(it) },
                 base.keys().asSequence().associateWith { Base(fieldsFromJson(base.getJSONObject(it).getJSONObject("f")), base.getJSONObject(it).optLong("at")) },
                 tombs.keys().asSequence().associateWith { tombs.getLong(it) },
+                o.optLong("backupAt"),
             )
         }
     }
@@ -74,6 +77,10 @@ data class SyncReport(
     val unreadable: List<String> = emptyList(),
     val devices: Int = 0,
     val total: Int = 0,
+    /** Contacts that are another copy of one already synced (the same person in two accounts): not published twice. */
+    val copies: Int = 0,
+    /** Whether a full encrypted copy of the contacts was kept on the server this time. */
+    val backedUp: Boolean = false,
 ) {
     val changedHere: Boolean get() = created + updated + deleted > 0
 }
@@ -101,6 +108,8 @@ class SyncEngine(
     /** Called with the phone's contacts just before the first change is applied. */
     private val beforeChanges: (List<LocalContact>) -> Unit = {},
     private val root: String = Vault.ROOT,
+    /** Also keep a full encrypted copy of the contacts on the server (daily, and after changes), the last [KEEP_BACKUPS]. */
+    private val remoteBackups: Boolean = true,
 ) {
     private data class Update(val handle: String, val uid: String, val fields: Fields)
 
@@ -227,9 +236,11 @@ class SyncEngine(
         var updated = 0
         var deleted = 0
         var failures = 0
+        val createdFields = HashMap<String, Fields>()
         for (record in creates) {
             try {
                 val handle = local.create(record.fields)
+                createdFields[handle] = record.fields
                 links[handle] = record.uid
                 uidToHandle[record.uid] = handle
                 publishedAt[record.uid] = record.updatedAt
@@ -259,11 +270,24 @@ class SyncEngine(
             }
         }
 
-        // New contacts of this phone get their identity.
-        unlinked.filter { it.fields.hasContent }.forEach { c ->
+        // New contacts of this phone get their identity, unless they're another copy of a contact
+        // already synced (the same person saved in two accounts, such as the phone and Google, which
+        // Android shows as one): publishing both would duplicate them on the other phones.
+        val index = HashMap<String, MutableList<Fields>>()
+        fun keysOf(f: Fields) = f.keys("phones").map { "p:$it" } + f.keys("emails").map { "e:$it" }
+        fun indexFields(f: Fields) = keysOf(f).forEach { index.getOrPut(it) { ArrayList() } += f }
+        links.keys.forEach { h -> (byHandle[h]?.fields ?: createdFields[h])?.let(::indexFields) }
+        var copies = 0
+        for (c in unlinked) {
+            if (!c.fields.hasContent) continue
+            if (keysOf(c.fields).flatMap { index[it].orEmpty() }.any { Merge.match(it, c.fields) == Match.Same }) {
+                copies++
+                continue
+            }
             val uid = UUID.randomUUID().toString()
             links[c.handle] = uid
             publishedAt[uid] = now
+            indexFields(c.fields)
         }
 
         // What the provider holds now is the new agreed state (it may normalise values), so read again.
@@ -283,15 +307,36 @@ class SyncEngine(
         }
         val liveTombs = tombs.filterValues { now - it < TOMBSTONE_MS }.filterKeys { it !in newBase }
         val afterHandles = after.mapTo(HashSet()) { it.handle }
-        val newState = SyncState(deviceId, links.filterKeys { it in afterHandles }, newBase, liveTombs)
+        val newState = SyncState(deviceId, links.filterKeys { it in afterHandles }, newBase, liveTombs, st.lastBackupAt)
         state.save(newState)
 
         dav.put("$root/devices/$deviceId$EXT", Crypto.seal(key, DeviceFile(deviceId, deviceName, now, records, liveTombs).toBytes(), DeviceFile.LABEL))
-        return SyncReport(created, updated, deleted, suggestions, skipped, failures, unreadable, devices + 1, after.size)
+
+        // The second copy: every contact of the phone, in one encrypted file, kept apart from the
+        // sync so it can be restored even if the sync went wrong. A failure here doesn't fail the sync.
+        var backedUp = false
+        if (remoteBackups && (st.lastBackupAt == 0L || now - st.lastBackupAt >= DAY_MS || created + updated + deleted > 0 || newBase != st.base)) {
+            backedUp = runCatching {
+                val folder = "$root/backups/$deviceId"
+                dav.ensureFolder(folder)
+                val snapshot = DeviceFile(deviceId, deviceName, now, after.map { Record(links[it.handle] ?: "local-${it.handle}", it.fields, now) }, emptyMap())
+                dav.put("$folder/$now$EXT", Crypto.seal(key, snapshot.toBytes(), BACKUP_LABEL))
+                dav.list(folder).filter { !it.isFolder && it.name.endsWith(EXT) }.map { it.name }
+                    .sortedByDescending { it.removeSuffix(EXT).toLongOrNull() ?: 0L }.drop(KEEP_BACKUPS)
+                    .forEach { dav.delete("$folder/$it") }
+            }.isSuccess
+            if (backedUp) state.save(newState.copy(lastBackupAt = now))
+        }
+        return SyncReport(created, updated, deleted, suggestions, skipped, failures, unreadable, devices + 1, after.size, copies, backedUp)
     }
 
     companion object {
         const val EXT = ".bsync"
+        const val BACKUP_LABEL = "bundle-sync backup"
+
+        /** Full copies kept on the server, per phone. */
+        const val KEEP_BACKUPS = 10
+        private const val DAY_MS = 24L * 60 * 60 * 1000
 
         /** Changes beyond this many (and beyond a fifth of the contacts) are refused as probably a mistake. */
         const val MASS = 10

@@ -81,6 +81,8 @@ data class SyncStatus(
     val problem: SyncProblem? = null,
     val detail: String = "",
     val running: Boolean = false,
+    /** Google and other accounts' contacts are synced too, not only the phone's. */
+    val allAccounts: Boolean = true,
 )
 
 /**
@@ -109,7 +111,14 @@ object ContactSync {
             problem = last?.optString("problem")?.takeIf { it.isNotEmpty() }?.let { runCatching { SyncProblem.valueOf(it) }.getOrNull() },
             detail = last?.optString("detail").orEmpty(),
             running = _status.value.running,
+            allAccounts = p.getBoolean("allAccounts", true),
         )
+    }
+
+    /** Whether Google and other accounts' contacts are synced too. */
+    fun setAllAccounts(context: Context, on: Boolean) {
+        prefs(context).edit().putBoolean("allAccounts", on).apply()
+        refresh(context)
     }
 
     private fun deviceId(context: Context): String = prefs(context).let { p ->
@@ -120,7 +129,7 @@ object ContactSync {
      * Connects to the server with the group's [passphrase]: checks the login and the passphrase
      * (creating the group on the first phone) before anything is saved. Throws on any problem.
      */
-    fun connect(context: Context, server: String, user: String, appPassword: String, passphrase: CharArray) {
+    fun connect(context: Context, server: String, user: String, appPassword: String, passphrase: CharArray, allAccounts: Boolean = true) {
         val base = Nextcloud.davBase(server, user)
         val dav = OkHttpWebDav(base, user.trim(), appPassword)
         val key = Vault.open(dav, passphrase)
@@ -129,6 +138,7 @@ object ContactSync {
             .putString("password", KeystoreBox.seal(appPassword.toByteArray()))
             .putString("key", KeystoreBox.seal(key))
             .remove("last")
+            .putBoolean("allAccounts", allAccounts)
             .apply()
         key.fill(0)
         refresh(context)
@@ -155,7 +165,7 @@ object ContactSync {
             val password = String(KeystoreBox.open(p.getString("password", "")!!))
             val dav = OkHttpWebDav(p.getString("server", "")!!, p.getString("user", "")!!, password)
             SyncEngine(
-                dav, RawContactStore(context), EncryptedState(dir(context), key), key,
+                dav, RawContactStore(context, p.getBoolean("allAccounts", true)), EncryptedState(dir(context), key), key,
                 deviceId(context), Build.MODEL ?: "Android",
                 beforeChanges = { Backups.write(dir(context), key, it) },
             ).sync()

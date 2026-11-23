@@ -19,6 +19,8 @@ class FakeDav : WebDav {
 
     override fun get(path: String): ByteArray? = files[path]
     override fun put(path: String, data: ByteArray) { files[path] = data }
+    override fun delete(path: String) { files.remove(path) }
+
     override fun putIfAbsent(path: String, data: ByteArray): Boolean {
         beforePutIfAbsent?.invoke()
         if (path in files) return false

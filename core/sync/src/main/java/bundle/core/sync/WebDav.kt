@@ -37,6 +37,9 @@ interface WebDav {
 
     /** Writes the file only if it doesn't exist yet; false if it did (nothing is written then). */
     fun putIfAbsent(path: String, data: ByteArray): Boolean
+
+    /** Deletes the file; fine if it's already gone. */
+    fun delete(path: String)
 }
 
 /**
@@ -111,6 +114,10 @@ class OkHttpWebDav(base: String, private val user: String, private val password:
                 else -> throw DavException(r.code, "PUT $path: ${r.code}")
             }
         }
+
+    override fun delete(path: String) {
+        call(request(path, "DELETE")) { r -> if (r.code !in listOf(200, 204, 404)) throw DavException(r.code, "DELETE $path: ${r.code}") }
+    }
 
     internal companion object {
         val LOCAL_HOSTS = setOf("localhost", "127.0.0.1", "10.0.2.2")

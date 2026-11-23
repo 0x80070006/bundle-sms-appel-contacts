@@ -378,5 +378,8 @@
     <string name="sync_problem_permission">L\'accès aux contacts est nécessaire.</string>
     <string name="sync_problem_format">L\'adresse n\'est pas valide, ou un fichier du serveur vient d\'une version plus récente de l\'app.</string>
     <string name="sync_problem_other">Une erreur s\'est produite : %1$s</string>
-    <string name="sync_security">Chiffrement : AES-256-GCM, avec une clé tirée de la phrase secrète (PBKDF2, 600 000 itérations) et gardée dans l\'Android Keystore. Avant toute modification, une copie chiffrée de vos contacts est gardée sur le téléphone. Seuls les contacts enregistrés sur le téléphone sont synchronisés, pas ceux de Google. Les photos ne le sont pas encore. Bêta.</string>
+    <string name="sync_security">Chiffrement : AES-256-GCM, avec une clé tirée de la phrase secrète (PBKDF2, 600 000 itérations) et gardée dans l\'Android Keystore. Avant toute modification, une copie chiffrée de vos contacts est gardée sur le téléphone. Les photos ne sont pas encore synchronisées. Bêta.</string>
+    <string name="sync_all_accounts">Aussi Google et les autres comptes</string>
+    <string name="sync_all_accounts_summary">Synchronise aussi les contacts de Google et de tout autre compte modifiable, pas seulement ceux enregistrés sur le téléphone. Une même personne présente dans deux comptes n\'est synchronisée qu\'une fois.</string>
+    <string name="sync_backup_note">Une copie complète et chiffrée de vos contacts est aussi gardée sur Nextcloud (BundleSync/backups), chaque jour et après chaque modification : les 10 dernières.</string>
 </resources>

@@ -179,4 +179,39 @@ class SyncEngineTest {
         repeat(3) { phones.forEach { it.sync() } }
         phones.forEach { assertEquals(setOf("Léa", "Hugo", "Camille"), it.local.contacts.values.map { f -> f.scalar("first") }.toSet()) }
     }
+
+    @Test fun `the same person in two accounts of one phone is published once`() {
+        val (_, a, b) = phones()
+        a.local.add(person("Léa", "Moreau", "0611223344"))           // the phone's copy
+        a.local.add(person("Léa", "Moreau", "+33 6 11 22 33 44"))    // the Google copy
+        val report = a.sync()
+        assertEquals(1, report.copies)
+        b.sync()
+        assertEquals(1, b.local.contacts.size)
+    }
+
+    @Test fun `a contact that arrives through Google after the sync made it is not sent back as new`() {
+        val (_, a, b) = phones()
+        a.local.add(person("Léa", "Moreau", "0611223344"))
+        a.sync(); b.sync()
+        b.local.add(person("Léa", "Moreau", "0611223344"))           // Google brings its own copy later
+        b.sync(); a.sync()
+        assertEquals(1, a.local.contacts.size)
+    }
+
+    @Test fun `a full encrypted copy is kept on the server, the last ten only`() {
+        val (dav, a, _) = phones()
+        a.local.add(person("Léa", "Moreau", "0611223344"))
+        assertTrue(a.sync().backedUp)
+        val copy = dav.files.keys.single { it.startsWith("BundleSync/backups/A/") }
+        assertFalse(String(dav.files.getValue(copy), Charsets.ISO_8859_1).contains("Moreau"))
+        val back = DeviceFile.fromBytes(Crypto.open(TEST_KEY, dav.files.getValue(copy), SyncEngine.BACKUP_LABEL))
+        assertEquals("Léa", back.records.single().fields.scalar("first"))
+        assertFalse(a.sync().backedUp)   // nothing changed, and not a day later
+        repeat(12) { i ->
+            a.local.add(person("C$i", null, "06" + "%08d".format(i)))
+            a.sync()
+        }
+        assertEquals(SyncEngine.KEEP_BACKUPS, dav.files.keys.count { it.startsWith("BundleSync/backups/A/") })
+    }
 }

@@ -99,6 +99,7 @@ fun SyncDialog(onDismiss: () -> Unit) {
             ) {
                 Text(stringResource(R.string.sync_intro), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 if (status.configured) Connected(status) else SetUp()
+                Text(stringResource(R.string.sync_backup_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text(stringResource(R.string.sync_security), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
@@ -115,6 +116,7 @@ private fun SetUp() {
     var phrase by remember { mutableStateOf("") }
     var phrase2 by remember { mutableStateOf("") }
     var busy by remember { mutableStateOf(false) }
+    var allAccounts by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<Pair<SyncProblem, String>?>(null) }
     val short = phrase.isNotEmpty() && phrase.length < 10
     val mismatch = phrase2.isNotEmpty() && phrase != phrase2
@@ -129,6 +131,7 @@ private fun SetUp() {
             Field(phrase, { phrase = it }, R.string.sync_passphrase, secret = true, error = if (short) stringResource(R.string.sync_passphrase_short) else null)
             Field(phrase2, { phrase2 = it }, R.string.sync_passphrase_confirm, secret = true, error = if (mismatch) stringResource(R.string.sync_passphrase_mismatch) else null)
             Text(stringResource(R.string.sync_passphrase_help), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+            AccountsSwitch(allAccounts) { allAccounts = it }
             error?.let { (problem, detail) -> Text(problemText(problem, detail), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium) }
             if (busy) {
                 Text(stringResource(R.string.sync_connecting), style = MaterialTheme.typography.bodyMedium)
@@ -141,7 +144,7 @@ private fun SetUp() {
                     error = null
                     scope.launch {
                         val failure = withContext(Dispatchers.IO) {
-                            runCatching { ContactSync.connect(context, server, user, password, phrase.toCharArray()) }.exceptionOrNull()
+                            runCatching { ContactSync.connect(context, server, user, password, phrase.toCharArray(), allAccounts) }.exceptionOrNull()
                         }
                         if (failure == null) {
                             phrase = ""; phrase2 = ""; password = ""
@@ -181,6 +184,7 @@ private fun Connected(status: SyncStatus) {
                 Text(stringResource(R.string.sync_running), style = MaterialTheme.typography.bodyMedium)
                 LinearProgressIndicator(Modifier.fillMaxWidth())
             }
+            AccountsSwitch(status.allAccounts) { ContactSync.setAllAccounts(context, it) }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(enabled = !status.running, onClick = { scope.launch(Dispatchers.IO) { ContactSync.run(context) } }) { Text(stringResource(R.string.sync_now)) }
             }
@@ -201,6 +205,18 @@ private fun Connected(status: SyncStatus) {
             },
             dismissButton = { TextButton(onClick = { confirmStop = false }) { Text(stringResource(R.string.cancel)) } },
         )
+    }
+}
+
+/** "Also Google and other accounts' contacts", on by default. */
+@Composable
+private fun AccountsSwitch(on: Boolean, onChange: (Boolean) -> Unit) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(R.string.sync_all_accounts), style = MaterialTheme.typography.bodyLarge)
+            Text(stringResource(R.string.sync_all_accounts_summary), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        androidx.compose.material3.Switch(checked = on, onCheckedChange = onChange)
     }
 }
 
