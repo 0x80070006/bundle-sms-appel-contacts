@@ -121,6 +121,8 @@ android {
         // Phone), compiled from core/appearance's sources: this build keeps its own Gradle setup.
         kotlin.srcDir("../../../core/appearance/src/main/java")
         res.srcDir("../res")
+        // Bundle: the cartoon avatars Contacts and Phone show for contacts with no photo.
+        res.srcDir("../../../core/design/avatars/res")
         // Twill: the Delta Chat core and its JNI bridge, built by
         // scripts/build-deltachat-core.sh (not in git). Loaded straight from the APK.
         jniLibs.srcDir("../deltachat/jniLibs")
@@ -150,6 +152,11 @@ android {
                 keyAlias = keystoreProperties["keyAlias"] as String
                 keyPassword = keystoreProperties["keyPassword"] as String
                 enableV4Signing = true
+                // Bundle: every signature scheme, so any installer (old file managers included)
+                // accepts the APK.
+                enableV1Signing = true
+                enableV2Signing = true
+                enableV3Signing = true
             }
         }
     }

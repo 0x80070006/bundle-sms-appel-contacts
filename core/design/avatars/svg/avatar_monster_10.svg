@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="512" height="512">
+  <path d="M0,0 H100 V100 H0 Z" fill="#E0F2F1"/>
+  <path d="M20,92 L20,44 C20,26 34,20 50,20 C66,20 80,26 80,44 L80,92 C80,98 74,98 74,92 C74,86 66,86 66,94 C66,100 58,100 58,94 L58,90 C58,84 50,84 50,92 C50,98 42,98 42,92 C42,86 34,86 34,94 C34,100 26,100 26,94 C26,88 20,88 20,92 Z" fill="#FFB703"/>
+  <path d="M32,46 a7,7 0 1,0 14,0 a7,7 0 1,0 -14,0 Z" fill="#FFFFFF"/>
+  <path d="M54,46 a7,7 0 1,0 14,0 a7,7 0 1,0 -14,0 Z" fill="#FFFFFF"/>
+  <path d="M36,48.5 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0 Z" fill="#2B2B33"/>
+  <path d="M58,48.5 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0 Z" fill="#2B2B33"/>
+  <path d="M32,46 a7,7 0 0,1 14,0 Z" fill="#FFB703"/>
+  <path d="M54,46 a7,7 0 0,1 14,0 Z" fill="#FFB703"/>
+  <path d="M32,46 L46,46 M54,46 L68,46" fill="none" stroke="#2B2B33" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M44,64 a6,7 0 1,0 12,0 a6,7 0 1,0 -12,0 Z" fill="#2B2B33"/>
+  <path d="M46.5,67 a3.5,2.5 0 1,0 7,0 a3.5,2.5 0 1,0 -7,0 Z" fill="#F06A7D"/>
+</svg>

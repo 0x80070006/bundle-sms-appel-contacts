@@ -78,7 +78,6 @@
         <item quantity="other"><xliff:g id="count" example="12">%1$d</xliff:g> contacts</item>
     </plurals>
     <string name="create_label">Create label</string>
-    <string name="create_label_in">Create in</string>
     <string name="label_name">Label name</string>
     <string name="create">Create</string>
     <string name="rename">Rename</string>
@@ -94,7 +93,7 @@
     <string name="remove_from_label">Remove from label</string>
     <string name="label_empty_title">No contacts in this label</string>
     <string name="label_empty_body">Add contacts to keep them together here.</string>
-    <string name="label_add_skipped"><xliff:g id="count" example="2">%1$d</xliff:g> couldn\'t be added: a label can only hold contacts saved in its own account.</string>
+    <string name="label_add_skipped"><xliff:g id="count" example="2">%1$d</xliff:g> couldn\'t be added to the label.</string>
     <string name="merge_duplicates">Merge duplicates</string>
     <string name="merge_none">No duplicates found</string>
     <plurals name="merge_suggestions">
@@ -202,6 +201,13 @@
     <string name="add_photo">Add picture</string>
     <string name="change_photo">Change picture</string>
     <string name="remove_photo">Remove</string>
+    <string name="choose_photo">Contact photo</string>
+    <string name="photo_from_gallery">Choose from gallery</string>
+    <string name="photo_avatars_people">People</string>
+    <string name="photo_avatars_animals">Animals</string>
+    <string name="photo_avatars_robots">Robots</string>
+    <string name="photo_avatars_monsters">Monsters</string>
+    <string name="photo_avatars_scifi">Sci-fi</string>
     <string name="save_to">Save to</string>
     <string name="account_phone">Phone</string>
     <string name="name_prefix">Name prefix</string>

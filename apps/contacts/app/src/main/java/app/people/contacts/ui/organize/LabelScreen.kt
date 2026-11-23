@@ -68,7 +68,8 @@ import kotlinx.coroutines.launch
 fun LabelScreen(viewModel: ContactsViewModel, id: Long, onBack: () -> Unit, onOpenContact: (Long) -> Unit) {
     val labels by viewModel.labels.collectAsStateWithLifecycle()
     val contacts by viewModel.shownContacts.collectAsStateWithLifecycle()
-    val label = labels?.firstOrNull { it.id == id }
+    // The id is one of the label's groups; the label may have gained groups in other accounts since.
+    val label = labels?.firstOrNull { id in it.groupIds }
     LaunchedEffect(labels) { if (labels != null && label == null) onBack() }
     if (label == null) return
 

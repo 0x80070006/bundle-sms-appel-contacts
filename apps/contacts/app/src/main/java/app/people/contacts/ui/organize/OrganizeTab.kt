@@ -13,10 +13,7 @@ import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.Healing
 import androidx.compose.material.icons.outlined.Upload
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,7 +26,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.people.contacts.R
-import app.people.contacts.data.ContactAccount
 import app.people.contacts.ui.ContactsViewModel
 import app.people.contacts.ui.components.ListRow
 import app.people.contacts.ui.components.SEGMENT_GAP
@@ -51,13 +47,9 @@ fun OrganizeTab(
     val duplicates by viewModel.duplicates.collectAsStateWithLifecycle()
     val fixes by viewModel.fixes.collectAsStateWithLifecycle()
     val backup = rememberBackupActions(viewModel)
-    val accounts by viewModel.accounts.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
-    var creating by remember { mutableStateOf<ContactAccount?>(null) }
-    var chooseAccount by remember { mutableStateOf(false) }
+    var creating by remember { mutableStateOf(false) }
     val list = labels.orEmpty()
-    // Labels can go in any account that accepts changes; with only the phone there's no choice.
-    val labelAccounts = accounts.filter { it.onDevice || !it.type.isNullOrEmpty() }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -73,37 +65,21 @@ fun OrganizeTab(
             ListRow(
                 icon = Icons.AutoMirrored.Outlined.Label,
                 title = label.title,
-                summary = listOfNotNull(
-                    pluralStringResource(R.plurals.contact_count, label.memberIds.size, label.memberIds.size),
-                    label.accountName.takeIf { labelAccounts.size > 1 },
-                ).joinToString(" · "),
+                // One label across every account: its contacts, wherever they're saved.
+                summary = pluralStringResource(R.plurals.contact_count, label.memberIds.size, label.memberIds.size),
                 shape = segmentShape(index, rows),
                 onClick = { onOpenLabel(label.id) },
                 modifier = Modifier.padding(horizontal = 16.dp).animateItem(),
             )
         }
         item(key = "label-create") {
-            androidx.compose.foundation.layout.Box(Modifier.padding(horizontal = 16.dp)) {
-                ListRow(
-                    icon = Icons.Rounded.Add,
-                    title = stringResource(R.string.create_label),
-                    shape = segmentShape(rows - 1, rows),
-                    onClick = {
-                        if (labelAccounts.size > 1) chooseAccount = true
-                        else creating = labelAccounts.firstOrNull() ?: ContactAccount(null, null, "")
-                    },
-                )
-                DropdownMenu(expanded = chooseAccount, onDismissRequest = { chooseAccount = false }) {
-                    Text(
-                        stringResource(R.string.create_label_in),
-                        style = MaterialTheme.typography.labelLarge,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    )
-                    labelAccounts.forEach { account ->
-                        DropdownMenuItem(text = { Text(account.label) }, onClick = { chooseAccount = false; creating = account })
-                    }
-                }
-            }
+            ListRow(
+                icon = Icons.Rounded.Add,
+                title = stringResource(R.string.create_label),
+                shape = segmentShape(rows - 1, rows),
+                onClick = { creating = true },
+                modifier = Modifier.padding(horizontal = 16.dp),
+            )
         }
 
         item(key = "manage-header") { SectionHeader(stringResource(R.string.fix_and_manage)) }
@@ -154,17 +130,22 @@ fun OrganizeTab(
         }
     }
 
-    creating?.let { account ->
+    if (creating) {
+        val context = androidx.compose.ui.platform.LocalContext.current
         TextInputDialog(
             title = stringResource(R.string.create_label),
             initial = "",
             confirmLabel = stringResource(R.string.create),
             fieldLabel = stringResource(R.string.label_name),
             onConfirm = { name ->
-                creating = null
-                scope.launch { viewModel.labelStore.create(name, account) }
+                creating = false
+                scope.launch {
+                    if (!viewModel.labelStore.create(name)) {
+                        android.widget.Toast.makeText(context, R.string.save_failed, android.widget.Toast.LENGTH_LONG).show()
+                    }
+                }
             },
-            onDismiss = { creating = null },
+            onDismiss = { creating = false },
         )
     }
 }

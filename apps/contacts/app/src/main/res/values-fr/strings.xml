@@ -80,7 +80,6 @@
         <item quantity="other"><xliff:g id="count" example="12">%1$d</xliff:g> contacts</item>
     </plurals>
     <string name="create_label">Créer un libellé</string>
-    <string name="create_label_in">Créer dans</string>
     <string name="label_name">Nom du libellé</string>
     <string name="create">Créer</string>
     <string name="rename">Renommer</string>
@@ -97,7 +96,7 @@
     <string name="remove_from_label">Retirer du libellé</string>
     <string name="label_empty_title">Aucun contact dans ce libellé</string>
     <string name="label_empty_body">Ajoutez des contacts pour les regrouper ici.</string>
-    <string name="label_add_skipped"><xliff:g id="count" example="2">%1$d</xliff:g> n\'ont pas pu être ajoutés : un libellé ne peut contenir que des contacts de son propre compte.</string>
+    <string name="label_add_skipped"><xliff:g id="count" example="2">%1$d</xliff:g> n\'ont pas pu être ajoutés au libellé.</string>
     <string name="merge_duplicates">Fusionner les doublons</string>
     <string name="merge_none">Aucun doublon trouvé</string>
     <plurals name="merge_suggestions">
@@ -209,6 +208,13 @@
     <string name="add_photo">Ajouter une photo</string>
     <string name="change_photo">Changer la photo</string>
     <string name="remove_photo">Supprimer</string>
+    <string name="choose_photo">Photo du contact</string>
+    <string name="photo_from_gallery">Choisir dans la galerie</string>
+    <string name="photo_avatars_people">Personnages</string>
+    <string name="photo_avatars_animals">Animaux</string>
+    <string name="photo_avatars_robots">Robots</string>
+    <string name="photo_avatars_monsters">Monstres</string>
+    <string name="photo_avatars_scifi">Science-fiction</string>
     <string name="save_to">Enregistrer dans</string>
     <string name="account_phone">Téléphone</string>
     <string name="name_prefix">Titre</string>

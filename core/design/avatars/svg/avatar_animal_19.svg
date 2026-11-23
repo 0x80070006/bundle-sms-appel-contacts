@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="512" height="512">
+  <path d="M0,0 H100 V100 H0 Z" fill="#FFF4C2"/>
+  <path d="M26,42 L30,20 L44,32 Z" fill="#8E8E99"/>
+  <path d="M74,42 L70,20 L56,32 Z" fill="#8E8E99"/>
+  <path d="M30,36 L32,26 L39,32 Z" fill="#3B3B45"/>
+  <path d="M70,36 L68,26 L61,32 Z" fill="#3B3B45"/>
+  <path d="M22,100 a28,13 0 1,0 56,0 a28,13 0 1,0 -56,0 Z" fill="#8E8E99"/>
+  <path d="M23,56 a27,23 0 1,0 54,0 a27,23 0 1,0 -54,0 Z" fill="#8E8E99"/>
+  <path d="M37,66 a13,9 0 1,0 26,0 a13,9 0 1,0 -26,0 Z" fill="#F2F2F2"/>
+  <path d="M24,52 C30,44 42,46 50,52 C58,46 70,44 76,52 C70,60 58,60 50,56 C42,60 30,60 24,52 Z" fill="#3B3B45"/>
+  <path d="M36.8,52 a3.2,3.2 0 1,0 6.4,0 a3.2,3.2 0 1,0 -6.4,0 Z" fill="#FFFFFF"/>
+  <path d="M56.8,52 a3.2,3.2 0 1,0 6.4,0 a3.2,3.2 0 1,0 -6.4,0 Z" fill="#FFFFFF"/>
+  <path d="M38.3,52 a1.7,1.7 0 1,0 3.4,0 a1.7,1.7 0 1,0 -3.4,0 Z" fill="#2B2B33"/>
+  <path d="M58.3,52 a1.7,1.7 0 1,0 3.4,0 a1.7,1.7 0 1,0 -3.4,0 Z" fill="#2B2B33"/>
+  <path d="M46.5,62 a3.5,2.5 0 1,0 7,0 a3.5,2.5 0 1,0 -7,0 Z" fill="#2B2B33"/>
+  <path d="M50,64.5 Q48.0,67.0 46,65.75 M50,64.5 Q52.0,67.0 54,65.75" fill="none" stroke="#2B2B33" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

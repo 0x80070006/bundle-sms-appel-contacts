@@ -231,7 +231,7 @@ private fun VoicemailRow(
     Surface(onClick = onToggle, shape = shape, color = container, modifier = modifier.fillMaxWidth()) {
         Column {
             Row(Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                Avatar(contact?.name, contact?.photoUri, numberKey(vm.number).hashCode().toLong(), 48.dp)
+                Avatar(contact?.name, contact?.photoUri, contact?.id ?: numberKey(vm.number).hashCode().toLong(), 48.dp)
                 Spacer(Modifier.width(16.dp))
                 Column(Modifier.weight(1f)) {
                     Text(

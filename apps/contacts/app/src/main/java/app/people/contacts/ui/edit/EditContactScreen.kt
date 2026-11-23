@@ -45,6 +45,7 @@ import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Event
 import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.PhotoLibrary
 import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.ExpandLess
@@ -73,6 +74,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -90,6 +92,7 @@ import app.people.contacts.ui.components.Avatar
 import app.people.contacts.util.croppedContactPhoto
 import app.people.contacts.util.loadPhotoForCrop
 import android.graphics.Bitmap
+import bundle.core.design.CartoonAvatars
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -141,6 +144,8 @@ fun EditContactScreen(
 
     // A picked photo goes to the cropper first; the chosen square becomes the new photo.
     var cropping by remember { mutableStateOf<Bitmap?>(null) }
+    // Bundle: the photo comes from the gallery or is one of the cartoon avatars.
+    var choosingPhoto by remember { mutableStateOf(false) }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null) scope.launch {
             cropping = withContext(Dispatchers.IO) { loadPhotoForCrop(context, uri) }
@@ -177,12 +182,21 @@ fun EditContactScreen(
                     modifier = Modifier.padding(start = 8.dp).weight(1f),
                 )
                 Button(
-                    enabled = contact?.hasContent == true && !saving,
+                    // Bundle: a new photo alone is worth saving, even on a contact with no name,
+                    // number or email (one with only an address, say).
+                    enabled = contact != null && !saving &&
+                        (contact.hasContent || (photo != PhotoChange.Keep && (original != null || profile))),
                     onClick = {
                         val toSave = contact ?: return@Button
                         saving = true
                         scope.launch {
-                            val savedId = viewModel.writer.save(original, toSave, photo)
+                            // Labels just ticked may only exist in other accounts: join them through
+                            // their group in this contact's account, made if needed.
+                            val before = original?.labelIds.orEmpty()
+                            val added = toSave.labelIds - before
+                            val labelled = if (added.isEmpty() || toSave.isProfile) toSave
+                            else toSave.copy(labelIds = (toSave.labelIds - added) + viewModel.labelStore.inAccount(added, toSave.account))
+                            val savedId = viewModel.writer.save(original, labelled, photo)
                             if (savedId != null && original == null && !profile) viewModel.settings.setLastAccount(toSave.account?.name, toSave.account?.type)
                             saving = false
                             if (savedId != null) onSaved(savedId) else android.widget.Toast
@@ -199,24 +213,34 @@ fun EditContactScreen(
                     Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(FIELD_GAP),
                 ) {
-                    PhotoEditor(contact, photo, onPick = {
-                        picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                    }, onRemove = { photo = PhotoChange.Remove })
+                    PhotoEditor(contact, photo, onPick = { choosingPhoto = true }, onRemove = { photo = PhotoChange.Remove })
                     if (contact.contactId == null && !contact.isProfile && accounts.size > 1) {
                         AccountPicker(accounts, contact.account) { edited = contact.copy(account = it) }
                     }
                     Fields(contact, context.resources) { edited = it }
                     if (!contact.isProfile) {
-                        val inAccount = labels.orEmpty().filter {
-                            it.accountType.orEmpty() == contact.account?.type.orEmpty() &&
-                                it.accountName.orEmpty() == contact.account?.name.orEmpty()
-                        }
-                        LabelChips(inAccount, contact.labelIds) { edited = contact.copy(labelIds = it) }
+                        LabelChips(labels.orEmpty(), contact.labelIds) { edited = contact.copy(labelIds = it) }
                     }
                     Spacer(Modifier.navigationBarsPadding().height(24.dp))
                 }
             }
         }
+    }
+
+    if (choosingPhoto) {
+        PhotoSourceSheet(
+            onGallery = {
+                choosingPhoto = false
+                picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            },
+            onAvatar = { avatar ->
+                choosingPhoto = false
+                scope.launch {
+                    withContext(Dispatchers.IO) { CartoonAvatars.jpeg(context, avatar) }?.let { photo = PhotoChange.Set(it) }
+                }
+            },
+            onDismiss = { choosingPhoto = false },
+        )
     }
 
     if (confirmDiscard) {
@@ -253,6 +277,51 @@ private fun PhotoEditor(contact: EditableContact, photo: PhotoChange, onPick: ()
     }
 }
 
+/** Bundle: where the photo comes from: the gallery, or one of the cartoon avatars, by kind. */
+@Composable
+private fun PhotoSourceSheet(onGallery: () -> Unit, onAvatar: (Int) -> Unit, onDismiss: () -> Unit) {
+    androidx.compose.material3.ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp).navigationBarsPadding(),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(stringResource(R.string.choose_photo), style = MaterialTheme.typography.titleLarge)
+            androidx.compose.material3.FilledTonalButton(onClick = onGallery, modifier = Modifier.fillMaxWidth()) {
+                Icon(Icons.Outlined.PhotoLibrary, null, Modifier.padding(end = 8.dp))
+                Text(stringResource(R.string.photo_from_gallery))
+            }
+            AvatarGrid(stringResource(R.string.photo_avatars_people), CartoonAvatars.people, onAvatar)
+            AvatarGrid(stringResource(R.string.photo_avatars_animals), CartoonAvatars.animals, onAvatar)
+            AvatarGrid(stringResource(R.string.photo_avatars_robots), CartoonAvatars.robots, onAvatar)
+            AvatarGrid(stringResource(R.string.photo_avatars_monsters), CartoonAvatars.monsters, onAvatar)
+            AvatarGrid(stringResource(R.string.photo_avatars_scifi), CartoonAvatars.sciFi, onAvatar)
+            Spacer(Modifier.height(8.dp))
+        }
+    }
+}
+
+@Composable
+private fun AvatarGrid(title: String, avatars: List<Int>, onAvatar: (Int) -> Unit) {
+    Text(title, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    androidx.compose.foundation.layout.FlowRow(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        maxItemsInEachRow = 5,
+    ) {
+        avatars.forEach { avatar ->
+            Image(
+                painterResource(avatar),
+                contentDescription = title,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.size(56.dp).clip(CircleShape).clickable { onAvatar(avatar) },
+            )
+        }
+        // Empty cells finish the last row, so its avatars line up with the rows above.
+        repeat((5 - avatars.size % 5) % 5) { Spacer(Modifier.size(56.dp)) }
+    }
+}
+
 @Composable
 private fun AccountPicker(accounts: List<ContactAccount>, selected: ContactAccount?, onPick: (ContactAccount) -> Unit) {
     var open by remember { mutableStateOf(false) }
@@ -278,7 +347,10 @@ private fun AccountPicker(accounts: List<ContactAccount>, selected: ContactAccou
     }
 }
 
-/** The labels the contact can be in (those of its account), as chips to tick. */
+/**
+ * Every label, as chips to tick, whatever account the contact is in. [chosen] holds group ids:
+ * a label is ticked if the contact is in any of its groups; unticking leaves all of them.
+ */
 @Composable
 private fun LabelChips(labels: List<app.people.contacts.data.Label>, chosen: Set<Long>, onChange: (Set<Long>) -> Unit) {
     if (labels.isEmpty()) return
@@ -292,10 +364,10 @@ private fun LabelChips(labels: List<app.people.contacts.data.Label>, chosen: Set
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             labels.forEach { label ->
-                val selected = label.id in chosen
+                val selected = label.groupIds.any { it in chosen }
                 androidx.compose.material3.FilterChip(
                     selected = selected,
-                    onClick = { onChange(if (selected) chosen - label.id else chosen + label.id) },
+                    onClick = { onChange(if (selected) chosen - label.groupIds else chosen + label.id) },
                     label = { Text(label.title) },
                 )
             }

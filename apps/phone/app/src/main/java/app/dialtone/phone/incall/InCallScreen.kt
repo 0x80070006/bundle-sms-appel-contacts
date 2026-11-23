@@ -256,7 +256,8 @@ private fun InCallContent(call: Call, snap: CallSnapshot, audio: CallAudioState?
                 CallerHalo(
                     name = info.name,
                     photoUri = info.photoUri,
-                    seed = numberKey(snap.number).hashCode().toLong(),
+                    // Bundle: a contact's own seed, so they get the same avatar as in Contacts.
+                    seed = info.contactId ?: numberKey(snap.number).hashCode().toLong(),
                     animate = ringing || snap.state == Call.STATE_DIALING || snap.state == Call.STATE_CONNECTING,
                 )
             }

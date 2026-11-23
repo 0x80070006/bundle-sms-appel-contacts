@@ -14,6 +14,8 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures { compose = true }
+    // Bundle: the cartoon avatars, a resource folder Messages uses too (avatars/generate.py).
+    sourceSets.getByName("main").res.srcDir("avatars/res")
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {

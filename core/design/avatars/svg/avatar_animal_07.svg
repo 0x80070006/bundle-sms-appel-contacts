@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="512" height="512">
+  <path d="M0,0 H100 V100 H0 Z" fill="#BFE6EA"/>
+  <path d="M26,36 L28,16 L40,28 Z" fill="#8A5A3C"/>
+  <path d="M74,36 L72,16 L60,28 Z" fill="#8A5A3C"/>
+  <path d="M22,64 a28,34 0 1,0 56,0 a28,34 0 1,0 -56,0 Z" fill="#8A5A3C"/>
+  <path d="M33,80 a17,16 0 1,0 34,0 a17,16 0 1,0 -34,0 Z" fill="#D9B48F"/>
+  <path d="M43,76 q2.5,2.5 5,0 M52,76 q2.5,2.5 5,0 M47.5,83 q2.5,2.5 5,0" fill="none" stroke="#B08960" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <g transform="rotate(10 24 68)"><path d="M18,68 a6,16 0 1,0 12,0 a6,16 0 1,0 -12,0 Z" fill="#6E4429"/></g>
+  <g transform="rotate(-10 76 68)"><path d="M70,68 a6,16 0 1,0 12,0 a6,16 0 1,0 -12,0 Z" fill="#6E4429"/></g>
+  <path d="M28,50 a11,11 0 1,0 22,0 a11,11 0 1,0 -22,0 Z" fill="#FFF8E7"/>
+  <path d="M50,50 a11,11 0 1,0 22,0 a11,11 0 1,0 -22,0 Z" fill="#FFF8E7"/>
+  <path d="M33.5,50 a5.5,5.5 0 1,0 11,0 a5.5,5.5 0 1,0 -11,0 Z" fill="#2B2B33"/>
+  <path d="M55.5,50 a5.5,5.5 0 1,0 11,0 a5.5,5.5 0 1,0 -11,0 Z" fill="#2B2B33"/>
+  <path d="M39.1,48.2 a1.7,1.7 0 1,0 3.4,0 a1.7,1.7 0 1,0 -3.4,0 Z" fill="#FFFFFF"/>
+  <path d="M61.1,48.2 a1.7,1.7 0 1,0 3.4,0 a1.7,1.7 0 1,0 -3.4,0 Z" fill="#FFFFFF"/>
+  <path d="M46,58 L54,58 L50,66 Z" fill="#F2A33A"/>
+</svg>

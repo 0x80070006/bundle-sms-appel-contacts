@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="512" height="512">
+  <path d="M0,0 H100 V100 H0 Z" fill="#E0F7FA"/>
+  <path d="M33,34 L25,10 L42,27 Z" fill="#D9B26F"/>
+  <path d="M67,34 L75,10 L58,27 Z" fill="#D9B26F"/>
+  <path d="M16,100 C12,70 20,26 50,24 C80,26 88,70 84,100 Z" fill="#7BC67E"/>
+  <path d="M26,70 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0 Z" fill="#3E8E41" fill-opacity="0.55"/>
+  <path d="M67,66 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0 Z" fill="#3E8E41" fill-opacity="0.55"/>
+  <path d="M61.5,80 a2.5,2.5 0 1,0 5,0 a2.5,2.5 0 1,0 -5,0 Z" fill="#3E8E41" fill-opacity="0.55"/>
+  <path d="M31.5,34 a2.5,2.5 0 1,0 5,0 a2.5,2.5 0 1,0 -5,0 Z" fill="#3E8E41" fill-opacity="0.55"/>
+  <path d="M39,44 a11,11 0 1,0 22,0 a11,11 0 1,0 -22,0 Z" fill="#FFFFFF"/>
+  <path d="M44.5,45 a5.5,5.5 0 1,0 11,0 a5.5,5.5 0 1,0 -11,0 Z" fill="#2B2B33"/>
+  <path d="M50.2,43 a1.8,1.8 0 1,0 3.6,0 a1.8,1.8 0 1,0 -3.6,0 Z" fill="#FFFFFF"/>
+  <path d="M36,61 Q50,74 64,61 Z" fill="#2B2B33"/>
+  <path d="M40,62 L43,68 L46,63 Z" fill="#FFFFFF"/>
+  <path d="M54,63 L57,68 L60,62 Z" fill="#FFFFFF"/>
+</svg>

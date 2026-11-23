@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="512" height="512">
+  <path d="M0,0 H100 V100 H0 Z" fill="#CDEBC0"/>
+  <path d="M19.5,34 a9.5,9.5 0 1,0 19,0 a9.5,9.5 0 1,0 -19,0 Z" fill="#2B2B33"/>
+  <path d="M61.5,34 a9.5,9.5 0 1,0 19,0 a9.5,9.5 0 1,0 -19,0 Z" fill="#2B2B33"/>
+  <path d="M22,100 a28,12 0 1,0 56,0 a28,12 0 1,0 -56,0 Z" fill="#FFFFFF"/>
+  <path d="M23,56 a27,24 0 1,0 54,0 a27,24 0 1,0 -54,0 Z" fill="#FFFFFF"/>
+  <g transform="rotate(25 40 54)"><path d="M33.5,54 a6.5,8.5 0 1,0 13,0 a6.5,8.5 0 1,0 -13,0 Z" fill="#2B2B33"/></g>
+  <g transform="rotate(-25 60 54)"><path d="M53.5,54 a6.5,8.5 0 1,0 13,0 a6.5,8.5 0 1,0 -13,0 Z" fill="#2B2B33"/></g>
+  <path d="M38.1,53 a2.4,2.4 0 1,0 4.8,0 a2.4,2.4 0 1,0 -4.8,0 Z" fill="#FFFFFF"/>
+  <path d="M57.1,53 a2.4,2.4 0 1,0 4.8,0 a2.4,2.4 0 1,0 -4.8,0 Z" fill="#FFFFFF"/>
+  <path d="M39.8,53 a1.2,1.2 0 1,0 2.4,0 a1.2,1.2 0 1,0 -2.4,0 Z" fill="#2B2B33"/>
+  <path d="M57.8,53 a1.2,1.2 0 1,0 2.4,0 a1.2,1.2 0 1,0 -2.4,0 Z" fill="#2B2B33"/>
+  <path d="M30.8,64 a3.2,3.2 0 1,0 6.4,0 a3.2,3.2 0 1,0 -6.4,0 Z" fill="#F7A8B8" fill-opacity="0.7"/>
+  <path d="M62.8,64 a3.2,3.2 0 1,0 6.4,0 a3.2,3.2 0 1,0 -6.4,0 Z" fill="#F7A8B8" fill-opacity="0.7"/>
+  <path d="M46,62 a4,2.8 0 1,0 8,0 a4,2.8 0 1,0 -8,0 Z" fill="#2B2B33"/>
+  <path d="M50,64.5 Q47.5,67.5 45,66.0 M50,64.5 Q52.5,67.5 55,66.0" fill="none" stroke="#2B2B33" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

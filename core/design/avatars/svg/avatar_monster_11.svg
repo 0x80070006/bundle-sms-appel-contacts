@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="512" height="512">
+  <path d="M0,0 H100 V100 H0 Z" fill="#FDF2E9"/>
+  <path d="M33,34 L25,10 L42,27 Z" fill="#D9B26F"/>
+  <path d="M67,34 L75,10 L58,27 Z" fill="#D9B26F"/>
+  <path d="M16,100 C12,70 20,26 50,24 C80,26 88,70 84,100 Z" fill="#8338EC"/>
+  <path d="M32,92 a18,14 0 1,0 36,0 a18,14 0 1,0 -36,0 Z" fill="#B392F0"/>
+  <path d="M32.5,47 a6.5,6.5 0 1,0 13,0 a6.5,6.5 0 1,0 -13,0 Z" fill="#FFFFFF"/>
+  <path d="M54.5,47 a6.5,6.5 0 1,0 13,0 a6.5,6.5 0 1,0 -13,0 Z" fill="#FFFFFF"/>
+  <path d="M36.8,48 a3.2,3.2 0 1,0 6.4,0 a3.2,3.2 0 1,0 -6.4,0 Z" fill="#2B2B33"/>
+  <path d="M56.8,48 a3.2,3.2 0 1,0 6.4,0 a3.2,3.2 0 1,0 -6.4,0 Z" fill="#2B2B33"/>
+  <path d="M31,38 L46,43 M69,38 L54,43" fill="none" stroke="#2B2B33" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M38,59 H62 a4,4 0 0,1 4,4 V66 a4,4 0 0,1 -4,4 H38 a4,4 0 0,1 -4,-4 V63 a4,4 0 0,1 4,-4 Z" fill="#2B2B33"/>
+  <path d="M34,60 L38,65 L42,60 L46,65 L50,60 L54,65 L58,60 L62,65 L66,60 Z" fill="#FFFFFF"/>
+</svg>

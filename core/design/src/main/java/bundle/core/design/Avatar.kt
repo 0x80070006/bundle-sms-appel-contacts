@@ -8,12 +8,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Person
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -27,12 +23,9 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.sp
 import bundle.core.appearance.AvatarStyle
-import bundle.core.telephony.initialOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -87,8 +80,9 @@ fun rememberPhoto(uri: String?): ImageBitmap? {
 }
 
 /**
- * A contact's avatar, the same in every app of the bundle: the photo, or the first initial on
- * a colour picked from [seed]. Circles in lists; [expressive] uses [avatarShape] instead.
+ * A contact's avatar, the same in every app of the bundle: the photo, or (bundle) a cartoon
+ * avatar picked from [seed], always the same for one contact. Circles in lists; [expressive]
+ * uses [avatarShape] instead. [name] is kept for callers; the initial no longer shows.
  */
 @Composable
 fun Avatar(
@@ -103,18 +97,14 @@ fun Avatar(
     // "Shapes" style gives every avatar its expressive shape, not only favorites.
     val everywhere = LocalAppearance.current.avatarStyle == AvatarStyle.Expressive
     val shape: Shape = if (expressive || everywhere) avatarShape(seed) else CircleShape
-    val (bg, fg) = avatarColors(seed)
+    val (bg, _) = avatarColors(seed)
     val photo = rememberPhoto(photoUri)
-    val initial = initialOf(name)
     Box(modifier.size(size).clip(shape).background(bg), contentAlignment = Alignment.Center) {
-        when {
-            photo != null -> Image(photo, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-            initial != null -> Text(
-                initial,
-                color = fg,
-                style = TextStyle(fontSize = (size.value * 0.42f).sp, fontWeight = FontWeight.Medium),
-            )
-            else -> Icon(Icons.Rounded.Person, null, tint = fg, modifier = Modifier.size(size * 0.55f))
+        // While a photo loads (or if there's none) the contact's cartoon shows.
+        if (photo != null) {
+            Image(photo, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+        } else {
+            Image(painterResource(CartoonAvatars.forSeed(seed)), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
         }
     }
 }

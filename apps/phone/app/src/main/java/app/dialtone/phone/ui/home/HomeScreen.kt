@@ -447,7 +447,7 @@ private fun RecentRow(
                 Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Avatar(name, contact?.photoUri ?: call.photoUri, numberKey(call.number).hashCode().toLong(), 48.dp)
+                Avatar(name, contact?.photoUri ?: call.photoUri, contact?.id ?: numberKey(call.number).hashCode().toLong(), 48.dp)
                 Spacer(Modifier.width(16.dp))
                 Column(Modifier.weight(1f)) {
                     Text(

@@ -218,8 +218,8 @@ class ContactWriter(private val context: Context) {
         }
 
     /**
-     * Moves a contact to [account]: saves a copy there, then deletes the copies it had. Labels
-     * belong to accounts, so they don't come along. Returns the moved contact's id.
+     * Moves a contact to [account]: saves a copy there, then deletes the copies it had. Its
+     * labels come along, through their groups in [account]. Returns the moved contact's id.
      */
     suspend fun move(contactId: Long, account: ContactAccount): Long? = withContext(Dispatchers.IO) {
         val oldRaw = resolver.query(
@@ -234,7 +234,7 @@ class ContactWriter(private val context: Context) {
         fun List<EditField>.fresh() = map { it.copy(dataId = 0) }
         val copy = loaded.copy(
             contactId = null, rawContactId = null, account = account, nameId = 0, nicknameId = 0,
-            organizationId = 0, noteId = 0, labelIds = emptySet(),
+            organizationId = 0, noteId = 0, labelIds = LabelStore(context).inAccount(loaded.labelIds, account),
             phones = loaded.phones.fresh(), emails = loaded.emails.fresh(), addresses = loaded.addresses.fresh(),
             events = loaded.events.fresh(), websites = loaded.websites.fresh(),
             relations = loaded.relations.fresh(), sipAddresses = loaded.sipAddresses.fresh(), chats = loaded.chats.fresh(),

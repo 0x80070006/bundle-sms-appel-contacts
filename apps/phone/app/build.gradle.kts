@@ -51,6 +51,11 @@ android {
                 storePassword = bundleSigning["storePassword"]
                 keyAlias = bundleSigning["keyAlias"]
                 keyPassword = bundleSigning["keyPassword"]
+                // Bundle: every signature scheme, so any installer (old file managers included)
+                // accepts the APK.
+                enableV1Signing = true
+                enableV2Signing = true
+                enableV3Signing = true
             }
         }
     }

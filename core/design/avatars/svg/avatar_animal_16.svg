@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="512" height="512">
+  <path d="M0,0 H100 V100 H0 Z" fill="#E6F7D9"/>
+  <path d="M22,100 a28,12 0 1,0 56,0 a28,12 0 1,0 -56,0 Z" fill="#FFFFFF"/>
+  <path d="M53,96 a7,5 0 1,0 14,0 a7,5 0 1,0 -14,0 Z" fill="#2B2B33"/>
+  <path d="M31,33 C28,25 30,20 34,20 C34,25 35,28 39,31 Z" fill="#F5E6C8"/>
+  <path d="M69,33 C72,25 70,20 66,20 C66,25 65,28 61,31 Z" fill="#F5E6C8"/>
+  <g transform="rotate(-20 25 46)"><path d="M16,46 a9,5 0 1,0 18,0 a9,5 0 1,0 -18,0 Z" fill="#FFFFFF"/></g>
+  <g transform="rotate(20 75 46)"><path d="M66,46 a9,5 0 1,0 18,0 a9,5 0 1,0 -18,0 Z" fill="#FFFFFF"/></g>
+  <g transform="rotate(-20 25 46)"><path d="M20,46 a5,2.5 0 1,0 10,0 a5,2.5 0 1,0 -10,0 Z" fill="#F7B8C8"/></g>
+  <g transform="rotate(20 75 46)"><path d="M70,46 a5,2.5 0 1,0 10,0 a5,2.5 0 1,0 -10,0 Z" fill="#F7B8C8"/></g>
+  <path d="M27,52 a23,24 0 1,0 46,0 a23,24 0 1,0 -46,0 Z" fill="#FFFFFF"/>
+  <path d="M33,38 a7,5 0 1,0 14,0 a7,5 0 1,0 -14,0 Z" fill="#2B2B33"/>
+  <path d="M58,44 a5,6 0 1,0 10,0 a5,6 0 1,0 -10,0 Z" fill="#2B2B33"/>
+  <path d="M35,66 a15,10 0 1,0 30,0 a15,10 0 1,0 -30,0 Z" fill="#F7B8C8"/>
+  <path d="M42,66 a2,2.8 0 1,0 4,0 a2,2.8 0 1,0 -4,0 Z" fill="#B5526C"/>
+  <path d="M54,66 a2,2.8 0 1,0 4,0 a2,2.8 0 1,0 -4,0 Z" fill="#B5526C"/>
+  <path d="M38.2,51 a2.8,2.8 0 1,0 5.6,0 a2.8,2.8 0 1,0 -5.6,0 Z" fill="#2B2B33"/>
+  <path d="M56.2,51 a2.8,2.8 0 1,0 5.6,0 a2.8,2.8 0 1,0 -5.6,0 Z" fill="#2B2B33"/>
+  <path d="M41,50.1 a0.9,0.9 0 1,0 1.8,0 a0.9,0.9 0 1,0 -1.8,0 Z" fill="#FFFFFF"/>
+  <path d="M59,50.1 a0.9,0.9 0 1,0 1.8,0 a0.9,0.9 0 1,0 -1.8,0 Z" fill="#FFFFFF"/>
+</svg>
