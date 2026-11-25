@@ -65,6 +65,10 @@ import app.people.contacts.data.ContactAccount
 import app.people.contacts.data.ListLayout
 import bundle.core.appearance.AppearanceDialog
 import bundle.core.appearance.InstallHelpDialog
+import bundle.core.appearance.UpdateDialog
+import bundle.core.appearance.Updater
+import bundle.core.appearance.updateStrings
+import androidx.compose.material.icons.outlined.SystemUpdate
 import app.people.contacts.sync.ContactSync
 import androidx.compose.material.icons.outlined.CloudSync
 import androidx.compose.runtime.LaunchedEffect
@@ -101,6 +105,7 @@ fun SettingsScreen(viewModel: ContactsViewModel, onBack: () -> Unit) {
     var showAppearance by remember { mutableStateOf(false) }
     var showInstallHelp by remember { mutableStateOf(false) }
     var showSync by remember { mutableStateOf(false) }
+    var showUpdate by remember { mutableStateOf(false) }
 
     val calendarOn by viewModel.settings.birthdayCalendar.collectAsStateWithLifecycle(false)
     val calendarAccess = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
@@ -161,6 +166,17 @@ fun SettingsScreen(viewModel: ContactsViewModel, onBack: () -> Unit) {
                     summary = syncSummary(syncStatus),
                     shape = segmentShape(0, 1),
                     onClick = { showSync = true },
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                )
+            }
+            item(key = "updates") {
+                val up = updateStrings()
+                ListRow(
+                    icon = Icons.Outlined.SystemUpdate,
+                    title = up.rowTitle,
+                    summary = up.rowSummary(Updater.installedVersion(context)),
+                    shape = segmentShape(0, 1),
+                    onClick = { showUpdate = true },
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 )
             }
@@ -250,6 +266,7 @@ fun SettingsScreen(viewModel: ContactsViewModel, onBack: () -> Unit) {
 
     if (showInstallHelp) InstallHelpDialog(onDismiss = { showInstallHelp = false })
     if (showSync) SyncDialog(onDismiss = { showSync = false })
+    if (showUpdate) UpdateDialog(onDismiss = { showUpdate = false })
     if (showAppearance) {
         AppearanceDialog(
             onDismiss = { showAppearance = false },

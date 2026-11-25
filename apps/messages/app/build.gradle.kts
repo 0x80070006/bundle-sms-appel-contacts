@@ -58,9 +58,8 @@ tasks.withType<Detekt>().configureEach {
 // Bundle: this build lives in apps/messages; the monorepo root holds the shared package
 // prefix (gradle.properties) and the shared signing key (signing.properties).
 val bundleRoot = rootProject.file("../..")
-val appIdPrefix: String = Properties().apply {
-    bundleRoot.resolve("gradle.properties").inputStream().use { load(it) }
-}.getProperty("bundle.appIdPrefix")
+val bundleProps = Properties().apply { bundleRoot.resolve("gradle.properties").inputStream().use { load(it) } }
+val appIdPrefix: String = bundleProps.getProperty("bundle.appIdPrefix")
 
 android {
     compileSdk = 37
@@ -75,6 +74,7 @@ android {
         // and app.twill.debug.
         // Bundle: <prefix>.messages; debug and perf builds add .debug / .perf.
         applicationId = "$appIdPrefix.messages"
+        manifestPlaceholders["bundleVersion"] = providers.gradleProperty("bundle.version").orNull ?: bundleProps.getProperty("bundle.version")
         // versionCode only has to keep increasing (test installs started at 20000016);
         // versionName is Twill's own version, shown to users and used as the release tag.
         versionCode = 20000000 + 38

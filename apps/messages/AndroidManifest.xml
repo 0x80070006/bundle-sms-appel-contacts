@@ -61,6 +61,8 @@
     <uses-feature android:name="android.hardware.screen.portrait" android:required="false" />
     <uses-feature android:name="android.hardware.telephony" android:required="false" />
 
+    <!-- Bundle: installing its own updates from GitHub. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <queries>
         <package android:name="com.android.cellbroadcastreceiver.module" />
         <!-- Twill: find NIP-55 Nostr signer apps such as Amber and talk to them in the background -->
@@ -471,6 +473,14 @@
                 <action android:name="bundle.action.APPEARANCE_SYNC" />
             </intent-filter>
         </provider>
+        <!-- Updates from the project's GitHub releases (Settings › Updates). -->
+        <meta-data android:name="bundle.version" android:value="${bundleVersion}" />
+        <receiver android:name="bundle.core.appearance.UpdateStatusReceiver" android:exported="false" />
+        <receiver android:name="bundle.core.appearance.UpdatedReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
         <!-- BUNDLE-ICONS: launcher icon colours, chosen in Appearance (scripts/make_icons.py). -->
         <activity-alias
             android:name="bundle.launcher.Black"

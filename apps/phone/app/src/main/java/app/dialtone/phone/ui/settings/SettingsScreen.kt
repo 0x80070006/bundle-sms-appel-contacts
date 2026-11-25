@@ -31,6 +31,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.outlined.Palette
 import bundle.core.appearance.AppearanceDialog
 import bundle.core.appearance.InstallHelpDialog
+import bundle.core.appearance.UpdateDialog
+import bundle.core.appearance.Updater
+import bundle.core.appearance.updateStrings
+import androidx.compose.material.icons.outlined.SystemUpdate
 import bundle.core.appearance.installStrings
 import androidx.compose.material.icons.outlined.Info
 import bundle.core.appearance.AppIconConfig
@@ -131,6 +135,9 @@ fun SettingsScreen(
     var viewingLog by rememberSaveable { mutableStateOf(false) }
     var showAppearance by rememberSaveable { mutableStateOf(false) }
     var showInstallHelp by rememberSaveable { mutableStateOf(false) }
+    var showUpdate by rememberSaveable { mutableStateOf(false) }
+    val updateContext = androidx.compose.ui.platform.LocalContext.current
+    if (showUpdate) UpdateDialog(onDismiss = { showUpdate = false })
     if (showInstallHelp) InstallHelpDialog(onDismiss = { showInstallHelp = false })
     if (showAppearance) {
         AppearanceDialog(
@@ -172,6 +179,16 @@ fun SettingsScreen(
                     summary = tr("Theme, colours, contact pictures and language, for all three apps"),
                     shape = segmentShape(0, 1),
                     onClick = { showAppearance = true },
+                )
+            }
+            item(key = "updates") {
+                val up = updateStrings()
+                SettingsRow(
+                    icon = Icons.Outlined.SystemUpdate,
+                    title = up.rowTitle,
+                    summary = up.rowSummary(Updater.installedVersion(updateContext)),
+                    shape = segmentShape(0, 1),
+                    onClick = { showUpdate = true },
                 )
             }
             item(key = "install-help") {

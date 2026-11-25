@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Updates: checking GitHub (only when the user opens Updates) and installing the new APK. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- Finds the other apps of the bundle, to share the look with them. -->
     <queries>
@@ -9,6 +13,14 @@
     </queries>
 
     <application>
+        <!-- Updates from the project's GitHub releases (Settings › Updates). -->
+        <meta-data android:name="bundle.version" android:value="${bundleVersion}" />
+        <receiver android:name="bundle.core.appearance.UpdateStatusReceiver" android:exported="false" />
+        <receiver android:name="bundle.core.appearance.UpdatedReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
         <!-- Exported for the sibling apps; it only answers apps signed with the same key. -->
         <provider
             android:name="bundle.core.appearance.AppearanceSyncProvider"

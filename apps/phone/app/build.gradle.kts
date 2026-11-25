@@ -37,6 +37,7 @@ android {
     defaultConfig {
         // Bundle: <prefix>.phone (upstream: app.dialtone.phone).
         applicationId = "$appIdPrefix.phone"
+        manifestPlaceholders["bundleVersion"] = providers.gradleProperty("bundle.version").get()
         minSdk = 29 // RoleManager.ROLE_DIALER
         targetSdk = 36
         // CI passes the run number / tag so every build installs over the previous one.

@@ -49,6 +49,7 @@ android {
         ndk { abiFilters += "arm64-v8a" }
         // The app's own account type (it holds the birthday calendar): the app id, as in the old app.
         resValue("string", "account_type", appId)
+        manifestPlaceholders["bundleVersion"] = providers.gradleProperty("bundle.version").get()
     }
 
     // Unit tests run on the computer, not a phone. Android calls the tested code happens to make
