@@ -1,6 +1,11 @@
 package bundle.core.appearance
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -52,7 +57,7 @@ class UpdateStrings(private val fr: Boolean) {
     fun available(version: String, beta: Boolean) = t("Version $version disponible" + if (beta) " (bêta)" else "", "Version $version available" + if (beta) " (beta)" else "")
     val update = t("Mettre à jour", "Update")
     fun downloading(percent: Int) = t("Téléchargement… $percent %", "Downloading… $percent%")
-    val installing = t("Installation… L'app va se fermer puis se rouvrir dans sa nouvelle version.", "Installing… The app will close and open again in its new version.")
+    val installing = t("Installation… L'app va se fermer : touchez la notification « est à jour » pour la rouvrir dans sa nouvelle version.", "Installing… The app will close: tap the \"is up to date\" notification to open it again in its new version.")
     val permission = t(
         "Android doit d'abord autoriser cette app à installer des apps (une seule fois) : activez « Autoriser cette source », puis revenez.",
         "Android must first allow this app to install apps (once): turn on \"Allow from this source\", then come back.",
@@ -87,6 +92,13 @@ fun UpdateDialog(onDismiss: () -> Unit) {
     val state by Updater.state.collectAsState()
     var beta by remember { mutableStateOf(betaOn(context)) }
     val installed = remember { Updater.installedVersion(context) }
+    var askedNotifications by remember { mutableStateOf(false) }
+    var pendingRelease by remember { mutableStateOf<Release?>(null) }
+    // The update function, for the permission callback (a plain holder: not state, no recomposition).
+    val resume = remember { arrayOfNulls<(Release) -> Unit>(1) }
+    val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+        pendingRelease?.let { r -> pendingRelease = null; resume[0]?.invoke(r) }
+    }
 
     fun check() {
         Updater.set(UpdateState.Checking)
@@ -108,6 +120,15 @@ fun UpdateDialog(onDismiss: () -> Unit) {
     }
 
     fun update(release: Release) {
+        // Android 13+: the "open again" notification needs this permission; ask once, carry on either way.
+        if (Build.VERSION.SDK_INT >= 33 && !askedNotifications &&
+            context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            askedNotifications = true
+            pendingRelease = release
+            notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+            return
+        }
         if (!Updater.canInstall(context)) {
             Updater.set(UpdateState.NeedsPermission(release))
             return
@@ -132,6 +153,7 @@ fun UpdateDialog(onDismiss: () -> Unit) {
         }
     }
 
+    resume[0] = ::update
     LaunchedEffect(Unit) { if (state !is UpdateState.Downloading && state !is UpdateState.Installing) check() }
     // Back from the "install apps" setting: carry on with the update.
     val lifecycle = LocalLifecycleOwner.current.lifecycle

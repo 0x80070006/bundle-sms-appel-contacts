@@ -262,8 +262,9 @@ class UpdateStatusReceiver : BroadcastReceiver() {
 }
 
 /**
- * Opens the app again once it has been updated. If Android doesn't allow starting it from the
- * background, a notification offers to open it instead.
+ * Opens the app again once it has been updated. Android 10+ refuses to start an app from the
+ * background, so in practice a pop-up notification offers to open it; the direct start stays for
+ * the cases Android allows.
  */
 class UpdatedReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
@@ -273,10 +274,10 @@ class UpdatedReceiver : BroadcastReceiver() {
         runCatching {
             val nm = context.getSystemService(NotificationManager::class.java)
             val fr = context.resources.configuration.locales[0]?.language == "fr"
-            nm.createNotificationChannel(NotificationChannel("bundle-updates", if (fr) "Mises à jour" else "Updates", NotificationManager.IMPORTANCE_DEFAULT))
+            nm.createNotificationChannel(NotificationChannel("bundle-updated", if (fr) "Mise à jour installée" else "Update installed", NotificationManager.IMPORTANCE_HIGH))
             val open = PendingIntent.getActivity(context, 0, launch, PendingIntent.FLAG_IMMUTABLE)
             val label = context.applicationInfo.loadLabel(context.packageManager)
-            val notification = android.app.Notification.Builder(context, "bundle-updates")
+            val notification = android.app.Notification.Builder(context, "bundle-updated")
                 .setSmallIcon(android.R.drawable.stat_sys_download_done)
                 .setContentTitle(if (fr) "$label est à jour" else "$label is up to date")
                 .setContentText(if (fr) "Version ${Updater.installedVersion(context)} installée. Touchez pour ouvrir." else "Version ${Updater.installedVersion(context)} installed. Tap to open.")
