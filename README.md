@@ -85,6 +85,10 @@ Le thème, les couleurs et les avatars se synchronisent entre les trois apps (el
 signées avec la même clé, ce qui est le cas des APK publiées). La langue et l'icône restent propres
 à chaque app.
 
+## Mettre à jour
+
+Dans chaque app : Paramètres › **Mises à jour**. L'app compare sa version avec la dernière release GitHub (« Latest », ou aussi les bêtas si l'option est activée), télécharge son APK, vérifie son empreinte SHA-256, l'installe et se rouvre dans sa nouvelle version. La première fois, Android demande d'autoriser l'app à installer des applications. Les apps ne contactent GitHub que quand vous ouvrez cet écran.
+
 ## Installer
 
 1. Télécharger les trois APK dans [Releases](../../releases) et les **extraire** si elles sont dans
