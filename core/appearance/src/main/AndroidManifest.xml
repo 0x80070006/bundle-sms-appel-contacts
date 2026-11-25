@@ -3,6 +3,8 @@
     <!-- Updates: checking GitHub (only when the user opens Updates) and installing the new APK. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- Android 12+: once the app has installed itself, its next updates need no confirmation. -->
+    <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- Finds the other apps of the bundle, to share the look with them. -->

@@ -63,6 +63,8 @@
 
     <!-- Bundle: installing its own updates from GitHub. -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- Android 12+: once the app has installed itself, its next updates need no confirmation. -->
+    <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
     <queries>
         <package android:name="com.android.cellbroadcastreceiver.module" />
         <!-- Twill: find NIP-55 Nostr signer apps such as Amber and talk to them in the background -->
