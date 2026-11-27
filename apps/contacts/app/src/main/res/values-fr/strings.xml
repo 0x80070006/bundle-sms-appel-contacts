@@ -415,4 +415,16 @@
     <string name="ice_mark">Contact d\'urgence</string>
     <string name="ice_unmark">Retirer des contacts d\'urgence</string>
     <string name="ice_section">En cas d\'urgence</string>
+    <string name="backup_title">Sauvegarde complète</string>
+    <string name="backup_summary">Contacts, appels, SMS, notes et réglages dans un fichier chiffré</string>
+    <string name="backup_body">Un seul fichier avec vos contacts, le journal d\'appels, les SMS, les notes et les infos d\'urgence, chiffré avec votre phrase secrète. La restauration remet les contacts, les notes et les infos d\'urgence ; les appels et SMS restent dans le fichier.</string>
+    <string name="backup_passphrase">Phrase secrète</string>
+    <string name="backup_passphrase_hint">Au moins 8 caractères. Elle n\'est pas enregistrée : sans elle, le fichier ne peut pas être ouvert.</string>
+    <string name="backup_export">Sauvegarder</string>
+    <string name="backup_restore">Restaurer</string>
+    <string name="backup_working">En cours…</string>
+    <string name="backup_done">Sauvegardé : %1$d contacts, %2$d appels, %3$d SMS.</string>
+    <string name="backup_restored">%1$d contacts restaurés (le fichier contient aussi %2$d appels et %3$d SMS).</string>
+    <string name="backup_wrong">Phrase secrète incorrecte, ou fichier abîmé.</string>
+    <string name="backup_failed">Ça n\'a pas marché. Vérifiez le fichier et réessayez.</string>
 </resources>

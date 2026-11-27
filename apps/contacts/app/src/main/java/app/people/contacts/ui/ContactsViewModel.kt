@@ -330,6 +330,18 @@ class ContactsViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** Bundle: adds every contact in a vCard text (full backup restore) to the first account. */
+    suspend fun importVCardText(text: String): Int {
+        val account = accounts.value.firstOrNull { it.onDevice } ?: accounts.value.firstOrNull()
+            ?: ContactAccount(null, null, "")
+        return VCardReader.parse(text).count { (contact, photo) ->
+            contact.hasContent && writer.save(
+                null, contact.copy(account = account),
+                if (photo != null) PhotoChange.Set(photo) else PhotoChange.Keep,
+            ) != null
+        }
+    }
+
     /** Bundle: puts a contact from the trash back, in the first account; true if it worked. */
     suspend fun restoreFromTrash(item: Trash.Item): Boolean {
         val account = accounts.value.firstOrNull { it.onDevice } ?: accounts.value.firstOrNull()

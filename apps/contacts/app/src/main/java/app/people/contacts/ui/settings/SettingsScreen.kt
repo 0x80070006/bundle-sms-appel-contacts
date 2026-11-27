@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.List
+import androidx.compose.material.icons.outlined.Backup
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.MedicalInformation
 import androidx.compose.material.icons.outlined.Edit
@@ -109,6 +110,8 @@ fun SettingsScreen(viewModel: ContactsViewModel, onBack: () -> Unit) {
     var showUpdate by remember { mutableStateOf(false) }
     var showTrash by remember { mutableStateOf(false) }
     var showEmergency by remember { mutableStateOf(false) }
+    var showBackup by remember { mutableStateOf(false) }
+    if (showBackup) SuiteBackupDialog(viewModel, onDismiss = { showBackup = false })
     if (showEmergency) EmergencyDialog(viewModel, onDismiss = { showEmergency = false })
     if (showTrash) TrashDialog(viewModel, onDismiss = { showTrash = false })
 
@@ -193,6 +196,16 @@ fun SettingsScreen(viewModel: ContactsViewModel, onBack: () -> Unit) {
                     summary = help.rowSummary,
                     shape = segmentShape(0, 1),
                     onClick = { showInstallHelp = true },
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                )
+            }
+            item(key = "suite-backup") {
+                ListRow(
+                    icon = Icons.Outlined.Backup,
+                    title = stringResource(R.string.backup_title),
+                    summary = stringResource(R.string.backup_summary),
+                    shape = segmentShape(0, 1),
+                    onClick = { showBackup = true },
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 )
             }

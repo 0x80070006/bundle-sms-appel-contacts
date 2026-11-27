@@ -401,4 +401,16 @@
     <string name="ice_mark">Emergency contact</string>
     <string name="ice_unmark">Remove from emergency contacts</string>
     <string name="ice_section">In case of emergency</string>
+    <string name="backup_title">Full backup</string>
+    <string name="backup_summary">Contacts, calls, texts, notes and settings in one encrypted file</string>
+    <string name="backup_body">One file with your contacts, call log, texts, notes and emergency information, encrypted with your passphrase. Restoring brings back contacts, notes and emergency information; calls and texts stay in the file.</string>
+    <string name="backup_passphrase">Passphrase</string>
+    <string name="backup_passphrase_hint">At least 8 characters. It is not saved: without it, the file cannot be opened.</string>
+    <string name="backup_export">Back up</string>
+    <string name="backup_restore">Restore</string>
+    <string name="backup_working">Working…</string>
+    <string name="backup_done">Saved: %1$d contacts, %2$d calls, %3$d texts.</string>
+    <string name="backup_restored">Restored %1$d contacts (the file also holds %2$d calls and %3$d texts).</string>
+    <string name="backup_wrong">Wrong passphrase, or the file is damaged.</string>
+    <string name="backup_failed">That didn\'t work. Check the file and try again.</string>
 </resources>
