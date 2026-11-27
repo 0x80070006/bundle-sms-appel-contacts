@@ -210,6 +210,8 @@ internal abstract class BaseConversationScreenTest {
         every { model.effects } returns effectsFlow
         every { model.navigationEvents } returns MutableSharedFlow()
         every { model.scaffoldUiState } returns scaffoldUiStateFlow
+        // Bundle: Twill's delayed send, added after these tests; none pending here.
+        every { model.delayedSend } returns kotlinx.coroutines.flow.MutableStateFlow(null)
         every { model.mediaPickerOverlayUiState } returns mediaPickerOverlayUiStateFlow
 
         return ScreenModelHandle(

@@ -48,7 +48,7 @@ class DeleteConversationActionTest {
             true
         mockkStatic(MessagingContentProvider::class)
         every { MessagingContentProvider.notifyConversationListChanged() } just runs
-        mockkStatic(WidgetConversationProvider::class)
+        mockkObject(WidgetConversationProvider.Companion)
         every { WidgetConversationProvider.notifyConversationDeleted(any(), any()) } just runs
         mockkStatic(BugleNotifications::class)
         every { BugleNotifications.update(any(), any()) } just runs

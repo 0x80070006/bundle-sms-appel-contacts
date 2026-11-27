@@ -28,7 +28,7 @@ jobs:
       - name: Unit tests (core, Contacts, Phone)
         run: >
           ./gradlew --no-daemon
-          :core:sync:testDebugUnitTest :core:telephony:testDebugUnitTest
+          :core:sync:testDebugUnitTest :core:telephony:testDebugUnitTest :core:hub:testDebugUnitTest
           :contacts:testDebugUnitTest :phone:testDebugUnitTest
 
   messages:

@@ -80,6 +80,17 @@ internal class AppSettingsRepositoryImplTest {
         } returns IN_CONVERSATION_SOUND_DEFAULT
         every { resources.getBoolean(R.bool.dump_sms_pref_default) } returns DUMP_SMS_DEFAULT
         every { resources.getBoolean(R.bool.dump_mms_pref_default) } returns DUMP_MMS_DEFAULT
+        // Bundle: settings Twill added after this test was written (they read like the others).
+        listOf(
+            R.string.send_delay_pref_key to R.bool.send_delay_pref_default,
+            R.string.unread_on_top_pref_key to R.bool.unread_on_top_pref_default,
+            R.string.long_sms_as_mms_pref_key to R.bool.long_sms_as_mms_pref_default,
+            R.string.web_link_previews_pref_key to R.bool.web_link_previews_pref_default,
+        ).forEach { (key, default) ->
+            every { context.getString(key) } returns "key_$key"
+            every { resources.getBoolean(default) } returns false
+            every { appPrefs.getBoolean("key_$key", false) } returns false
+        }
     }
 
     @After

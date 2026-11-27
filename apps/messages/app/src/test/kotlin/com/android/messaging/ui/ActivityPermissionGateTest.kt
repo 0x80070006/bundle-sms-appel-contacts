@@ -23,6 +23,9 @@ internal class ActivityPermissionGateTest {
         LaunchConversationActivity::class.java,
         LicenseActivity::class.java,
         ClassZeroActivity::class.java,
+        // Twill: only opens a nostr+walletconnect link and asks before saving it; it reads no
+        // SMS, contacts or phone state, so it needs none of the gated permissions.
+        com.android.messaging.ui.nostr.wallet.NostrWalletLinkActivity::class.java,
     )
 
     @Test

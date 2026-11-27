@@ -49,11 +49,21 @@ internal class LauncherAliasManifestTest {
 
     @Test
     fun manifest_declaresSingleLauncherEntry() {
-        val launcherEntries = (aliases() + activities())
+        // Bundle: the icon colour aliases (bundle.launcher.*, chosen in Appearance) also declare
+        // a launcher filter, but ship disabled: only the one the user picks is turned on, in
+        // place of the default. So at install there is still a single launcher entry.
+        val (colourAliases, others) = (aliases() + activities())
             .filter { element -> element.declaresLauncherIntentFilter() }
-            .map { element -> element.getAttribute("android:name") }
+            .partition { element -> element.getAttribute("android:name").startsWith("bundle.launcher.") }
 
-        assertEquals(listOf(launcherAliasName), launcherEntries)
+        assertEquals(listOf(launcherAliasName), others.map { it.getAttribute("android:name") })
+        colourAliases.forEach { alias ->
+            assertEquals(
+                "Icon colour alias ${alias.getAttribute("android:name")} must ship disabled",
+                "false",
+                alias.getAttribute("android:enabled"),
+            )
+        }
     }
 
     private fun Element.declaresLauncherIntentFilter(): Boolean {
