@@ -398,4 +398,21 @@
     <string name="notes_delete">Supprimer la note</string>
     <string name="label_color">Couleur</string>
     <string name="label_color_none">Aucune couleur</string>
+    <string name="ice_title">Infos d\'urgence</string>
+    <string name="ice_summary">Contacts d\'urgence, infos médicales et code QR</string>
+    <string name="ice_contacts">Contacts d\'urgence</string>
+    <string name="ice_contacts_none">Aucun pour l\'instant. Ouvrez un contact puis ⋮ › Contact d\'urgence.</string>
+    <string name="ice_medical">Infos médicales (facultatif)</string>
+    <string name="ice_blood">Groupe sanguin</string>
+    <string name="ice_allergies">Allergies</string>
+    <string name="ice_meds">Traitements</string>
+    <string name="ice_conditions">Antécédents médicaux</string>
+    <string name="ice_private">Gardées sur ce téléphone uniquement, jamais synchronisées.</string>
+    <string name="ice_lockscreen">Afficher sur l\'écran verrouillé (Réglages Android › Sécurité et urgences)</string>
+    <string name="ice_save">Enregistrer</string>
+    <string name="ice_qr">Code QR</string>
+    <string name="ice_edit">Modifier</string>
+    <string name="ice_mark">Contact d\'urgence</string>
+    <string name="ice_unmark">Retirer des contacts d\'urgence</string>
+    <string name="ice_section">En cas d\'urgence</string>
 </resources>

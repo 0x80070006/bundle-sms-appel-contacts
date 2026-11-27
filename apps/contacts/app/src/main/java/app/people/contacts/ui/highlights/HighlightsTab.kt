@@ -39,6 +39,9 @@ fun HighlightsTab(
     // Bundle: newest contacts (ids grow as contacts are added) and contacts with no number.
     val recentlyAdded = contacts.orEmpty().sortedByDescending { it.id }.take(10)
     val noNumber = contacts.orEmpty().filter { it.numbers.isEmpty() }.take(10)
+    // Bundle: emergency contacts (ICE) first, when there are any.
+    val ice by app.people.contacts.data.Emergency.info(androidx.compose.ui.platform.LocalContext.current).collectAsStateWithLifecycle()
+    val emergency = contacts.orEmpty().filter { it.id in ice?.contactIds.orEmpty() }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -54,7 +57,7 @@ fun HighlightsTab(
             }
             return@LazyColumn
         }
-        if (favorites.isEmpty() && birthdays.isEmpty() && recents.isEmpty() && recentlyAdded.size < 3 && noNumber.isEmpty()) {
+        if (favorites.isEmpty() && birthdays.isEmpty() && recents.isEmpty() && recentlyAdded.size < 3 && noNumber.isEmpty() && emergency.isEmpty()) {
             item(key = "empty") {
                 EmptyState(
                     Icons.Rounded.AutoAwesome,
@@ -63,6 +66,10 @@ fun HighlightsTab(
                 )
             }
             return@LazyColumn
+        }
+        if (emergency.isNotEmpty()) {
+            item(key = "ice-header") { SectionHeader(stringResource(R.string.ice_section)) }
+            item(key = "ice") { FavoritesRow(emergency, onOpenContact) }
         }
         if (favorites.isNotEmpty()) {
             item(key = "favorites-header") { SectionHeader(stringResource(R.string.favorites)) }

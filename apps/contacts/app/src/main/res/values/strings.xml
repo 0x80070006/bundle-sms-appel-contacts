@@ -384,4 +384,21 @@
     <string name="notes_delete">Delete note</string>
     <string name="label_color">Colour</string>
     <string name="label_color_none">No colour</string>
+    <string name="ice_title">Emergency information</string>
+    <string name="ice_summary">Emergency contacts, medical details and QR code</string>
+    <string name="ice_contacts">Emergency contacts</string>
+    <string name="ice_contacts_none">None yet. Open a contact and choose ⋮ › Emergency contact.</string>
+    <string name="ice_medical">Medical information (optional)</string>
+    <string name="ice_blood">Blood type</string>
+    <string name="ice_allergies">Allergies</string>
+    <string name="ice_meds">Medications</string>
+    <string name="ice_conditions">Medical conditions</string>
+    <string name="ice_private">Kept on this phone only, never synced.</string>
+    <string name="ice_lockscreen">Show on the lock screen (Android settings › Safety &amp; emergency)</string>
+    <string name="ice_save">Save</string>
+    <string name="ice_qr">QR code</string>
+    <string name="ice_edit">Edit</string>
+    <string name="ice_mark">Emergency contact</string>
+    <string name="ice_unmark">Remove from emergency contacts</string>
+    <string name="ice_section">In case of emergency</string>
 </resources>

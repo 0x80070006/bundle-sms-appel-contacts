@@ -52,6 +52,7 @@ import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material.icons.outlined.MedicalInformation
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
@@ -278,6 +279,14 @@ private fun TopBar(
                                 onClick = { menu = false; onUnlink() },
                             )
                         }
+                        // Bundle: emergency contact (ICE), kept on this phone.
+                        val ctx = androidx.compose.ui.platform.LocalContext.current
+                        val isIce = remember(contact.id, menu) { app.people.contacts.data.Emergency.isEmergency(ctx, contact.id) }
+                        DropdownMenuItem(
+                            text = { Text(stringResource(if (isIce) R.string.ice_unmark else R.string.ice_mark)) },
+                            leadingIcon = { Icon(Icons.Outlined.MedicalInformation, null) },
+                            onClick = { menu = false; app.people.contacts.data.Emergency.toggle(ctx, contact.id) },
+                        )
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.delete)) },
                             leadingIcon = { Icon(Icons.Outlined.Delete, null) },

@@ -23,6 +23,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.List
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.MedicalInformation
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.automirrored.outlined.Label
@@ -107,6 +108,8 @@ fun SettingsScreen(viewModel: ContactsViewModel, onBack: () -> Unit) {
     var showSync by remember { mutableStateOf(false) }
     var showUpdate by remember { mutableStateOf(false) }
     var showTrash by remember { mutableStateOf(false) }
+    var showEmergency by remember { mutableStateOf(false) }
+    if (showEmergency) EmergencyDialog(viewModel, onDismiss = { showEmergency = false })
     if (showTrash) TrashDialog(viewModel, onDismiss = { showTrash = false })
 
     val calendarOn by viewModel.settings.birthdayCalendar.collectAsStateWithLifecycle(false)
@@ -190,6 +193,16 @@ fun SettingsScreen(viewModel: ContactsViewModel, onBack: () -> Unit) {
                     summary = help.rowSummary,
                     shape = segmentShape(0, 1),
                     onClick = { showInstallHelp = true },
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                )
+            }
+            item(key = "emergency") {
+                ListRow(
+                    icon = Icons.Outlined.MedicalInformation,
+                    title = stringResource(R.string.ice_title),
+                    summary = stringResource(R.string.ice_summary),
+                    shape = segmentShape(0, 1),
+                    onClick = { showEmergency = true },
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 )
             }
