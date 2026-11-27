@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="BundleWidgetFavorite">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">48dp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:layout_marginEnd">6dp</item>
+        <item name="android:background">@drawable/bundle_widget_chip</item>
+        <item name="android:gravity">center</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:paddingStart">6dp</item>
+        <item name="android:paddingEnd">6dp</item>
+        <item name="android:textColor">@color/bundle_widget_on_chip</item>
+        <item name="android:textSize">13sp</item>
+    </style>
+    <string name="bundle_widget_label">Favorites</string>
+    <string name="bundle_widget_description">Call your favourites in one tap and see missed calls</string>
+</resources>

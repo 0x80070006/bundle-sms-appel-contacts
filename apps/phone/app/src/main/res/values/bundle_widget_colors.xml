@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bundle: widget colours. Fixed below Android 12; the wallpaper's colours from 12 (values-v31). -->
+<resources>
+    <color name="bundle_widget_bg">#FFF3F4F9</color>
+    <color name="bundle_widget_chip">#FFD6E3FF</color>
+    <color name="bundle_widget_on_chip">#FF001B3E</color>
+    <color name="bundle_widget_accent">#FF2E5A9E</color>
+    <color name="bundle_widget_text">#FF44474E</color>
+</resources>

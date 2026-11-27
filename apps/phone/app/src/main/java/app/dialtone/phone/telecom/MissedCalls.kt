@@ -74,6 +74,7 @@ object MissedCalls {
     /** Shows, updates or removes the notification to match the call log. */
     @SuppressLint("MissingPermission")
     fun refresh(context: Context) {
+        runCatching { app.dialtone.phone.widget.FavoritesWidget.refresh(context) }
         val calls = unseen(context)
         val nm = NotificationManagerCompat.from(context)
         if (calls.isEmpty()) {
@@ -158,6 +159,7 @@ object MissedCalls {
     /** Marks unseen missed calls as seen in the call log, and clears the notification. */
     fun markSeen(context: Context) {
         NotificationManagerCompat.from(context).cancel(NOTIFICATION_ID)
+        runCatching { app.dialtone.phone.widget.FavoritesWidget.refresh(context) }
         if (!context.hasPermission(Manifest.permission.WRITE_CALL_LOG)) return
         runCatching {
             context.contentResolver.update(

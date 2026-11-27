@@ -2,6 +2,10 @@ package app.dialtone.phone.util
 
 /** Bundle: French for every English text the app shows (see [tr]). */
 internal val FRENCH: Map<String, String> = mapOf(
+    // Bundle: widget
+    "1 missed call" to "1 appel manqué",
+    "%d missed calls" to "%d appels manqués",
+    "Star contacts to see them here" to "Ajoutez des favoris pour les voir ici",
     // Bundle: hub (notes, preferred SIM)
     "Add a note" to "Ajouter une note",
     "What was it about?" to "De quoi avez-vous parlé ?",
