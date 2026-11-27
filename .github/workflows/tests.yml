@@ -1,0 +1,48 @@
+name: Tests
+
+# Bundle: GitHub only runs workflows from the root .github/ folder. The ones under
+# apps/*/.github/ come from the upstream repos and expect their layout: they never run here.
+# This one compiles the three apps and runs their unit tests (no signing, no APK published).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contacts-phone-core:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Unit tests (core, Contacts, Phone)
+        run: >
+          ./gradlew --no-daemon
+          :core:sync:testDebugUnitTest :core:telephony:testDebugUnitTest
+          :contacts:testDebugUnitTest :phone:testDebugUnitTest
+
+  messages:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Unit tests (SMS)
+        working-directory: apps/messages
+        run: ./gradlew --no-daemon -Pbundle.javaToolchain=21 :app:testDebugUnitTest

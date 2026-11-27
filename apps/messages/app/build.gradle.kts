@@ -120,6 +120,8 @@ android {
         // Bundle: the shared look (theme, colours, language, app icon, sync with Contacts and
         // Phone), compiled from core/appearance's sources: this build keeps its own Gradle setup.
         kotlin.srcDir("../../../core/appearance/src/main/java")
+        // Bundle: number helpers, one-time codes and spam ranges shared with Contacts and Phone.
+        kotlin.srcDir("../../../core/telephony/src/main/java")
         res.srcDir("../res")
         // Bundle: the cartoon avatars Contacts and Phone show for contacts with no photo.
         res.srcDir("../../../core/design/avatars/res")

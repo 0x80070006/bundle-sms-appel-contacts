@@ -5,7 +5,7 @@ import org.junit.Test
 
 class ListLayoutTest {
     private fun label(id: Long, title: String, vararg members: Long, account: String = "a") =
-        Label(id, title, "type", account, members.toSet())
+        Label(id, title, listOf(LabelGroup(id, "type", account)), members.toSet())
 
     @Test fun `saved order comes first and new labels follow alphabetically`() {
         assertEquals(

@@ -35,7 +35,19 @@ object Dialer {
             Toast.makeText(context, tr("Phone permission is needed to place calls"), Toast.LENGTH_SHORT).show()
             return
         }
-        context.getSystemService(TelecomManager::class.java)?.placeCall(uri, Bundle())
+        val telecom = context.getSystemService(TelecomManager::class.java) ?: return
+        // Bundle: the SIM chosen for this number (hub), if it can still make calls. The hub
+        // lookup crosses processes, so it runs on a thread before placing the call.
+        val number = uri.schemeSpecificPart
+        Thread {
+            val extras = Bundle()
+            if (uri.scheme == "tel" && !number.isNullOrBlank()) {
+                val simId = runCatching { bundle.core.hub.Hub.line(context, number).simId }.getOrNull()
+                val handle = simId?.let { id -> runCatching { telecom.callCapablePhoneAccounts.firstOrNull { it.id == id } }.getOrNull() }
+                if (handle != null) extras.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, handle)
+            }
+            runCatching { telecom.placeCall(uri, extras) }
+        }.start()
     }
 
     /**

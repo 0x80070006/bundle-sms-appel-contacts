@@ -1,6 +1,7 @@
 package app.dialtone.phone.telecom
 
 import app.dialtone.phone.util.tr
+import app.dialtone.phone.util.trf
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -107,6 +108,7 @@ object MissedCalls {
                 .setContentText(if (calls.size > 1) "${calls.size} missed calls" else tr("Missed call"))
             if (latest.number.isNotBlank()) {
                 builder.addAction(0, tr("Call back"), broadcast(context, CallActionReceiver.ACTION_CALL_BACK, latest.number))
+                builder.addAction(0, tr("Remind me in 1 hour"), broadcast(context, CallActionReceiver.ACTION_REMIND_LATER, latest.number))
                 builder.addAction(
                     0, tr("Message"),
                     PendingIntent.getActivity(
@@ -128,6 +130,30 @@ object MissedCalls {
         }
         nm.notify(NOTIFICATION_ID, builder.build())
     }
+
+    /** Bundle: callback reminder, shown an hour after "Remind me in 1 hour" on a missed call. */
+    fun scheduleReminder(context: Context, number: String, delayMs: Long = 3_600_000L) {
+        val am = context.getSystemService(android.app.AlarmManager::class.java) ?: return
+        am.set(
+            android.app.AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + delayMs,
+            broadcast(context, CallActionReceiver.ACTION_REMIND_NOW, number),
+        )
+    }
+
+    fun showReminder(context: Context, number: String) {
+        ensureChannel(context)
+        val name = CallerLookup.lookup(context, number).name ?: formatNumber(number)
+        val n = NotificationCompat.Builder(context, CHANNEL)
+            .setSmallIcon(R.drawable.ic_stat_call_missed)
+            .setContentTitle(trf("Call back %s", name))
+            .setContentText(tr("You asked to call back"))
+            .setAutoCancel(true)
+            .setContentIntent(openCallLog(context))
+            .addAction(0, tr("Call back"), broadcast(context, CallActionReceiver.ACTION_CALL_BACK, number))
+            .build()
+        runCatching { NotificationManagerCompat.from(context).notify(REMINDER_ID_BASE + numberKey(number).hashCode() % 1000, n) }
+    }
+    private const val REMINDER_ID_BASE = 7000
 
     /** Marks unseen missed calls as seen in the call log, and clears the notification. */
     fun markSeen(context: Context) {

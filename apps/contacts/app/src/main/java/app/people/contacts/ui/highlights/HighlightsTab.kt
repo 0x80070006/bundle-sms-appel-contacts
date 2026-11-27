@@ -25,7 +25,7 @@ import app.people.contacts.ui.components.SEGMENT_GAP
 import app.people.contacts.ui.components.SectionHeader
 import app.people.contacts.ui.components.segmentShape
 
-/** The Highlights tab: favorites, upcoming birthdays ("For you") and Recents. */
+/** The Highlights tab: favorites, upcoming birthdays ("For you"), recently added, contacts with no number, and Recents. */
 @Composable
 fun HighlightsTab(
     viewModel: ContactsViewModel,
@@ -36,6 +36,9 @@ fun HighlightsTab(
     val birthdays by viewModel.birthdays.collectAsStateWithLifecycle()
     val recents by viewModel.recents.collectAsStateWithLifecycle()
     val favorites = contacts?.filter { it.starred }.orEmpty()
+    // Bundle: newest contacts (ids grow as contacts are added) and contacts with no number.
+    val recentlyAdded = contacts.orEmpty().sortedByDescending { it.id }.take(10)
+    val noNumber = contacts.orEmpty().filter { it.numbers.isEmpty() }.take(10)
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -51,7 +54,7 @@ fun HighlightsTab(
             }
             return@LazyColumn
         }
-        if (favorites.isEmpty() && birthdays.isEmpty() && recents.isEmpty()) {
+        if (favorites.isEmpty() && birthdays.isEmpty() && recents.isEmpty() && recentlyAdded.size < 3 && noNumber.isEmpty()) {
             item(key = "empty") {
                 EmptyState(
                     Icons.Rounded.AutoAwesome,
@@ -70,6 +73,14 @@ fun HighlightsTab(
             items(birthdays, key = { "birthday-${it.contact.id}" }) { birthday ->
                 BirthdayCard(birthday, onOpen = { onOpenContact(birthday.contact.id) }, Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
             }
+        }
+        if (recentlyAdded.size >= 3) {
+            item(key = "added-header") { SectionHeader(stringResource(R.string.recently_added)) }
+            item(key = "added") { FavoritesRow(recentlyAdded, onOpenContact) }
+        }
+        if (noNumber.isNotEmpty()) {
+            item(key = "nonumber-header") { SectionHeader(stringResource(R.string.to_complete)) }
+            item(key = "nonumber") { FavoritesRow(noNumber, onOpenContact) }
         }
         if (recents.isNotEmpty()) {
             item(key = "recents-header") { SectionHeader(stringResource(R.string.recents)) }

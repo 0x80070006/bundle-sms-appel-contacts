@@ -18,7 +18,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "Bundle"
 
-include(":core:appearance", ":core:design", ":core:sync", ":core:telephony")
+include(":core:appearance", ":core:design", ":core:hub", ":core:sync", ":core:telephony")
 
 include(":contacts")
 project(":contacts").projectDir = file("apps/contacts/app")

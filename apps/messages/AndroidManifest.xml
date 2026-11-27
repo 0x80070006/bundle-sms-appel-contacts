@@ -411,6 +411,7 @@
             android:exported="false" />
 
         <!-- Twill: "Delete" on SMS/MMS message notifications -->
+        <receiver android:name=".twill.TwillOtpCopyReceiver" android:exported="false" />
         <receiver android:name=".twill.TwillSmsNotificationDeleteReceiver"
             android:exported="false" />
 

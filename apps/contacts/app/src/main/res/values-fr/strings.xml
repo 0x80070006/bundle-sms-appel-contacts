@@ -382,4 +382,20 @@
     <string name="sync_all_accounts">Aussi Google et les autres comptes</string>
     <string name="sync_all_accounts_summary">Synchronise aussi les contacts de Google et de tout autre compte modifiable, pas seulement ceux enregistrés sur le téléphone. Une même personne présente dans deux comptes n\'est synchronisée qu\'une fois.</string>
     <string name="sync_backup_note">Une copie complète et chiffrée de vos contacts est aussi gardée sur Nextcloud (BundleSync/backups), chaque jour et après chaque modification : les 10 dernières.</string>
+    <string name="recently_added">Récemment ajoutés</string>
+    <string name="to_complete">Sans numéro de téléphone</string>
+    <string name="trash_title">Corbeille</string>
+    <string name="trash_summary">Contacts supprimés, gardés 30 jours</string>
+    <string name="trash_empty">La corbeille est vide.</string>
+    <string name="trash_days_left">Encore %1$d jours</string>
+    <string name="trash_restore">Restaurer</string>
+    <string name="trash_restored">Contact restauré</string>
+    <string name="trash_close">Fermer</string>
+    <string name="trash_empty_now">Vider la corbeille</string>
+    <string name="notes_title">Notes</string>
+    <string name="notes_hint">Ajouter une note…</string>
+    <string name="notes_add">Ajouter</string>
+    <string name="notes_delete">Supprimer la note</string>
+    <string name="label_color">Couleur</string>
+    <string name="label_color_none">Aucune couleur</string>
 </resources>

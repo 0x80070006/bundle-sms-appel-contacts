@@ -2,6 +2,35 @@ package app.dialtone.phone.util
 
 /** Bundle: French for every English text the app shows (see [tr]). */
 internal val FRENCH: Map<String, String> = mapOf(
+    // Bundle: hub (notes, preferred SIM)
+    "Add a note" to "Ajouter une note",
+    "What was it about?" to "De quoi avez-vous parlé ?",
+    "Note saved in Contacts" to "Note enregistrée dans Contacts",
+    "Install Contacts to keep notes" to "Installez Contacts pour garder des notes",
+    "SIM for this number" to "SIM pour ce numéro",
+    "Only one SIM can make calls on this phone." to "Une seule SIM peut appeler sur ce téléphone.",
+    "Phone default" to "Par défaut du téléphone",
+    // Bundle: spam, statistics, speed dial, callback reminders
+    "Spam and statistics" to "Spam et statistiques",
+    "Telemarketing numbers" to "Numéros de démarchage",
+    "Numbers not in contacts" to "Numéros hors contacts",
+    "Ring normally" to "Sonner normalement",
+    "Ring silently" to "Sonner en silence",
+    "Reject" to "Refuser",
+    "Call statistics" to "Statistiques d'appels",
+    "Time on the phone, most called contacts" to "Temps au téléphone, contacts les plus appelés",
+    "This week" to "Cette semaine",
+    "Average call" to "Appel moyen",
+    "Incoming" to "Reçus",
+    "Outgoing" to "Passés",
+    "Last 7 days" to "7 derniers jours",
+    "Most called (30 days)" to "Les plus appelés (30 jours)",
+    "No calls yet" to "Aucun appel pour l'instant",
+    "Type a number, then hold %s to save it as speed dial" to "Saisissez un numéro puis maintenez %s pour l'enregistrer en numérotation rapide",
+    "Speed dial %s: %s" to "Numérotation rapide %s : %s",
+    "Remind me in 1 hour" to "Me rappeler dans 1 h",
+    "Call back %s" to "Rappeler %s",
+    "You asked to call back" to "Vous vouliez rappeler",
     // Tabs, search and lists
     "Home" to "Accueil",
     "Keypad" to "Clavier",

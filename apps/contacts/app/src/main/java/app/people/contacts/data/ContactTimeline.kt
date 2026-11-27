@@ -30,10 +30,10 @@ data class TimelineEntry(
  */
 class ContactTimeline(private val context: Context) {
     /** The latest [limit] entries with any of [numbers]. */
-    suspend fun load(numbers: List<String>, limit: Int = 60): List<TimelineEntry> = withContext(Dispatchers.IO) {
+    suspend fun load(numbers: List<String>, limit: Int = 200): List<TimelineEntry> = withContext(Dispatchers.IO) {
         val keys = numbers.map(::numberKey).filter { it.isNotEmpty() }.toSet()
         if (keys.isEmpty() || !hasCallAndTextAccess(context)) return@withContext emptyList()
-        mergeTimeline(loadCalls(keys), loadTexts(keys), limit)
+        mergeTimeline(loadCalls(keys), loadTexts(keys) + loadMms(keys), limit)
     }
 
     private fun loadCalls(keys: Set<String>): List<TimelineEntry> {
@@ -61,6 +61,47 @@ class ContactTimeline(private val context: Context) {
         }
         return out
     }
+
+    /**
+     * Bundle: MMS (group texts, photos) too. Each MMS keeps its numbers in a separate "addr"
+     * table, so only the newest [MMS_SCAN_LIMIT] are looked at.
+     */
+    private fun loadMms(keys: Set<String>): List<TimelineEntry> {
+        val out = ArrayList<TimelineEntry>()
+        runCatching {
+            query(
+                Telephony.Mms.CONTENT_URI,
+                arrayOf(Telephony.Mms._ID, Telephony.Mms.DATE, Telephony.Mms.MESSAGE_BOX),
+                Telephony.Mms.DATE,
+            )?.use { c ->
+                var seen = 0
+                while (c.moveToNext() && seen++ < MMS_SCAN_LIMIT) {
+                    val id = c.getLong(0)
+                    val kind = when (c.getInt(2)) {
+                        Telephony.Mms.MESSAGE_BOX_INBOX -> TimelineKind.TextReceived
+                        Telephony.Mms.MESSAGE_BOX_SENT, Telephony.Mms.MESSAGE_BOX_OUTBOX -> TimelineKind.TextSent
+                        else -> continue
+                    }
+                    val address = mmsAddresses(id).firstOrNull { sameLine(it, keys) } ?: continue
+                    out += TimelineEntry(c.getLong(1) * 1000, kind, address, text = mmsText(id) ?: "MMS")
+                }
+            }
+        }
+        return out
+    }
+
+    private fun mmsAddresses(id: Long): List<String> = runCatching {
+        context.contentResolver.query(
+            android.net.Uri.parse("content://mms/$id/addr"), arrayOf(Telephony.Mms.Addr.ADDRESS), null, null, null,
+        )?.use { c -> buildList { while (c.moveToNext()) c.getString(0)?.let(::add) } }
+    }.getOrNull().orEmpty()
+
+    private fun mmsText(id: Long): String? = runCatching {
+        context.contentResolver.query(
+            android.net.Uri.parse("content://mms/part"), arrayOf(Telephony.Mms.Part.TEXT),
+            "${Telephony.Mms.Part.MSG_ID} = ? AND ${Telephony.Mms.Part.CONTENT_TYPE} = 'text/plain'", arrayOf(id.toString()), null,
+        )?.use { c -> if (c.moveToFirst()) c.getString(0) else null }
+    }.getOrNull()
 
     private fun loadTexts(keys: Set<String>): List<TimelineEntry> {
         val out = ArrayList<TimelineEntry>()
@@ -101,6 +142,7 @@ class ContactTimeline(private val context: Context) {
     private companion object {
         /** How many of the newest rows of each store are looked through. */
         const val SCAN_LIMIT = 3000
+        const val MMS_SCAN_LIMIT = 300
     }
 }
 

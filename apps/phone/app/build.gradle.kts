@@ -111,6 +111,7 @@ dependencies {
     // Bundle: shared theme, avatars and phone-number helpers.
     implementation(project(":core:design"))
     implementation(project(":core:telephony"))
+    implementation(project(":core:hub"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)

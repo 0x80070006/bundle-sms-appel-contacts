@@ -22,6 +22,12 @@ class CallActionReceiver : BroadcastReceiver() {
                 seen(context)
             }
             ACTION_MISSED_DISMISSED -> seen(context)
+            // Bundle: callback reminders.
+            ACTION_REMIND_LATER -> {
+                intent.getStringExtra(EXTRA_NUMBER)?.takeIf { it.isNotBlank() }?.let { MissedCalls.scheduleReminder(context, it) }
+                seen(context)
+            }
+            ACTION_REMIND_NOW -> intent.getStringExtra(EXTRA_NUMBER)?.takeIf { it.isNotBlank() }?.let { MissedCalls.showReminder(context, it) }
         }
     }
 
@@ -30,6 +36,8 @@ class CallActionReceiver : BroadcastReceiver() {
         const val ACTION_HANGUP = "app.dialtone.phone.action.HANGUP"
         const val ACTION_CALL_BACK = "app.dialtone.phone.action.CALL_BACK"
         const val ACTION_MISSED_DISMISSED = "app.dialtone.phone.action.MISSED_DISMISSED"
+        const val ACTION_REMIND_LATER = "app.dialtone.phone.action.REMIND_LATER"
+        const val ACTION_REMIND_NOW = "app.dialtone.phone.action.REMIND_NOW"
         const val EXTRA_NUMBER = "app.dialtone.phone.extra.NUMBER"
 
         private fun seen(context: Context) {

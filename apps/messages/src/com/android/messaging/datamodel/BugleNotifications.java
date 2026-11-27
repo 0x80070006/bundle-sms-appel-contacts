@@ -568,6 +568,15 @@ public class BugleNotifications {
         final NotificationCompat.Action markAsReadActionBuilder =
                 new NotificationCompat.Action.Builder(0,
                         context.getString(R.string.mark_as_read), markAsReadPendingIntent).build();
+        // Bundle: "Copy 482913" first when the latest text carries a one-time code.
+        if (!conversation.mLineInfos.isEmpty()) {
+            final NotificationCompat.Action otpAction = com.android.messaging.twill.TwillOtpCopy.action(
+                    context, conversationId,
+                    conversation.mLineInfos.get(0).mText);
+            if (otpAction != null) {
+                notifBuilder.addAction(otpAction);
+            }
+        }
         notifBuilder.addAction(markAsReadActionBuilder);
 
         if (canReplyFromNotification(conversation)) {

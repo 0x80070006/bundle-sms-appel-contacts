@@ -23,6 +23,8 @@ import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material.icons.outlined.SimCard
+import androidx.compose.material.icons.outlined.Description
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalView
 import app.dialtone.phone.screening.SendToVoicemail
@@ -503,6 +505,10 @@ private fun RecentRow(
             }
         }
     }
+    var noting by remember { mutableStateOf(false) }
+    var choosingSim by remember { mutableStateOf(false) }
+    if (noting) app.dialtone.phone.ui.components.AddNoteDialog(call.number, onDismiss = { noting = false })
+    if (choosingSim) app.dialtone.phone.ui.components.PreferredSimDialog(call.number, onDismiss = { choosingSim = false })
     // Long-press menu. Whether the number is blocked is looked up each time it opens.
     val blocked by produceState<Boolean?>(null, menu, call.number) {
         value = if (menu) withContext(Dispatchers.IO) { Blocking.isBlocked(context, call.number) } else null
@@ -531,6 +537,17 @@ private fun RecentRow(
                 },
             )
         }
+        // Bundle: notes and preferred SIM, kept in the shared hub (Contacts).
+        DropdownMenuItem(
+            text = { Text(tr("Add a note")) },
+            leadingIcon = { Icon(Icons.Outlined.Description, null) },
+            onClick = { menu = false; noting = true },
+        )
+        DropdownMenuItem(
+            text = { Text(tr("SIM for this number")) },
+            leadingIcon = { Icon(Icons.Outlined.SimCard, null) },
+            onClick = { menu = false; choosingSim = true },
+        )
         DropdownMenuItem(
             text = { Text(tr("Copy number")) },
             leadingIcon = { Icon(Icons.Outlined.ContentCopy, null) },

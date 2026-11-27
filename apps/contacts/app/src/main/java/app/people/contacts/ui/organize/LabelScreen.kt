@@ -3,6 +3,9 @@ package app.people.contacts.ui.organize
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -138,6 +141,8 @@ fun LabelScreen(viewModel: ContactsViewModel, id: Long, onBack: () -> Unit, onOp
             contentPadding = PaddingValues(top = padding.calculateTopPadding(), bottom = 96.dp),
             verticalArrangement = Arrangement.spacedBy(SEGMENT_GAP),
         ) {
+            // Bundle: the label's colour (a "profile"), kept in the shared hub.
+            item(key = "color") { LabelColorRow(label.title) }
             if (members.isEmpty()) {
                 item(key = "empty") {
                     EmptyState(Icons.AutoMirrored.Outlined.Label, stringResource(R.string.label_empty_title), stringResource(R.string.label_empty_body))
@@ -220,6 +225,34 @@ private fun ContactPicker(contacts: List<ContactSummary>, onDone: (Set<Long>) ->
                 }
             }
             item(key = "bottom") { Spacer(Modifier.navigationBarsPadding()) }
+        }
+    }
+}
+
+
+/** Bundle: picks the label's colour from the shared palette; tap the chosen one again to clear it. */
+@Composable
+private fun LabelColorRow(title: String) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var selected by remember(title) { mutableStateOf(bundle.core.hub.Hub.localLabelColor(context, title)) }
+    Row(
+        Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(stringResource(R.string.label_color), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(end = 8.dp))
+        bundle.core.hub.LabelColors.PALETTE.forEach { argb ->
+            val isOn = selected == argb
+            Box(
+                Modifier.size(if (isOn) 32.dp else 26.dp)
+                    .clip(androidx.compose.foundation.shape.CircleShape)
+                    .background(androidx.compose.ui.graphics.Color(argb))
+                    .clickable {
+                        val next = if (isOn) null else argb
+                        bundle.core.hub.Hub.setLabelColor(context, title, next)
+                        selected = next
+                    },
+            )
         }
     }
 }

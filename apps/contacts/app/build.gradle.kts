@@ -118,6 +118,7 @@ dependencies {
     implementation(project(":core:design"))
     implementation(project(":core:telephony"))
     implementation(project(":core:sync"))
+    implementation(project(":core:hub"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)

@@ -50,7 +50,7 @@ val T9: Map<Char, Char> = buildMap {
 
 /**
  * 4×3 dial pad with pill keys that morph to rounded squares while pressed.
- * [onLongKey] fires for long-press on 0 (+) and 1 (voicemail).
+ * [onLongKey] fires for long-press on 0 (+), 1 (voicemail) and 2–9 (speed dial).
  */
 @Composable
 fun DialPad(
@@ -67,7 +67,7 @@ fun DialPad(
                         digit = digit,
                         letters = letters,
                         onClick = { onKey(digit) },
-                        onLongClick = if (onLongKey != null && (digit == '0' || digit == '1')) {
+                        onLongClick = if (onLongKey != null && digit in '0'..'9') {
                             { onLongKey(digit) }
                         } else null,
                         modifier = Modifier.weight(1f).height(keyHeight),

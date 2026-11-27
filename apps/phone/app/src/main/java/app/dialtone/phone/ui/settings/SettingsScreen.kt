@@ -97,6 +97,7 @@ import app.dialtone.phone.data.TranscriptionUi
 import app.dialtone.phone.data.VvmAccount
 import app.dialtone.phone.data.VvmHealth
 import app.dialtone.phone.screening.SendToVoicemail
+import app.dialtone.phone.screening.SpamFilter
 import app.dialtone.phone.telecom.QuickResponses
 import app.dialtone.phone.ui.components.ContactPickerSheet
 import app.dialtone.phone.ui.components.SectionHeader
@@ -136,6 +137,9 @@ fun SettingsScreen(
     var showAppearance by rememberSaveable { mutableStateOf(false) }
     var showInstallHelp by rememberSaveable { mutableStateOf(false) }
     var showUpdate by rememberSaveable { mutableStateOf(false) }
+    var showStats by rememberSaveable { mutableStateOf(false) }
+    val spam = SpamFilter.settings(context).collectAsState().value ?: SpamFilter.Settings()
+    if (showStats) { app.dialtone.phone.ui.stats.StatsScreen(onBack = { showStats = false }); return }
     val updateContext = androidx.compose.ui.platform.LocalContext.current
     if (showUpdate) UpdateDialog(onDismiss = { showUpdate = false })
     if (showInstallHelp) InstallHelpDialog(onDismiss = { showInstallHelp = false })
@@ -341,6 +345,30 @@ fun SettingsScreen(
                 )
             }
 
+            // ---- Bundle: spam (ARCEP telemarketing ranges, unknown callers) and statistics
+            item(key = "spam-header") { SectionHeader(tr("Spam and statistics")) }
+            item(key = "spam-tm") {
+                SettingsRow(
+                    Icons.Outlined.Block, tr("Telemarketing numbers"), segmentShape(0, 3),
+                    summary = tr(spamLabel(spam.telemarketing)) + " · 0162, 0163, 0270, 0271, 0377, 0378, 0424, 0425, 0568, 0569, 0948, 0949",
+                    onClick = { SpamFilter.update(context, spam.copy(telemarketing = nextAction(spam.telemarketing))) },
+                )
+            }
+            item(key = "spam-unknown") {
+                SettingsRow(
+                    Icons.Outlined.Block, tr("Numbers not in contacts"), segmentShape(1, 3),
+                    summary = tr(spamLabel(spam.unknown)),
+                    onClick = { SpamFilter.update(context, spam.copy(unknown = nextAction(spam.unknown))) },
+                )
+            }
+            item(key = "stats") {
+                SettingsRow(
+                    Icons.Outlined.Description, tr("Call statistics"), segmentShape(2, 3),
+                    summary = tr("Time on the phone, most called contacts"),
+                    onClick = { showStats = true },
+                )
+            }
+
             // ---- Troubleshooting
             item(key = "log-header") { SectionHeader(tr("Troubleshooting")) }
             item(key = "log-view") {
@@ -442,6 +470,15 @@ private fun SettingsRow(
         Surface(shape = shape, color = scheme.surfaceBright, modifier = modifier) { content() }
     }
 }
+
+private fun spamLabel(action: SpamFilter.Action): String = when (action) {
+    SpamFilter.Action.Ring -> "Ring normally"
+    SpamFilter.Action.Silence -> "Ring silently"
+    SpamFilter.Action.Reject -> "Reject"
+}
+
+private fun nextAction(action: SpamFilter.Action): SpamFilter.Action =
+    SpamFilter.Action.entries[(action.ordinal + 1) % SpamFilter.Action.entries.size]
 
 private fun protocolName(protocol: String?): String = when (protocol) {
     "vvm_type_omtp" -> "OMTP"

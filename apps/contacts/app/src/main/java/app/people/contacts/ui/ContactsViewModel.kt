@@ -12,6 +12,7 @@ import app.people.contacts.calendar.BirthdayWorker
 import app.people.contacts.data.AccountKeys
 import app.people.contacts.data.BIRTHDAY_WINDOW_DAYS
 import app.people.contacts.data.ContactAccount
+import app.people.contacts.data.Trash
 import app.people.contacts.data.ContactDetails
 import app.people.contacts.data.ContactSummary
 import app.people.contacts.data.ContactWriter
@@ -329,6 +330,15 @@ class ContactsViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** Bundle: puts a contact from the trash back, in the first account; true if it worked. */
+    suspend fun restoreFromTrash(item: Trash.Item): Boolean {
+        val account = accounts.value.firstOrNull { it.onDevice } ?: accounts.value.firstOrNull()
+            ?: ContactAccount(null, null, "")
+        val added = importFrom(android.net.Uri.fromFile(item.file), account)
+        if (added > 0) Trash.remove(item)
+        return added > 0
+    }
+
     fun setRingtone(id: Long, uri: String?) {
         viewModelScope.launch { repository.setRingtone(id, uri) }
     }
@@ -391,6 +401,11 @@ class ContactsViewModel(app: Application) : AndroidViewModel(app) {
         if (pendingDeletion.value?.token == pending.token) pendingDeletion.value = null
         // Not tied to this screen's lifetime, so closing the app doesn't stop it halfway.
         deleteScope.launch {
+            // Bundle: a copy goes to the trash first (kept 30 days).
+            val app = getApplication<Application>()
+            pending.contacts.forEach { (id, key) ->
+                runCatching { Trash.keep(app, id, key, if (pending.contacts.size == 1) pending.name else null) }
+            }
             val failed = pending.contacts.filter { (id, key) -> !writer.delete(id, key) }
             // Deleted ones stay hidden (their ids aren't reused) so they can't flash back before
             // the list reloads; ones that couldn't be deleted come back.

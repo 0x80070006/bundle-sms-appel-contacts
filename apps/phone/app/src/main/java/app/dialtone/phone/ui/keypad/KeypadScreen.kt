@@ -1,6 +1,7 @@
 package app.dialtone.phone.ui.keypad
 
 import app.dialtone.phone.util.tr
+import app.dialtone.phone.util.trf
 
 import android.view.HapticFeedbackConstants
 import androidx.compose.animation.AnimatedVisibility
@@ -65,6 +66,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.dialtone.phone.data.Contact
 import app.dialtone.phone.data.PhoneNumber
+import app.dialtone.phone.data.SpeedDial
 import app.dialtone.phone.telecom.Dialer
 import app.dialtone.phone.ui.components.Avatar
 import app.dialtone.phone.ui.components.DialPad
@@ -236,6 +238,16 @@ private fun DialPanel(
                     when {
                         c == '0' -> onNumberChange(number + '+')
                         c == '1' && number.isEmpty() -> Dialer.callVoicemail(context)
+                        // Bundle: speed dial (see SpeedDial).
+                        c in SpeedDial.KEYS && number.isEmpty() -> {
+                            val target = SpeedDial.get(context, c)
+                            if (target != null) Dialer.call(context, target)
+                            else android.widget.Toast.makeText(context, trf("Type a number, then hold %s to save it as speed dial", c), android.widget.Toast.LENGTH_LONG).show()
+                        }
+                        c in SpeedDial.KEYS -> {
+                            SpeedDial.set(context, c, number)
+                            android.widget.Toast.makeText(context, trf("Speed dial %s: %s", c, formatNumber(number)), android.widget.Toast.LENGTH_SHORT).show()
+                        }
                         else -> onNumberChange(number + c)
                     }
                 },

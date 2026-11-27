@@ -106,6 +106,8 @@ fun SettingsScreen(viewModel: ContactsViewModel, onBack: () -> Unit) {
     var showInstallHelp by remember { mutableStateOf(false) }
     var showSync by remember { mutableStateOf(false) }
     var showUpdate by remember { mutableStateOf(false) }
+    var showTrash by remember { mutableStateOf(false) }
+    if (showTrash) TrashDialog(viewModel, onDismiss = { showTrash = false })
 
     val calendarOn by viewModel.settings.birthdayCalendar.collectAsStateWithLifecycle(false)
     val calendarAccess = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
@@ -188,6 +190,16 @@ fun SettingsScreen(viewModel: ContactsViewModel, onBack: () -> Unit) {
                     summary = help.rowSummary,
                     shape = segmentShape(0, 1),
                     onClick = { showInstallHelp = true },
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                )
+            }
+            item(key = "trash") {
+                ListRow(
+                    icon = Icons.Outlined.Delete,
+                    title = stringResource(R.string.trash_title),
+                    summary = stringResource(R.string.trash_summary),
+                    shape = segmentShape(0, 1),
+                    onClick = { showTrash = true },
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 )
             }

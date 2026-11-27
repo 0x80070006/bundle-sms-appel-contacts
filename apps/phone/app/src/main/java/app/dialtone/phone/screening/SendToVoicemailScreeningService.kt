@@ -18,7 +18,20 @@ class SendToVoicemailScreeningService : CallScreeningService() {
         val send = incoming && !number.isNullOrBlank() &&
             runCatching { SendToVoicemail.contains(this, number) }.getOrDefault(false)
 
-        val response = if (send) {
+        // Bundle: telemarketing ranges and unknown callers (Settings › Spam).
+        val spam = if (incoming && !send && !number.isNullOrBlank()) {
+            runCatching {
+                val isContact = app.dialtone.phone.telecom.CallerLookup.lookup(this, number).name != null
+                SpamFilter.actionFor(this, number, isContact)
+            }.getOrDefault(SpamFilter.Action.Ring)
+        } else SpamFilter.Action.Ring
+
+        val response = if (spam == SpamFilter.Action.Reject) {
+            CallResponse.Builder().setDisallowCall(true).setRejectCall(true)
+                .setSkipNotification(true).setSkipCallLog(false).build()
+        } else if (spam == SpamFilter.Action.Silence) {
+            CallResponse.Builder().setSilenceCall(true).build()
+        } else if (send) {
             VvmLog.i("SendToVoicemail", "sent an incoming call to voicemail")
             CallResponse.Builder()
                 .setDisallowCall(true)

@@ -17,8 +17,8 @@ class WebDavTest {
     private lateinit var dav: OkHttpWebDav
 
     @Before fun start() {
-        server = MockWebServer().also { it.start() }
-        dav = OkHttpWebDav(server.url("/remote.php/dav/files/alice/").toString(), "alice", "app-password")
+        server = MockWebServer().also { it.start(java.net.InetAddress.getByName("127.0.0.1"), 0) }
+        dav = OkHttpWebDav(server.url("/remote.php/dav/files/alice/").newBuilder().host("127.0.0.1").build().toString(), "alice", "app-password")
     }
 
     @After fun stop() = server.shutdown()

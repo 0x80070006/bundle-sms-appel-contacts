@@ -184,6 +184,7 @@ fun ContactScreen(viewModel: ContactsViewModel, id: Long, onBack: () -> Unit, on
                     contactSections(contact, onSetDefault = { mimeType, dataId, on ->
                         viewModel.setDefault(contact.id, mimeType, dataId, on)
                     })
+                    notesSection(contact)
                     timelineSection(contact)
                     item(key = "bottom") { Spacer(Modifier.navigationBarsPadding()) }
                 }

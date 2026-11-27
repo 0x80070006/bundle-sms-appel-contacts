@@ -238,5 +238,15 @@
             </intent-filter>
         </activity-alias>
         <!-- /BUNDLE-ICONS -->
+        <!-- Bundle: the shared hub (preferred SIM, call notes, label colours). Exported for Phone
+             and Messages; it only answers apps signed with the same key. -->
+        <provider
+            android:name="bundle.core.hub.HubProvider"
+            android:authorities="${applicationId}.bundle.hub"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="bundle.action.HUB" />
+            </intent-filter>
+        </provider>
     </application>
 </manifest>
