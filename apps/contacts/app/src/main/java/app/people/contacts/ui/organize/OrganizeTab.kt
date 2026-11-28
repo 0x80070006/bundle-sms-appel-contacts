@@ -10,6 +10,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Label
 import androidx.compose.material.icons.outlined.AutoFixHigh
 import androidx.compose.material.icons.outlined.Download
+import androidx.compose.material.icons.outlined.QrCodeScanner
+import androidx.compose.material.icons.outlined.SimCard
 import androidx.compose.material.icons.outlined.Healing
 import androidx.compose.material.icons.outlined.Upload
 import androidx.compose.material.icons.rounded.Add
@@ -47,6 +49,10 @@ fun OrganizeTab(
     val duplicates by viewModel.duplicates.collectAsStateWithLifecycle()
     val fixes by viewModel.fixes.collectAsStateWithLifecycle()
     val backup = rememberBackupActions(viewModel)
+    // Bundle: add from a QR code, and the SIM card's contacts.
+    val importQr = rememberQrImport(viewModel)
+    var showSim by remember { mutableStateOf(false) }
+    if (showSim) SimContactsDialog(viewModel, onDismiss = { showSim = false })
     val scope = rememberCoroutineScope()
     var creating by remember { mutableStateOf(false) }
     val list = labels.orEmpty()
@@ -90,7 +96,7 @@ fun OrganizeTab(
                 summary = if (duplicates.isEmpty()) stringResource(R.string.merge_none)
                 else pluralStringResource(R.plurals.merge_suggestions, duplicates.size, duplicates.size),
                 summaryColor = if (duplicates.isEmpty()) null else MaterialTheme.colorScheme.primary,
-                shape = segmentShape(0, 4),
+                shape = segmentShape(0, 6),
                 onClick = onOpenMerge,
                 modifier = Modifier.padding(horizontal = 16.dp),
             )
@@ -103,7 +109,7 @@ fun OrganizeTab(
                 summary = if (count == 0) stringResource(R.string.fix_summary_none)
                 else pluralStringResource(R.plurals.fix_suggestions, count, count),
                 summaryColor = if (count == 0) null else MaterialTheme.colorScheme.primary,
-                shape = segmentShape(1, 4),
+                shape = segmentShape(1, 6),
                 onClick = onOpenFix,
                 modifier = Modifier.padding(horizontal = 16.dp),
             )
@@ -113,7 +119,7 @@ fun OrganizeTab(
                 icon = Icons.Outlined.Download,
                 title = stringResource(R.string.import_contacts),
                 summary = stringResource(R.string.import_summary),
-                shape = segmentShape(2, 4),
+                shape = segmentShape(2, 6),
                 onClick = backup.import,
                 modifier = Modifier.padding(horizontal = 16.dp),
             )
@@ -123,8 +129,28 @@ fun OrganizeTab(
                 icon = Icons.Outlined.Upload,
                 title = stringResource(R.string.export_contacts),
                 summary = stringResource(R.string.export_summary),
-                shape = segmentShape(3, 4),
+                shape = segmentShape(3, 6),
                 onClick = backup.export,
+                modifier = Modifier.padding(horizontal = 16.dp),
+            )
+        }
+        item(key = "qr-import") {
+            ListRow(
+                icon = Icons.Outlined.QrCodeScanner,
+                title = stringResource(R.string.qr_import),
+                summary = stringResource(R.string.qr_import_summary),
+                shape = segmentShape(4, 6),
+                onClick = importQr,
+                modifier = Modifier.padding(horizontal = 16.dp),
+            )
+        }
+        item(key = "sim") {
+            ListRow(
+                icon = Icons.Outlined.SimCard,
+                title = stringResource(R.string.sim_title),
+                summary = stringResource(R.string.sim_summary),
+                shape = segmentShape(5, 6),
+                onClick = { showSim = true },
                 modifier = Modifier.padding(horizontal = 16.dp),
             )
         }

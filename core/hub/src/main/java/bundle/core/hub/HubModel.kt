@@ -14,11 +14,16 @@ data class LinePrefs(
     /** The PhoneAccountHandle id of the preferred SIM, or null for the phone's default. */
     val simId: String? = null,
     val notes: List<HubNote> = emptyList(),
+    /** Bundle: calls from this line ring silently until this time (ms), 0 = not silenced. */
+    val silentUntil: Long = 0,
 ) {
-    val isEmpty get() = simId == null && notes.isEmpty()
+    val isEmpty get() = simId == null && notes.isEmpty() && silentUntil == 0L
+
+    fun isSilenced(now: Long = System.currentTimeMillis()) = silentUntil > now
 
     fun toJson(): JSONObject = JSONObject().apply {
         simId?.let { put("sim", it) }
+        if (silentUntil > 0) put("silent", silentUntil)
         put("notes", JSONArray().apply { notes.forEach { put(JSONObject().put("t", it.time).put("x", it.text)) } })
     }
 
@@ -31,6 +36,7 @@ data class LinePrefs(
                 notes = (0 until arr.length()).mapNotNull { i ->
                     arr.optJSONObject(i)?.let { HubNote(it.optLong("t"), it.optString("x")) }
                 }.filter { it.text.isNotBlank() }.sortedByDescending { it.time },
+                silentUntil = o.optLong("silent"),
             )
         }
     }

@@ -12,6 +12,13 @@ class HubModelTest {
         assertEquals(listOf("new", "old"), back.notes.map { it.text })
     }
 
+    @Test fun silenceRoundTrip() {
+        val back = LinePrefs.fromJson(LinePrefs(silentUntil = 5_000).toJson())
+        assertEquals(5_000L, back.silentUntil)
+        assertTrue(back.isSilenced(now = 4_000))
+        assertTrue(!back.isSilenced(now = 6_000))
+    }
+
     @Test fun emptyAndBlank() {
         assertTrue(LinePrefs.fromJson(null).isEmpty)
         assertTrue(LinePrefs.fromJson(LinePrefs(null, listOf(HubNote(1, "  "))).toJson()).notes.isEmpty())

@@ -458,4 +458,31 @@
     <string name="share_kind_birthday">Anniversaire</string>
     <string name="share_kind_website">Site web</string>
     <string name="share_kind_note">Note</string>
+    <string name="qr_import">Ajouter depuis un code QR</string>
+    <string name="qr_import_summary">Depuis une photo ou une capture d\'écran d\'un code de contact</string>
+    <string name="qr_added">Contact ajouté</string>
+    <string name="qr_none">Aucun code de contact trouvé dans cette image</string>
+    <string name="sim_title">Contacts de la carte SIM</string>
+    <string name="sim_summary">Les voir et les copier sur le téléphone</string>
+    <string name="sim_loading">Lecture de la carte SIM…</string>
+    <string name="sim_empty">Aucun contact sur la carte SIM, ou elle ne peut pas être lue.</string>
+    <string name="sim_import">Importer</string>
+    <plurals name="sim_imported">
+        <item quantity="one">%d contact importé</item>
+        <item quantity="other">%d contacts importés</item>
+    </plurals>
+    <string name="settings_ringtone_custom">Sonnerie : personnalisée</string>
+    <string name="settings_ringtone_default">Sonnerie : par défaut</string>
+    <string name="silent_off">Pas en silencieux</string>
+    <string name="silent_until">Silencieux jusqu\'à %1$s</string>
+    <string name="silent_hour">Silencieux pendant 1 h</string>
+    <string name="silent_morning">Silencieux jusqu\'à demain 8 h</string>
+    <string name="silent_week">Silencieux pendant une semaine</string>
+    <string name="silent_stop">Faire sonner à nouveau</string>
+    <string name="complete_percent">Fiche complète à %1$d %%</string>
+    <string name="complete_phone">Ajouter un numéro</string>
+    <string name="complete_email">Ajouter un e-mail</string>
+    <string name="complete_photo">Ajouter une photo</string>
+    <string name="complete_birthday">Ajouter son anniversaire</string>
+    <string name="complete_address">Ajouter une adresse</string>
 </resources>

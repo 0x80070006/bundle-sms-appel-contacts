@@ -47,6 +47,10 @@ object Hub {
     fun setSim(context: Context, number: String, simId: String?) =
         putLine(context, number, line(context, number).copy(simId = simId))
 
+    /** Bundle: silences calls from [number] until [until] (ms); 0 lifts it. */
+    fun setSilentUntil(context: Context, number: String, until: Long) =
+        putLine(context, number, line(context, number).copy(silentUntil = until))
+
     fun addNote(context: Context, number: String, text: String, time: Long = System.currentTimeMillis()): Boolean {
         if (text.isBlank()) return false
         val current = line(context, number)

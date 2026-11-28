@@ -184,6 +184,25 @@ fun ContactScreen(viewModel: ContactsViewModel, id: Long, onBack: () -> Unit, on
                 ) {
                     item(key = "header") { ContactHeader(contact) }
                     item(key = "actions") { QuickActions(contact) }
+                    // Bundle: this person's settings (ringtone, silent) and how complete the card is.
+                    if (!isProfile) {
+                        item(key = "person-settings") {
+                            ContactSettingsRow(contact, onRingtone = {
+                                ringtonePicker.launch(
+                                    Intent(RingtoneManager.ACTION_RINGTONE_PICKER)
+                                        .putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_RINGTONE)
+                                        .putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+                                        .putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
+                                        .putExtra(RingtoneManager.EXTRA_RINGTONE_DEFAULT_URI, Settings.System.DEFAULT_RINGTONE_URI)
+                                        .putExtra(
+                                            RingtoneManager.EXTRA_RINGTONE_EXISTING_URI,
+                                            contact.ringtone?.let(android.net.Uri::parse) ?: Settings.System.DEFAULT_RINGTONE_URI,
+                                        ),
+                                )
+                            })
+                        }
+                        item(key = "completeness") { CompletenessBar(contact, onEdit) }
+                    }
                     contactSections(contact, onSetDefault = { mimeType, dataId, on ->
                         viewModel.setDefault(contact.id, mimeType, dataId, on)
                     })

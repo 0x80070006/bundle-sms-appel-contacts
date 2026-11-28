@@ -444,4 +444,31 @@
     <string name="share_kind_birthday">Birthday</string>
     <string name="share_kind_website">Website</string>
     <string name="share_kind_note">Note</string>
+    <string name="qr_import">Add from a QR code</string>
+    <string name="qr_import_summary">From a photo or a screenshot of a contact code</string>
+    <string name="qr_added">Contact added</string>
+    <string name="qr_none">No contact code found in that picture</string>
+    <string name="sim_title">SIM card contacts</string>
+    <string name="sim_summary">See them and copy them to the phone</string>
+    <string name="sim_loading">Reading the SIM card…</string>
+    <string name="sim_empty">No contacts on the SIM card, or it can\'t be read.</string>
+    <string name="sim_import">Import</string>
+    <plurals name="sim_imported">
+        <item quantity="one">%d contact imported</item>
+        <item quantity="other">%d contacts imported</item>
+    </plurals>
+    <string name="settings_ringtone_custom">Ringtone: own</string>
+    <string name="settings_ringtone_default">Ringtone: default</string>
+    <string name="silent_off">Not silenced</string>
+    <string name="silent_until">Silent until %1$s</string>
+    <string name="silent_hour">Silent for 1 hour</string>
+    <string name="silent_morning">Silent until tomorrow 8:00</string>
+    <string name="silent_week">Silent for a week</string>
+    <string name="silent_stop">Ring again</string>
+    <string name="complete_percent">Card %1$d%% complete</string>
+    <string name="complete_phone">Add a number</string>
+    <string name="complete_email">Add an email</string>
+    <string name="complete_photo">Add a photo</string>
+    <string name="complete_birthday">Add their birthday</string>
+    <string name="complete_address">Add an address</string>
 </resources>

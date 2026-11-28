@@ -25,11 +25,14 @@ class SendToVoicemailScreeningService : CallScreeningService() {
                 SpamFilter.actionFor(this, number, isContact)
             }.getOrDefault(SpamFilter.Action.Ring)
         } else SpamFilter.Action.Ring
+        // Bundle: "Silent" set on the contact (Contacts, kept in the hub): it rings silently.
+        val silenced = incoming && !send && spam == SpamFilter.Action.Ring && !number.isNullOrBlank() &&
+            runCatching { bundle.core.hub.Hub.line(this, number).isSilenced() }.getOrDefault(false)
 
         val response = if (spam == SpamFilter.Action.Reject) {
             CallResponse.Builder().setDisallowCall(true).setRejectCall(true)
                 .setSkipNotification(true).setSkipCallLog(false).build()
-        } else if (spam == SpamFilter.Action.Silence) {
+        } else if (spam == SpamFilter.Action.Silence || silenced) {
             CallResponse.Builder().setSilenceCall(true).build()
         } else if (send) {
             VvmLog.i("SendToVoicemail", "sent an incoming call to voicemail")
