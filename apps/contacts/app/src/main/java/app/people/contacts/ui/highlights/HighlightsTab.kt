@@ -42,6 +42,11 @@ fun HighlightsTab(
     // Bundle: emergency contacts (ICE) first, when there are any.
     val ice by app.people.contacts.data.Emergency.info(androidx.compose.ui.platform.LocalContext.current).collectAsStateWithLifecycle()
     val emergency = contacts.orEmpty().filter { it.id in ice?.contactIds.orEmpty() }
+    // Bundle: "Keep in touch", worked out on the phone.
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    val keep by androidx.compose.runtime.produceState(emptyList<app.people.contacts.data.KeepInTouchEntry>(), contacts) {
+        value = contacts?.let { app.people.contacts.data.loadKeepInTouch(ctx, it) }.orEmpty()
+    }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -57,7 +62,7 @@ fun HighlightsTab(
             }
             return@LazyColumn
         }
-        if (favorites.isEmpty() && birthdays.isEmpty() && recents.isEmpty() && recentlyAdded.size < 3 && noNumber.isEmpty() && emergency.isEmpty()) {
+        if (favorites.isEmpty() && birthdays.isEmpty() && recents.isEmpty() && recentlyAdded.size < 3 && noNumber.isEmpty() && emergency.isEmpty() && keep.isEmpty()) {
             item(key = "empty") {
                 EmptyState(
                     Icons.Rounded.AutoAwesome,
@@ -66,6 +71,11 @@ fun HighlightsTab(
                 )
             }
             return@LazyColumn
+        }
+        if (keep.isNotEmpty()) {
+            item(key = "keep-in-touch") {
+                KeepInTouchCard(keep, onOpenContact, Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+            }
         }
         if (emergency.isNotEmpty()) {
             item(key = "ice-header") { SectionHeader(stringResource(R.string.ice_section)) }

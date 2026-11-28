@@ -9,8 +9,11 @@ import app.people.contacts.util.numberKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-/** What happened: a call (and how it ended) or a text. */
-enum class TimelineKind { CallIncoming, CallOutgoing, CallMissed, CallRejected, TextReceived, TextSent }
+/** What happened: a call (and how it ended), a text, or (Bundle) a note or a birthday. */
+enum class TimelineKind { CallIncoming, CallOutgoing, CallMissed, CallRejected, TextReceived, TextSent, Note, Birthday }
+
+/** Bundle: the filters of a contact's thread. */
+enum class TimelineFilter { All, Calls, Texts, Notes }
 
 /** One line of a contact's history: [text] is the message for a text, [seconds] the length of a call. */
 data class TimelineEntry(
@@ -20,7 +23,39 @@ data class TimelineEntry(
     val text: String? = null,
     val seconds: Long = 0,
 ) {
-    val isCall: Boolean get() = kind != TimelineKind.TextReceived && kind != TimelineKind.TextSent
+    val isCall: Boolean get() = kind in CALLS
+    val isText: Boolean get() = kind == TimelineKind.TextReceived || kind == TimelineKind.TextSent
+
+    fun matches(filter: TimelineFilter): Boolean = when (filter) {
+        TimelineFilter.All -> true
+        TimelineFilter.Calls -> isCall
+        TimelineFilter.Texts -> isText
+        TimelineFilter.Notes -> kind == TimelineKind.Note || kind == TimelineKind.Birthday
+    }
+
+    private companion object {
+        val CALLS = setOf(TimelineKind.CallIncoming, TimelineKind.CallOutgoing, TimelineKind.CallMissed, TimelineKind.CallRejected)
+    }
+}
+
+/**
+ * Bundle: the person's whole thread: calls and texts from Android, notes from the hub, and their
+ * birthday (the last one and the next one), newest first.
+ */
+internal fun threadOf(
+    calls: List<TimelineEntry>,
+    notes: List<TimelineEntry>,
+    birthday: Pair<Int, Int>?,
+    today: java.time.LocalDate,
+    zone: java.time.ZoneId = java.time.ZoneId.systemDefault(),
+): List<TimelineEntry> {
+    val birthdays = birthday?.let { (month, day) ->
+        val thisYear = birthdayIn(month, day, today.year)
+        val last = if (thisYear.isAfter(today)) birthdayIn(month, day, today.year - 1) else thisYear
+        val next = if (thisYear.isAfter(today)) thisYear else birthdayIn(month, day, today.year + 1)
+        listOf(last, next).map { TimelineEntry(it.atTime(9, 0).atZone(zone).toInstant().toEpochMilli(), TimelineKind.Birthday, "") }
+    }.orEmpty()
+    return (calls + notes + birthdays).sortedByDescending { it.time }
 }
 
 /**

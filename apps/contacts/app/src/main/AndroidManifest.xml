@@ -238,6 +238,16 @@
             </intent-filter>
         </activity-alias>
         <!-- /BUNDLE-ICONS -->
+        <!-- Bundle: checked sharing hands a card file from the cache to the chosen app. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.shared"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/share_paths" />
+        </provider>
         <!-- Bundle: the shared hub (preferred SIM, call notes, label colours). Exported for Phone
              and Messages; it only answers apps signed with the same key. -->
         <provider

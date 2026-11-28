@@ -13,6 +13,7 @@ import app.people.contacts.data.AccountKeys
 import app.people.contacts.data.BIRTHDAY_WINDOW_DAYS
 import app.people.contacts.data.ContactAccount
 import app.people.contacts.data.Trash
+import app.people.contacts.util.parseEventDate
 import app.people.contacts.data.ContactDetails
 import app.people.contacts.data.ContactSummary
 import app.people.contacts.data.ContactWriter
@@ -132,6 +133,11 @@ class ContactsViewModel(app: Application) : AndroidViewModel(app) {
     /** One contact's details, reloaded whenever contacts change. */
     fun details(id: Long): Flow<DetailState> =
         changes.mapLatest { repository.loadDetails(id) }.map { DetailState(true, it) }
+
+    /** Bundle: every contact's birthday month, for search ("anniversaire en décembre"). */
+    val birthdayMonths: StateFlow<Map<Long, Int>> = changes.mapLatest {
+        repository.loadBirthdays().mapNotNull { (id, raw) -> parseEventDate(raw)?.let { id to it.month } }.toMap()
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
 
     /** Birthdays today and in the next [BIRTHDAY_WINDOW_DAYS] days, soonest first. */
     val birthdays: StateFlow<List<UpcomingBirthday>> = combine(

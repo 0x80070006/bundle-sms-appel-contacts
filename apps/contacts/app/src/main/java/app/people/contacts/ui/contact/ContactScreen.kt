@@ -85,6 +85,7 @@ import app.people.contacts.util.Reach
 /** A contact's page: header, quick actions, then cards of everything stored for them. */
 @Composable
 fun ContactScreen(viewModel: ContactsViewModel, id: Long, onBack: () -> Unit, onEdit: () -> Unit, onMoved: (Long) -> Unit = {}) {
+    var sharing by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     val flow = remember(id) { viewModel.details(id) }
     LaunchedEffect(id) { viewModel.recordView(id) }
     val state by flow.collectAsStateWithLifecycle(DetailState(false, null))
@@ -108,6 +109,7 @@ fun ContactScreen(viewModel: ContactsViewModel, id: Long, onBack: () -> Unit, on
         }
     }
     val isProfile = ContactsContract.isProfileId(id)
+    if (sharing && contact != null) ShareDialog(contact, isProfile, onDismiss = { sharing = false })
 
     if (confirmDelete && contact != null) {
         AlertDialog(
@@ -197,7 +199,8 @@ fun ContactScreen(viewModel: ContactsViewModel, id: Long, onBack: () -> Unit, on
                 onShowQr = { showQr = true },
                 onToggleStar = { contact?.let { viewModel.setStarred(it.id, !it.starred) } },
                 onEdit = onEdit,
-                onShare = { contact?.let { Reach.share(context, it.lookupKey, it.name, profile = isProfile) } },
+                // Bundle: checked sharing, the fields to send ticked first.
+                onShare = { sharing = true },
                 onDelete = { confirmDelete = true },
                 onRingtone = {
                     ringtonePicker.launch(

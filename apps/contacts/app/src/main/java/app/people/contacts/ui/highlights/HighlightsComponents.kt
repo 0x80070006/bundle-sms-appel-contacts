@@ -128,7 +128,9 @@ fun BirthdayCard(birthday: UpcomingBirthday, onOpen: () -> Unit, modifier: Modif
                             Spacer(Modifier.width(8.dp))
                             Text(stringResource(R.string.action_call))
                         }
-                        Button(onClick = { Reach.message(context, number) }, colors = colors) {
+                        // Bundle: the wish already typed; SMS can send it now or schedule it for the day.
+                        val wish = stringResource(R.string.birthday_wish)
+                        Button(onClick = { Reach.messageWith(context, number, wish) }, colors = colors) {
                             Icon(Icons.Outlined.ChatBubbleOutline, null, Modifier.size(18.dp))
                             Spacer(Modifier.width(8.dp))
                             Text(stringResource(R.string.action_message))

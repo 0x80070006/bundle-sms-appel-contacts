@@ -38,6 +38,10 @@ import app.people.contacts.R
 import app.people.contacts.data.ContactDetails
 import app.people.contacts.data.ContactTimeline
 import app.people.contacts.data.TimelineEntry
+import app.people.contacts.data.TimelineFilter
+import app.people.contacts.data.threadOf
+import androidx.compose.material.icons.outlined.Cake
+import androidx.compose.material.icons.outlined.StickyNote2
 import app.people.contacts.data.TimelineKind
 import app.people.contacts.data.hasCallAndTextAccess
 import app.people.contacts.ui.components.ListRow
@@ -57,6 +61,31 @@ fun LazyListScope.timelineSection(contact: ContactDetails) {
 }
 
 private const val FIRST_PAGE = 6
+
+/** Bundle: how many calls and texts are read at a time. */
+private const val PAGE = 100
+
+/** Bundle: All · Calls · Texts · Notes. */
+@Composable
+private fun TimelineFilters(selected: TimelineFilter, onSelect: (TimelineFilter) -> Unit) {
+    androidx.compose.foundation.layout.Row(
+        Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        listOf(
+            TimelineFilter.All to R.string.timeline_filter_all,
+            TimelineFilter.Calls to R.string.timeline_filter_calls,
+            TimelineFilter.Texts to R.string.timeline_filter_texts,
+            TimelineFilter.Notes to R.string.timeline_filter_notes,
+        ).forEach { (f, label) ->
+            androidx.compose.material3.FilterChip(
+                selected = f == selected,
+                onClick = { onSelect(f) },
+                label = { Text(stringResource(label)) },
+            )
+        }
+    }
+}
 
 @Composable
 private fun Timeline(contact: ContactDetails) {
@@ -88,11 +117,24 @@ private fun Timeline(contact: ContactDetails) {
             return@Column
         }
         val numbers = contact.phones.map { it.value }
-        val entries by produceState<List<TimelineEntry>?>(null, contact.id, numbers) {
-            value = ContactTimeline(context).load(numbers)
+        // Bundle: the thread: calls, texts, hub notes and birthdays; "more" loads further back.
+        var limit by remember(contact.id) { mutableStateOf(PAGE) }
+        var filter by remember(contact.id) { mutableStateOf(TimelineFilter.All) }
+        val birthday = remember(contact.events) {
+            contact.events.firstOrNull { it.type == android.provider.ContactsContract.CommonDataKinds.Event.TYPE_BIRTHDAY }
+                ?.let { app.people.contacts.util.parseEventDate(it.value) }?.let { it.month to it.day }
+        }
+        val entries by produceState<List<TimelineEntry>?>(null, contact.id, numbers, limit) {
+            val calls = ContactTimeline(context).load(numbers, limit)
+            val notes = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                numbers.flatMap { n -> bundle.core.hub.Hub.line(context, n).notes }.distinct()
+                    .map { TimelineEntry(it.time, TimelineKind.Note, "", text = it.text) }
+            }
+            value = threadOf(calls, notes, birthday, java.time.LocalDate.now())
         }
         var all by remember { mutableStateOf(false) }
-        val list = entries
+        TimelineFilters(filter) { filter = it; all = true }
+        val list = entries?.filter { it.matches(filter) }
         when {
             list == null -> Unit
             list.isEmpty() -> Text(
@@ -111,6 +153,9 @@ private fun Timeline(contact: ContactDetails) {
                 }
                 if (!all && list.size > FIRST_PAGE) {
                     TextButton(onClick = { all = true }, modifier = Modifier.padding(start = 16.dp, top = 4.dp)) { Text(stringResource(R.string.timeline_more)) }
+                } else if (all && (entries?.count { it.isCall || it.isText } ?: 0) >= limit) {
+                    // Bundle: older calls and texts, a page at a time.
+                    TextButton(onClick = { limit += PAGE }, modifier = Modifier.padding(start = 16.dp, top = 4.dp)) { Text(stringResource(R.string.timeline_older)) }
                 }
             }
         }
@@ -127,18 +172,26 @@ private fun TimelineRow(entry: TimelineEntry, shape: androidx.compose.ui.graphic
         TimelineKind.CallRejected -> stringResource(R.string.timeline_declined)
         TimelineKind.TextReceived -> entry.text.orEmpty().ifBlank { stringResource(R.string.recent_text_received) }
         TimelineKind.TextSent -> stringResource(R.string.recent_you, entry.text.orEmpty())
+        TimelineKind.Note -> stringResource(R.string.timeline_note, entry.text.orEmpty())
+        TimelineKind.Birthday -> stringResource(R.string.timeline_birthday)
     }
     val timeText = DateUtils.formatDateTime(
         context, entry.time,
         DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_ABBREV_MONTH or DateUtils.FORMAT_SHOW_TIME,
     )
-    val summary = if (entry.isCall && entry.seconds > 0) "$timeText · ${formatDuration(entry.seconds)}" else timeText
+    val summary = when {
+        entry.kind == TimelineKind.Birthday -> DateUtils.formatDateTime(context, entry.time, DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_ABBREV_MONTH)
+        entry.isCall && entry.seconds > 0 -> "$timeText · ${formatDuration(entry.seconds)}"
+        else -> timeText
+    }
     val icon = when (entry.kind) {
         TimelineKind.CallIncoming -> Icons.AutoMirrored.Rounded.CallReceived
         TimelineKind.CallOutgoing -> Icons.AutoMirrored.Rounded.CallMade
         TimelineKind.CallMissed -> Icons.AutoMirrored.Rounded.CallMissed
         TimelineKind.CallRejected -> Icons.Rounded.PhoneDisabled
         TimelineKind.TextReceived, TimelineKind.TextSent -> Icons.Rounded.Sms
+        TimelineKind.Note -> androidx.compose.material.icons.Icons.Outlined.StickyNote2
+        TimelineKind.Birthday -> androidx.compose.material.icons.Icons.Outlined.Cake
     }
     ListRow(
         icon = icon,
@@ -146,10 +199,10 @@ private fun TimelineRow(entry: TimelineEntry, shape: androidx.compose.ui.graphic
         summary = summary,
         shape = shape,
         summaryColor = if (entry.kind == TimelineKind.CallMissed) MaterialTheme.colorScheme.error else null,
-        onClick = {
+        onClick = if (!entry.isCall && !entry.isText) null else ({
             val intent = if (entry.isCall) Intent(Intent.ACTION_DIAL, Uri.fromParts("tel", entry.number, null))
             else Intent(Intent.ACTION_SENDTO, Uri.fromParts("smsto", entry.number, null))
             runCatching { context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
-        },
+        }),
     )
 }

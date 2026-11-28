@@ -22,6 +22,10 @@ object Reach {
     fun message(context: Context, number: String) =
         start(context, Intent(Intent.ACTION_SENDTO, Uri.fromParts("smsto", number, null)))
 
+    /** Bundle: a text with [body] already typed (SMS can then send it now or schedule it). */
+    fun messageWith(context: Context, number: String, body: String) =
+        start(context, Intent(Intent.ACTION_SENDTO, Uri.fromParts("smsto", number, null)).putExtra("sms_body", body))
+
     /** A group text to several numbers. */
     fun messageAll(context: Context, numbers: List<String>) =
         start(context, Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:" + numbers.joinToString(";") { Uri.encode(it) })))

@@ -56,7 +56,14 @@ import app.people.contacts.ui.components.segmentShape
 fun SearchScreen(viewModel: ContactsViewModel, onBack: () -> Unit, onOpenContact: (Long) -> Unit) {
     val contacts by viewModel.contacts.collectAsStateWithLifecycle()
     var query by rememberSaveable { mutableStateOf("") }
-    val results = remember(contacts, query) { searchContacts(contacts.orEmpty(), query) }
+    // Bundle: everyday words ("travail bordeaux", "anniversaire en décembre") with labels and birthdays.
+    val labels by viewModel.labels.collectAsStateWithLifecycle()
+    val months by viewModel.birthdayMonths.collectAsStateWithLifecycle()
+    val results = remember(contacts, query, labels, months) {
+        val byContact = HashMap<Long, MutableList<String>>()
+        labels.orEmpty().forEach { l -> l.memberIds.forEach { byContact.getOrPut(it) { ArrayList() } += l.title } }
+        app.people.contacts.data.searchNatural(contacts.orEmpty(), query, { byContact[it].orEmpty() }, { months[it] })
+    }
     val focus = remember { FocusRequester() }
     LaunchedEffect(Unit) { focus.requestFocus() }
 
