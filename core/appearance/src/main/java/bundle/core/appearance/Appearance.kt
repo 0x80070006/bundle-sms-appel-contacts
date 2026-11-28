@@ -45,6 +45,8 @@ data class Appearance(
     val pureBlack: Boolean = false,
     val avatarStyle: AvatarStyle = AvatarStyle.Circle,
     val language: AppLanguage = AppLanguage.System,
+    /** "Interface expressive": living avatar outlines, weights that change when read, springier motion. */
+    val expressiveUi: Boolean = false,
     val revision: Long = 0,
 ) {
     /** The seed colour in use, or null for wallpaper colours. */
@@ -62,6 +64,7 @@ data class Appearance(
         .put("pureBlack", pureBlack)
         .put("avatarStyle", avatarStyle.name)
         .put("language", language.name)
+        .put("expressiveUi", expressiveUi)
         .put("revision", revision)
         .toString()
 
@@ -79,6 +82,7 @@ data class Appearance(
                     pureBlack = o.optBoolean("pureBlack", d.pureBlack),
                     avatarStyle = enumOr(o.optString("avatarStyle"), d.avatarStyle),
                     language = enumOr(o.optString("language"), d.language),
+                    expressiveUi = o.optBoolean("expressiveUi", d.expressiveUi),
                     revision = o.optLong("revision", 0),
                 )
             }.getOrNull()

@@ -26,4 +26,5 @@ fun Avatar(
     size: Dp,
     modifier: Modifier = Modifier,
     expressive: Boolean = false,
-) = bundle.core.design.Avatar(name, photoUri, seed, size, modifier, expressive)
+    aura: bundle.core.design.Aura = bundle.core.design.Aura.None,
+) = bundle.core.design.Avatar(name, photoUri, seed, size, modifier, expressive, aura)

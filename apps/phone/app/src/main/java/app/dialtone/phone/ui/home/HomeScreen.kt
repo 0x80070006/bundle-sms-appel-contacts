@@ -419,6 +419,8 @@ private fun RecentRow(
     val scheme = MaterialTheme.colorScheme
     var menu by remember { mutableStateOf(false) }
     val missed = call.type == CallType.Missed || call.type == CallType.Rejected
+    // Bundle 0.7: a missed call from the last 24 hours gets the living outline and a bold name.
+    val recentMissed = call.type == CallType.Missed && System.currentTimeMillis() - call.date < 24 * 60 * 60 * 1000L
     val name = contact?.name ?: call.cachedName?.takeIf { it.isNotBlank() }
     val display = name ?: if (call.number.isBlank()) tr("Private number") else formatNumber(call.number)
     val label = contact?.numbers?.firstOrNull { numberKey(it.number) == numberKey(call.number) }?.label
@@ -449,12 +451,16 @@ private fun RecentRow(
                 Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Avatar(name, contact?.photoUri ?: call.photoUri, contact?.id ?: numberKey(call.number).hashCode().toLong(), 48.dp)
+                Avatar(
+                    name, contact?.photoUri ?: call.photoUri, contact?.id ?: numberKey(call.number).hashCode().toLong(), 48.dp,
+                    aura = if (recentMissed) bundle.core.design.Aura.Missed else bundle.core.design.Aura.None,
+                )
                 Spacer(Modifier.width(16.dp))
                 Column(Modifier.weight(1f)) {
                     Text(
                         if (call.count > 1) "$display (${call.count})" else display,
                         style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = bundle.core.design.unreadWeight(recentMissed && bundle.core.design.LocalAppearance.current.expressiveUi),
                         color = if (missed) scheme.error else scheme.onSurface,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,

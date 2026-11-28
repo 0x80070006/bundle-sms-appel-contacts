@@ -62,7 +62,8 @@ fun Avatar(
     size: Dp,
     modifier: Modifier = Modifier,
     expressive: Boolean = false,
-) = bundle.core.design.Avatar(name, photoUri, seed, size, modifier, expressive)
+    aura: bundle.core.design.Aura = bundle.core.design.Aura.None,
+) = bundle.core.design.Avatar(name, photoUri, seed, size, modifier, expressive, aura)
 
 /** Corner radii for M3 Expressive grouped lists. Bundle: shared, in core/design. */
 fun segmentShape(index: Int, count: Int, large: Dp = 24.dp, small: Dp = 6.dp): Shape =

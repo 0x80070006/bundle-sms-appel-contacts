@@ -32,6 +32,8 @@ class AppearanceStrings(val fr: Boolean) {
     val avatars = t("Photos des contacts", "Contact pictures")
     val avatarCircle = t("Cercles", "Circles")
     val avatarExpressive = t("Formes", "Shapes")
+    val expressiveUi = t("Interface expressive", "Expressive interface")
+    val expressiveUiSummary = t("Contours vivants autour des avatars, textes non lus qui s'affinent une fois lus", "Living outlines around avatars, unread text that thins out once read")
     val language = t("Langue", "Language")
     val languageSystem = t("Téléphone", "Phone's")
     val languageNote = t("Langue de cette app uniquement", "This app's language only")

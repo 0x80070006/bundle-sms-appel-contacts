@@ -209,7 +209,12 @@ private fun ThemeSection(strings: AppearanceStrings) {
             listOf(AvatarStyle.Circle to strings.avatarCircle, AvatarStyle.Expressive to strings.avatarExpressive),
             appearance.avatarStyle,
             { style -> store.update { it.copy(avatarStyle = style) } },
-            appearanceSegment(0, 1),
+            appearanceSegment(0, 2),
+        )
+        AppearanceSwitchRow(
+            strings.expressiveUi, strings.expressiveUiSummary, appearance.expressiveUi,
+            { on -> store.update { it.copy(expressiveUi = on) } },
+            appearanceSegment(1, 2),
         )
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {

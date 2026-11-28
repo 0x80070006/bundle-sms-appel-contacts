@@ -92,6 +92,7 @@ fun Avatar(
     size: Dp,
     modifier: Modifier = Modifier,
     expressive: Boolean = false,
+    aura: Aura = Aura.None,
 ) {
     // toShape() is composable (and remembers internally) in Material 3 1.5. Appearance's
     // "Shapes" style gives every avatar its expressive shape, not only favorites.
@@ -99,12 +100,14 @@ fun Avatar(
     val shape: Shape = if (expressive || everywhere) avatarShape(seed) else CircleShape
     val (bg, _) = avatarColors(seed)
     val photo = rememberPhoto(photoUri)
-    Box(modifier.size(size).clip(shape).background(bg), contentAlignment = Alignment.Center) {
-        // While a photo loads (or if there's none) the contact's cartoon shows.
-        if (photo != null) {
-            Image(photo, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-        } else {
-            Image(painterResource(CartoonAvatars.forSeed(seed)), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+    Box(modifier.size(size).aura(aura, shape), contentAlignment = Alignment.Center) {
+        Box(Modifier.fillMaxSize().clip(shape).background(bg), contentAlignment = Alignment.Center) {
+            // While a photo loads (or if there's none) the contact's cartoon shows.
+            if (photo != null) {
+                Image(photo, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            } else {
+                Image(painterResource(CartoonAvatars.forSeed(seed)), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            }
         }
     }
 }
