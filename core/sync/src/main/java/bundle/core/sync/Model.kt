@@ -95,6 +95,9 @@ data class DeviceFile(
     companion object {
         const val LABEL = "bundle-sync device file"
 
+        /** Bundle: the label a phone's own file is sealed with, so it only opens as that phone's file. */
+        fun labelFor(deviceId: String) = "$LABEL:$deviceId"
+
         fun fromBytes(bytes: ByteArray): DeviceFile {
             val o = JSONObject(String(bytes, Charsets.UTF_8))
             if (o.optInt("v", 1) > 1) throw UnsupportedFormatException("device file format ${o.optInt("v")}")

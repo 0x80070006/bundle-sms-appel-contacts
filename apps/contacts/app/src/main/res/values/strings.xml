@@ -413,4 +413,9 @@
     <string name="backup_restored">Restored %1$d contacts (the file also holds %2$d calls and %3$d texts).</string>
     <string name="backup_wrong">Wrong passphrase, or the file is damaged.</string>
     <string name="backup_failed">That didn\'t work. Check the file and try again.</string>
+    <string name="sync_problem_state">The sync\'s memory on this phone is damaged. Nothing was changed. Start again from the server: contacts on both sides are matched again.</string>
+    <string name="sync_reset_state">Start the sync again</string>
+    <string name="sync_confirm_body">%1$d contacts would be deleted at once. That\'s more than usual, so the sync waited for you. They stay in the trash on the server copies.</string>
+    <string name="sync_confirm_deletions">Confirm these %1$d deletions</string>
+    <string name="sync_long_absence">This phone had not synced for over 90 days: contacts deleted on your other phones meanwhile may have come back. Check them and delete again if needed.</string>
 </resources>

@@ -427,4 +427,9 @@
     <string name="backup_restored">%1$d contacts restaurés (le fichier contient aussi %2$d appels et %3$d SMS).</string>
     <string name="backup_wrong">Phrase secrète incorrecte, ou fichier abîmé.</string>
     <string name="backup_failed">Ça n\'a pas marché. Vérifiez le fichier et réessayez.</string>
+    <string name="sync_problem_state">La mémoire de la synchro sur ce téléphone est abîmée. Rien n\'a été modifié. Repartez du serveur : les contacts présents des deux côtés sont à nouveau reconnus.</string>
+    <string name="sync_reset_state">Relancer la synchro depuis le serveur</string>
+    <string name="sync_confirm_body">%1$d contacts seraient supprimés d\'un coup. C\'est plus que d\'habitude : la synchro a attendu votre accord. Les copies chiffrées sur le serveur les gardent.</string>
+    <string name="sync_confirm_deletions">Confirmer ces %1$d suppressions</string>
+    <string name="sync_long_absence">Ce téléphone ne s\'était pas synchronisé depuis plus de 90 jours : des contacts supprimés sur vos autres téléphones entre-temps ont pu revenir. Vérifiez-les et supprimez-les à nouveau si besoin.</string>
 </resources>

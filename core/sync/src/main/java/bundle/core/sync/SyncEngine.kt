@@ -28,12 +28,18 @@ data class SyncState(
     val tombstones: Map<String, Long> = emptyMap(),
     /** When this phone last kept a full copy of its contacts on the server. */
     val lastBackupAt: Long = 0,
+    /** Bundle: when this phone last synced (0 = never), to warn after a long absence. */
+    val lastSyncAt: Long = 0,
+    /** Bundle: the newest file seen from each other phone (device id -> writtenAt), so an older copy put back on the server is refused. */
+    val seen: Map<String, Long> = emptyMap(),
 ) {
     fun toBytes(): ByteArray = JSONObject()
         .put("v", 1).put("device", deviceId).put("backupAt", lastBackupAt)
         .put("links", JSONObject(links))
         .put("base", JSONObject(base.mapValues { (_, b) -> JSONObject().put("at", b.at).put("f", b.fields.toJson()) }))
         .put("tombstones", JSONObject(tombstones))
+        .put("syncAt", lastSyncAt)
+        .put("seen", JSONObject(seen))
         .toString().toByteArray(Charsets.UTF_8)
 
     companion object {
@@ -44,12 +50,15 @@ data class SyncState(
             val links = o.optJSONObject("links") ?: JSONObject()
             val base = o.optJSONObject("base") ?: JSONObject()
             val tombs = o.optJSONObject("tombstones") ?: JSONObject()
+            val seen = o.optJSONObject("seen") ?: JSONObject()
             return SyncState(
                 o.getString("device"),
                 links.keys().asSequence().associateWith { links.getString(it) },
                 base.keys().asSequence().associateWith { Base(fieldsFromJson(base.getJSONObject(it).getJSONObject("f")), base.getJSONObject(it).optLong("at")) },
                 tombs.keys().asSequence().associateWith { tombs.getLong(it) },
                 o.optLong("backupAt"),
+                o.optLong("syncAt"),
+                seen.keys().asSequence().associateWith { seen.getLong(it) },
             )
         }
     }
@@ -81,12 +90,19 @@ data class SyncReport(
     val copies: Int = 0,
     /** Whether a full encrypted copy of the contacts was kept on the server this time. */
     val backedUp: Boolean = false,
+    /** Bundle: this phone had not synced for more than 90 days; contacts deleted elsewhere meanwhile may come back. */
+    val longAbsence: Boolean = false,
+    /** Bundle: other phones' files older than one already seen from them (an old copy put back), ignored. */
+    val replayed: Int = 0,
 ) {
     val changedHere: Boolean get() = created + updated + deleted > 0
 }
 
-/** A sync that must not go on: nothing has been changed. */
-class SyncAbortedException(message: String) : Exception(message)
+/**
+ * A sync that must not go on: nothing has been changed. [deletions] is how many contacts would
+ * have been deleted (0 when it is not about deletions); the user can confirm them (see SyncEngine).
+ */
+class SyncAbortedException(message: String, val deletions: Int = 0) : Exception(message)
 
 /**
  * One sync run, in the order that keeps contacts safe:
@@ -110,6 +126,11 @@ class SyncEngine(
     private val root: String = Vault.ROOT,
     /** Also keep a full encrypted copy of the contacts on the server (daily, and after changes), the last [KEEP_BACKUPS]. */
     private val remoteBackups: Boolean = true,
+    /**
+     * Bundle: the user saw how many contacts this run deletes (more than the safe limit) and
+     * confirmed. Only for one run: the next ones are guarded again.
+     */
+    private val confirmDeletions: Boolean = false,
 ) {
     private data class Update(val handle: String, val uid: String, val fields: Fields)
 
@@ -124,12 +145,24 @@ class SyncEngine(
         val remote = HashMap<String, Record>()
         val remoteTombs = HashMap<String, Long>()
         val unreadable = ArrayList<String>()
+        val seen = st.seen.toMutableMap()
+        var replayed = 0
         var devices = 0
         for (entry in dav.list("$root/devices")) {
             if (entry.isFolder || !entry.name.endsWith(EXT) || entry.name == "$deviceId$EXT") continue
             val bytes = dav.get("$root/devices/${entry.name}") ?: continue
+            val owner = entry.name.removeSuffix(EXT)
             val file = try {
-                DeviceFile.fromBytes(Crypto.open(key, bytes, DeviceFile.LABEL))
+                // Bundle: a file is sealed for the phone that wrote it, so it cannot be passed off as
+                // another phone's; files from earlier versions used the shared label.
+                val plain = try {
+                    Crypto.open(key, bytes, DeviceFile.labelFor(owner))
+                } catch (e: WrongPassphraseException) {
+                    Crypto.open(key, bytes, DeviceFile.LABEL)
+                }
+                DeviceFile.fromBytes(plain).also { f ->
+                    if (f.deviceId != owner) throw UnsupportedFormatException("file of ${f.deviceId} stored as $owner")
+                }
             } catch (e: WrongPassphraseException) {
                 unreadable += "${entry.name}: damaged or encrypted with another passphrase"
                 continue
@@ -140,6 +173,14 @@ class SyncEngine(
                 unreadable += "${entry.name}: unreadable"
                 continue
             }
+            // Bundle: an older copy of a phone's file than one already seen is a replay: ignore it.
+            val lastSeen = seen[file.deviceId] ?: 0L
+            if (file.writtenAt < lastSeen) {
+                replayed++
+                unreadable += "${entry.name}: older than the copy already seen"
+                continue
+            }
+            seen[file.deviceId] = file.writtenAt
             devices++
             file.records.forEach { r -> remote.merge(r.uid, r) { a, b -> if (b.updatedAt > a.updatedAt) b else a } }
             file.tombstones.forEach { (uid, at) -> remoteTombs.merge(uid, at) { a, b -> maxOf(a, b) } }
@@ -151,8 +192,8 @@ class SyncEngine(
         val base = st.base.toMutableMap()
         val tombs = st.tombstones.toMutableMap()
         val vanished = links.filterKeys { it !in byHandle }
-        if (vanished.size > maxOf(MASS, st.links.size / 5)) {
-            throw SyncAbortedException("${vanished.size} contacts of ${st.links.size} are gone from the phone: not trusting that")
+        if (!confirmDeletions && vanished.size > maxOf(MASS, st.links.size / 5)) {
+            throw SyncAbortedException("${vanished.size} contacts of ${st.links.size} are gone from the phone: not trusting that", vanished.size)
         }
         vanished.forEach { (handle, uid) -> links.remove(handle); base.remove(uid); tombs[uid] = now }
 
@@ -225,7 +266,7 @@ class SyncEngine(
 
         // Too many deletions at once is not a sync, it's an accident (or an attack).
         var skipped = 0
-        if (deletes.size > maxOf(MASS, locals.size / 5)) {
+        if (!confirmDeletions && deletes.size > maxOf(MASS, locals.size / 5)) {
             skipped = deletes.size
             deletes.clear()
         }
@@ -307,10 +348,10 @@ class SyncEngine(
         }
         val liveTombs = tombs.filterValues { now - it < TOMBSTONE_MS }.filterKeys { it !in newBase }
         val afterHandles = after.mapTo(HashSet()) { it.handle }
-        val newState = SyncState(deviceId, links.filterKeys { it in afterHandles }, newBase, liveTombs, st.lastBackupAt)
+        val newState = SyncState(deviceId, links.filterKeys { it in afterHandles }, newBase, liveTombs, st.lastBackupAt, now, seen)
         state.save(newState)
 
-        dav.put("$root/devices/$deviceId$EXT", Crypto.seal(key, DeviceFile(deviceId, deviceName, now, records, liveTombs).toBytes(), DeviceFile.LABEL))
+        dav.put("$root/devices/$deviceId$EXT", Crypto.seal(key, DeviceFile(deviceId, deviceName, now, records, liveTombs).toBytes(), DeviceFile.labelFor(deviceId)))
 
         // The second copy: every contact of the phone, in one encrypted file, kept apart from the
         // sync so it can be restored even if the sync went wrong. A failure here doesn't fail the sync.
@@ -321,25 +362,39 @@ class SyncEngine(
                 dav.ensureFolder(folder)
                 val snapshot = DeviceFile(deviceId, deviceName, now, after.map { Record(links[it.handle] ?: "local-${it.handle}", it.fields, now) }, emptyMap())
                 dav.put("$folder/$now$EXT", Crypto.seal(key, snapshot.toBytes(), BACKUP_LABEL))
-                dav.list(folder).filter { !it.isFolder && it.name.endsWith(EXT) }.map { it.name }
-                    .sortedByDescending { it.removeSuffix(EXT).toLongOrNull() ?: 0L }.drop(KEEP_BACKUPS)
-                    .forEach { dav.delete("$folder/$it") }
+                val names = dav.list(folder).filter { !it.isFolder && it.name.endsWith(EXT) }.map { it.name }
+                val keep = keptBackups(names, now)
+                names.filter { it !in keep }.forEach { dav.delete("$folder/$it") }
             }.isSuccess
             if (backedUp) state.save(newState.copy(lastBackupAt = now))
         }
-        return SyncReport(created, updated, deleted, suggestions, skipped, failures, unreadable, devices + 1, after.size, copies, backedUp)
+        val longAbsence = st.lastSyncAt > 0 && now - st.lastSyncAt > TOMBSTONE_MS
+        return SyncReport(created, updated, deleted, suggestions, skipped, failures, unreadable, devices + 1, after.size, copies, backedUp, longAbsence, replayed)
     }
 
     companion object {
         const val EXT = ".bsync"
         const val BACKUP_LABEL = "bundle-sync backup"
 
-        /** Full copies kept on the server, per phone. */
+        /** Full copies kept on the server, per phone: the latest ones... */
         const val KEEP_BACKUPS = 10
+
+        /** ...plus the newest copy of each of the last [KEEP_DAYS] days (Bundle). */
+        const val KEEP_DAYS = 7
+
+        /** Which backup files to keep: the [KEEP_BACKUPS] newest, and the newest of each of the last [KEEP_DAYS] days. */
+        fun keptBackups(names: List<String>, now: Long): Set<String> {
+            val byTime = names.mapNotNull { n -> n.removeSuffix(EXT).toLongOrNull()?.let { it to n } }.sortedByDescending { it.first }
+            val keep = byTime.take(KEEP_BACKUPS).mapTo(HashSet()) { it.second }
+            byTime.filter { now - it.first < KEEP_DAYS * DAY_MS }
+                .groupBy { it.first / DAY_MS }
+                .values.forEach { day -> keep += day.first().second }
+            return keep
+        }
         private const val DAY_MS = 24L * 60 * 60 * 1000
 
         /** Changes beyond this many (and beyond a fifth of the contacts) are refused as probably a mistake. */
         const val MASS = 10
-        private const val TOMBSTONE_MS = 90L * 24 * 60 * 60 * 1000
+        const val TOMBSTONE_MS = 90L * 24 * 60 * 60 * 1000
     }
 }

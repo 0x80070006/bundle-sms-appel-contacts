@@ -69,7 +69,10 @@ private object KeystoreBox {
 }
 
 /** Why a sync didn't happen, for the message the user sees. */
-enum class SyncProblem { NotSetUp, Auth, Network, Certificate, Passphrase, Aborted, Permission, Format, Other }
+enum class SyncProblem { NotSetUp, Auth, Network, Certificate, Passphrase, Aborted, Permission, Format, StateDamaged, Other }
+
+/** Bundle: the sync's memory on this phone exists but can't be opened (damaged): starting from zero must be the user's choice. */
+class SyncStateDamagedException : Exception("sync state on this phone is damaged")
 
 /** The last sync, as shown in Settings. */
 data class SyncStatus(
@@ -83,6 +86,10 @@ data class SyncStatus(
     val running: Boolean = false,
     /** Google and other accounts' contacts are synced too, not only the phone's. */
     val allAccounts: Boolean = true,
+    /** Bundle: deletions waiting for the user's confirmation (the sync stopped on them), 0 if none. */
+    val pendingDeletions: Int = 0,
+    /** Bundle: the last sync came after more than 90 days without one. */
+    val longAbsence: Boolean = false,
 )
 
 /**
@@ -112,6 +119,8 @@ object ContactSync {
             detail = last?.optString("detail").orEmpty(),
             running = _status.value.running,
             allAccounts = p.getBoolean("allAccounts", true),
+            pendingDeletions = last?.optInt("pendingDeletions") ?: 0,
+            longAbsence = last?.optBoolean("longAbsence") ?: false,
         )
     }
 
@@ -153,7 +162,7 @@ object ContactSync {
     }
 
     /** One sync now (call it off the main thread). Records the result for Settings. */
-    fun run(context: Context): SyncReport? {
+    fun run(context: Context, confirmDeletions: Boolean = false): SyncReport? {
         val p = prefs(context)
         if (!p.contains("key")) {
             refresh(context)
@@ -168,6 +177,7 @@ object ContactSync {
                 dav, RawContactStore(context, p.getBoolean("allAccounts", true)), EncryptedState(dir(context), key), key,
                 deviceId(context), Build.MODEL ?: "Android",
                 beforeChanges = { Backups.write(dir(context), key, it) },
+                confirmDeletions = confirmDeletions,
             ).sync()
         }
         val last = JSONObject().put("at", System.currentTimeMillis())
@@ -175,14 +185,27 @@ object ContactSync {
             last.put("created", r.created).put("updated", r.updated).put("deleted", r.deleted).put("suggestions", r.suggestions)
                 .put("skipped", r.skippedDeletes).put("failures", r.failures).put("devices", r.devices).put("total", r.total)
                 .put("detail", r.unreadable.joinToString("\n"))
+                .put("longAbsence", r.longAbsence)
+            // Deletions left out as too many: the user can confirm them.
+            if (r.skippedDeletes > 0) last.put("pendingDeletions", r.skippedDeletes)
         }.onFailure { e ->
             val problem = syncProblemOf(e)
             last.put("problem", problem.name).put("detail", e.message.orEmpty())
+            if (e is SyncAbortedException && e.deletions > 0) last.put("pendingDeletions", e.deletions)
         }
         p.edit().putString("last", last.toString()).apply()
         _status.value = _status.value.copy(running = false)
         refresh(context)
         return result.getOrNull()
+    }
+
+    /**
+     * Bundle: the sync's memory was damaged; the user chose to start again from what is on the
+     * server and on the phone. Contacts already on both are linked again by matching them.
+     */
+    fun resetState(context: Context) {
+        File(dir(context), "state.bsync").delete()
+        refresh(context)
     }
 
     /** Whether a failed run is worth trying again soon (the network), or needs the user. */
@@ -195,6 +218,7 @@ fun syncProblemOf(e: Throwable): SyncProblem = when (e) {
     is SSLException -> SyncProblem.Certificate
     is WrongPassphraseException -> SyncProblem.Passphrase
     is SyncAbortedException -> SyncProblem.Aborted
+    is SyncStateDamagedException -> SyncProblem.StateDamaged
     is SecurityException -> SyncProblem.Permission
     is UnsupportedFormatException -> SyncProblem.Format
     is IllegalArgumentException -> SyncProblem.Format
@@ -206,9 +230,14 @@ fun syncProblemOf(e: Throwable): SyncProblem = when (e) {
 private class EncryptedState(private val dir: File, private val key: ByteArray) : StateStore {
     private val file = File(dir, "state.bsync")
 
-    override fun load(deviceId: String): SyncState = runCatching {
-        SyncState.fromBytes(Crypto.open(key, file.readBytes(), SyncState.LABEL)).takeIf { it.deviceId == deviceId }
-    }.getOrNull() ?: SyncState(deviceId)
+    // Bundle: a missing file is a first sync; a file that exists but can't be read is damage, and
+    // starting from zero silently would lose the links between contacts and make duplicates.
+    override fun load(deviceId: String): SyncState {
+        if (!file.exists()) return SyncState(deviceId)
+        val state = runCatching { SyncState.fromBytes(Crypto.open(key, file.readBytes(), SyncState.LABEL)) }
+            .getOrElse { throw SyncStateDamagedException() }
+        return state.takeIf { it.deviceId == deviceId } ?: SyncState(deviceId)
+    }
 
     override fun save(state: SyncState) {
         val tmp = File(dir, "state.tmp")

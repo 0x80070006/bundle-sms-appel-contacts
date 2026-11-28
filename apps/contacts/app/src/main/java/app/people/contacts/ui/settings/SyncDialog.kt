@@ -72,6 +72,7 @@ private fun problemText(problem: SyncProblem, detail: String): String = when (pr
     SyncProblem.Aborted -> stringResource(R.string.sync_problem_aborted)
     SyncProblem.Permission -> stringResource(R.string.sync_problem_permission)
     SyncProblem.Format -> stringResource(R.string.sync_problem_format)
+    SyncProblem.StateDamaged -> stringResource(R.string.sync_problem_state)
     SyncProblem.NotSetUp, SyncProblem.Other -> stringResource(R.string.sync_problem_other, detail)
 }
 
@@ -179,6 +180,21 @@ private fun Connected(status: SyncStatus) {
             }
             if (status.problem == null && status.detail.isNotBlank()) {
                 Text(stringResource(R.string.sync_unreadable) + "\n" + status.detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+            }
+            // Bundle: deletions held back, the user decides; a damaged memory, the user decides too.
+            if (status.pendingDeletions > 0 && !status.running) {
+                Text(stringResource(R.string.sync_confirm_body, status.pendingDeletions), style = MaterialTheme.typography.bodyMedium)
+                Button(onClick = { scope.launch(Dispatchers.IO) { ContactSync.run(context, confirmDeletions = true) } }) {
+                    Text(stringResource(R.string.sync_confirm_deletions, status.pendingDeletions))
+                }
+            }
+            if (status.problem == SyncProblem.StateDamaged && !status.running) {
+                OutlinedButton(onClick = {
+                    scope.launch(Dispatchers.IO) { ContactSync.resetState(context); ContactSync.run(context) }
+                }) { Text(stringResource(R.string.sync_reset_state)) }
+            }
+            if (status.longAbsence) {
+                Text(stringResource(R.string.sync_long_absence), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
             }
             if (status.running) {
                 Text(stringResource(R.string.sync_running), style = MaterialTheme.typography.bodyMedium)
