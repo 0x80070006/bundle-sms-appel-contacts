@@ -2,6 +2,11 @@ package app.dialtone.phone.util
 
 /** Bundle: French for every English text the app shows (see [tr]). */
 internal val FRENCH: Map<String, String> = mapOf(
+    // Bundle: copy and paste on the keypad
+    "Copy or paste" to "Copier ou coller",
+    "Paste %s" to "Coller %s",
+    "Nothing to paste" to "Rien à coller",
+    "%s copied" to "%s copié",
     // Bundle: widget
     "1 missed call" to "1 appel manqué",
     "%d missed calls" to "%d appels manqués",

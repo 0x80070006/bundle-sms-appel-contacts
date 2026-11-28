@@ -118,6 +118,7 @@ fun KeypadTab(
     contentPadding: PaddingValues,
 ) {
     val scheme = MaterialTheme.colorScheme
+    val context = LocalContext.current
     val density = LocalDensity.current
     var padHeightPx by remember { mutableIntStateOf(0) }
     val listState = rememberLazyListState()
@@ -155,11 +156,20 @@ fun KeypadTab(
                 }
             }
             itemsIndexed(rows, key = { _, (c, pn) -> "${c.id}-${pn.number}" }) { i, (contact, pn) ->
+                // Bundle: a long press copies the number.
                 Surface(
-                    onClick = { onCall(pn.number) },
                     shape = segmentShape(i, rows.size),
                     color = scheme.surfaceBright,
-                    modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth().animateItem(),
+                    modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth().animateItem()
+                        .clip(segmentShape(i, rows.size))
+                        .combinedClickable(
+                            onClick = { onCall(pn.number) },
+                            onLongClick = {
+                                Dialer.copy(context, pn.number)
+                                android.widget.Toast.makeText(context, trf("%s copied", formatNumber(pn.number)), android.widget.Toast.LENGTH_SHORT).show()
+                            },
+                            onLongClickLabel = tr("Copy number"),
+                        ),
                 ) {
                     Row(Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
                         Avatar(contact.name, contact.photoUri, contact.id, 48.dp)
@@ -218,13 +228,42 @@ private fun DialPanel(
         modifier = modifier.fillMaxWidth(),
     ) {
         Column(Modifier.padding(horizontal = 20.dp).padding(bottom = bottomInset + 12.dp)) {
-            BasicText(
-                text = formatNumber(number),
-                style = MaterialTheme.typography.displaySmall.copy(color = scheme.onSurface, textAlign = TextAlign.Center),
-                maxLines = 1,
-                autoSize = TextAutoSize.StepBased(minFontSize = 20.sp, maxFontSize = 36.sp),
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 12.dp).height(48.dp),
-            )
+            // Bundle: a long press on the number copies it, or pastes a number copied elsewhere.
+            var numberMenu by remember { mutableStateOf(false) }
+            Box(Modifier.fillMaxWidth()) {
+                BasicText(
+                    text = formatNumber(number),
+                    style = MaterialTheme.typography.displaySmall.copy(color = scheme.onSurface, textAlign = TextAlign.Center),
+                    maxLines = 1,
+                    autoSize = TextAutoSize.StepBased(minFontSize = 20.sp, maxFontSize = 36.sp),
+                    modifier = Modifier.fillMaxWidth()
+                        .combinedClickable(
+                            interactionSource = null,
+                            indication = null,
+                            onClick = {},
+                            onLongClick = {
+                                view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                                numberMenu = true
+                            },
+                            onLongClickLabel = tr("Copy or paste"),
+                        )
+                        .padding(horizontal = 8.dp, vertical = 12.dp).height(48.dp),
+                )
+                androidx.compose.material3.DropdownMenu(expanded = numberMenu, onDismissRequest = { numberMenu = false }) {
+                    if (number.isNotEmpty()) {
+                        androidx.compose.material3.DropdownMenuItem(
+                            text = { Text(tr("Copy")) },
+                            onClick = { numberMenu = false; Dialer.copy(context, number) },
+                        )
+                    }
+                    val pasted = remember(numberMenu) { clipboardNumber(context) }
+                    androidx.compose.material3.DropdownMenuItem(
+                        text = { Text(if (pasted != null) trf("Paste %s", pasted) else tr("Nothing to paste")) },
+                        enabled = pasted != null,
+                        onClick = { numberMenu = false; pasted?.let(onNumberChange) },
+                    )
+                }
+            }
 
             DialPad(
                 keyHeight = 60.dp,
@@ -284,4 +323,25 @@ private fun DialPanel(
             }
         }
     }
+}
+
+
+/**
+ * Bundle: the phone number on the clipboard, if there is one. Only the characters a number is
+ * dialled with are kept ("+33 6 12-34-56-78" gives "+33612345678"), so a number copied from a
+ * message or a web page pastes cleanly. Null when nothing number-like is there.
+ */
+internal fun clipboardNumber(context: android.content.Context): String? {
+    val text = runCatching {
+        context.getSystemService(android.content.ClipboardManager::class.java)
+            ?.primaryClip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.coerceToText(context)?.toString()
+    }.getOrNull() ?: return null
+    return dialableOf(text)
+}
+
+/** Keeps the dialable characters of [text]; null if what is left is neither a number nor a service code. */
+internal fun dialableOf(text: String): String? {
+    val kept = text.trim().filterIndexed { i, ch -> ch.isDigit() || ch == '*' || ch == '#' || (ch == '+' && text.trim().indexOf('+') == i) }
+    // A number (3 digits or more), or a service code such as *#06#.
+    return kept.takeIf { s -> s.count { it.isDigit() } >= 3 || (s.any { it == '*' || it == '#' } && s.any { it.isDigit() }) }
 }
