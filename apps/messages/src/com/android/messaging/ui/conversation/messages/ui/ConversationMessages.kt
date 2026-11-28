@@ -1,5 +1,6 @@
 package com.android.messaging.ui.conversation.messages.ui
 
+import com.android.messaging.ui.bundle.bubbleBirth
 import com.android.messaging.ui.bundle.ChatWallpaper
 import com.android.messaging.ui.bundle.LocalChatStyle
 
@@ -186,7 +187,9 @@ private fun LazyListScope.conversationMessageItems(
     ) { index, message ->
         ConversationMessagesItem(
             modifier = Modifier
-                .animateItem(),
+                .animateItem()
+                // Bundle 0.8: a message just sent rises and settles (Expressive interface).
+                .bubbleBirth(message.messageId.value, !message.isIncoming, maxOf(message.sentTimestamp, message.receivedTimestamp)),
             message = message,
             messageAbove = messageAboveCurrent(messages = displayMessages, index = index),
             messageBelow = messageBelowCurrent(messages = displayMessages, index = index),

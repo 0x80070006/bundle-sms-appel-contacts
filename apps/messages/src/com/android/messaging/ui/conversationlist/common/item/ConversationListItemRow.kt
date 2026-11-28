@@ -56,6 +56,8 @@ internal fun ConversationListItemRow(
 ) {
     // Twill: drawn as a card when the inbox provides one (see TwillCards).
     val cardShape = LocalTwillCardShape.current
+    // Bundle: over a theme, the card fades the lower it is on screen (and as the list scrolls).
+    val rowDepth = bundle.core.appearance.themedDepth(itemContainerColor(item))
     TwoLineListItem(
         onClick = onClick,
         leadingContent = {
@@ -72,11 +74,11 @@ internal fun ConversationListItemRow(
         titleContent = {
             ConversationListItemHeader(item)
         },
-        modifier = modifier.testTag(
+        modifier = modifier.then(rowDepth.first).testTag(
             tag = conversationListItemTestTag(item.conversationId),
         ),
         onLongClick = onLongClick,
-        color = itemContainerColor(item),
+        color = rowDepth.second,
         contentDescription = conversationListItemContentDescription(item),
         keepLeadingContentAccessible = true,
         subtitleContent = {

@@ -1,5 +1,6 @@
 package com.android.messaging.ui.conversationlist.common.item
 
+import com.android.messaging.ui.bundle.unreadAura
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
@@ -67,7 +68,8 @@ internal fun ConversationListItemAvatar(
         item.title.orEmpty(),
     )
 
-    Box(modifier = Modifier.size(ItemAvatarSize)) {
+    // Bundle 0.8: unread aura (Expressive interface).
+    Box(modifier = Modifier.size(ItemAvatarSize).unreadAura(item.isUnread && !item.isSelected)) {
         SelectionListAvatar(
             avatarUri = item.avatar.uri,
             size = ItemAvatarSize,

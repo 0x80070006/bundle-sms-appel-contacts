@@ -7,6 +7,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -326,3 +329,27 @@ fun themeActive(home: Boolean): Boolean {
     val appearance by AppearanceStore.get(androidx.compose.ui.platform.LocalContext.current).state.collectAsState()
     return appearance.themePack != ThemePack.None && (home || appearance.themeScope == ThemeScope.Everywhere)
 }
+
+/**
+ * Bundle: a list card over a theme gets more see-through the lower it is on the screen, so the
+ * art shows more and more towards the bottom, and it changes as the list scrolls. Returns the
+ * modifier that follows the card's position and its colour: [base] at the top (a little
+ * transparent), down to [MIN_ROW_ALPHA] at the bottom. Without a theme: [base], unchanged.
+ * Only the card's background fades; its text keeps full contrast.
+ */
+@Composable
+fun themedDepth(base: Color, home: Boolean = true): Pair<Modifier, Color> {
+    if (!themeActive(home)) return Modifier to base
+    val screen = androidx.compose.ui.platform.LocalWindowInfo.current.containerSize.height.toFloat().coerceAtLeast(1f)
+    var centerY by androidx.compose.runtime.remember { androidx.compose.runtime.mutableFloatStateOf(0f) }
+    val depth = (centerY / screen).coerceIn(0f, 1f)
+    val alpha = MAX_ROW_ALPHA - (MAX_ROW_ALPHA - MIN_ROW_ALPHA) * depth
+    val track = Modifier.onGloballyPositioned { c ->
+        val b = c.boundsInWindow()
+        centerY = (b.top + b.bottom) / 2f
+    }
+    return track to base.copy(alpha = base.alpha * alpha)
+}
+
+private const val MAX_ROW_ALPHA = 0.9f
+private const val MIN_ROW_ALPHA = 0.3f

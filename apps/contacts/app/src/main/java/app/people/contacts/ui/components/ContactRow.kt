@@ -49,15 +49,17 @@ fun ContactRow(
     onLongClick: (() -> Unit)? = null,
 ) {
     val scheme = MaterialTheme.colorScheme
-    val color = if (selected) scheme.secondaryContainer else scheme.surfaceBright
+    // Bundle: over a theme, the card fades the lower it is on screen (and as the list scrolls).
+    val depth = bundle.core.appearance.themedDepth(if (selected) scheme.secondaryContainer else scheme.surfaceBright)
+    val color = depth.second
     if (onLongClick == null) {
-        Surface(onClick = onClick, shape = shape, color = color, modifier = modifier.fillMaxWidth()) {
+        Surface(onClick = onClick, shape = shape, color = color, modifier = modifier.then(depth.first).fillMaxWidth()) {
             ContactRowContent(contact, supporting, selected)
         }
     } else {
         Surface(
             shape = shape, color = color,
-            modifier = modifier.fillMaxWidth().clip(shape).combinedClickable(onClick = onClick, onLongClick = onLongClick),
+            modifier = modifier.then(depth.first).fillMaxWidth().clip(shape).combinedClickable(onClick = onClick, onLongClick = onLongClick),
         ) {
             ContactRowContent(contact, supporting, selected)
         }

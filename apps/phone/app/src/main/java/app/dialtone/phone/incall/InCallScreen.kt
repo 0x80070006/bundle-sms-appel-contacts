@@ -151,7 +151,13 @@ fun InCallRoute(onFinished: () -> Unit) {
         }
     }
 
-    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
+    // Bundle 0.8 (Interface expressive): the ambient background behind the call.
+    val expressive = bundle.core.design.LocalAppearance.current.expressiveUi
+    val page = MaterialTheme.colorScheme.surface
+    if (expressive) {
+        bundle.core.design.AmbientCallBackground(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary, page)
+    }
+    Surface(Modifier.fillMaxSize(), color = if (expressive) androidx.compose.ui.graphics.Color.Transparent else page, contentColor = MaterialTheme.colorScheme.onSurface) {
         if (call != null) {
             val snap = remember(call, version) { call.snapshot() }
             InCallContent(call, snap, audio, other, version)
@@ -377,10 +383,21 @@ private fun IncomingActions(
                     MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.colorScheme.onTertiaryContainer, 1f, onEndAndAnswer,
                 )
             }
-            RoundAction(
-                Icons.Rounded.Call, if (onEndAndAnswer != null) tr("Hold & answer") else tr("Answer"),
-                CallColors.container(), CallColors.content(), pulse, onAnswer,
-            )
+            if (bundle.core.design.LocalAppearance.current.expressiveUi && onEndAndAnswer == null) {
+                // Bundle 0.8: drag up to answer, the button turns from a cookie into a pill; a tap answers too.
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    bundle.core.design.MorphAnswerButton(tr("Answer"), CallColors.container(), onAnswer) {
+                        Icon(Icons.Rounded.Call, null, Modifier.size(36.dp), tint = CallColors.content())
+                    }
+                    Spacer(Modifier.height(10.dp))
+                    Text(tr("Answer"), style = MaterialTheme.typography.labelLarge)
+                }
+            } else {
+                RoundAction(
+                    Icons.Rounded.Call, if (onEndAndAnswer != null) tr("Hold & answer") else tr("Answer"),
+                    CallColors.container(), CallColors.content(), pulse, onAnswer,
+                )
+            }
         }
         if (onReply != null) {
             FilledTonalButton(onClick = { replying = true }, modifier = Modifier.padding(bottom = 24.dp)) {
