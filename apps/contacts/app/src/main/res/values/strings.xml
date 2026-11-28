@@ -471,4 +471,19 @@
     <string name="complete_photo">Add a photo</string>
     <string name="complete_birthday">Add their birthday</string>
     <string name="complete_address">Add an address</string>
+    <string name="maintenance_title">Keeping the book tidy</string>
+    <string name="maintenance_sync_paused">Sync paused</string>
+    <string name="maintenance_sync_ok">Nextcloud sync</string>
+    <string name="maintenance_sync_last">Last sync %1$s</string>
+    <string name="maintenance_sync_never">Not synced yet</string>
+    <string name="maintenance_fix_header">Fix in one tap</string>
+    <string name="maintenance_duplicates">Duplicates</string>
+    <string name="maintenance_merge">Merge</string>
+    <string name="maintenance_no_code">No country code</string>
+    <string name="maintenance_add_code">Add it</string>
+    <string name="maintenance_no_name">No name</string>
+    <string name="maintenance_name">Name them</string>
+    <string name="maintenance_empty">Empty cards</string>
+    <string name="maintenance_trash">Move to trash</string>
+    <string name="maintenance_nothing">Nothing to do</string>
 </resources>

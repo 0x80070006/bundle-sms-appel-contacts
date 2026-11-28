@@ -313,7 +313,10 @@ fun ThemedPage(home: Boolean, conversation: Boolean = false, content: @Composabl
     }
     Box(Modifier.fillMaxSize()) {
         ThemeBackdrop(pack, themeVeil(page, conversation), conversation = conversation)
-        content(Color.Transparent)
+        // The page is see-through, so its text colour has to be provided here.
+        androidx.compose.runtime.CompositionLocalProvider(
+            androidx.compose.material3.LocalContentColor provides androidx.compose.material3.MaterialTheme.colorScheme.onBackground,
+        ) { content(Color.Transparent) }
     }
 }
 

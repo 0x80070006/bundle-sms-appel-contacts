@@ -73,7 +73,8 @@ private fun ContactRowContent(contact: ContactSummary, supporting: String?, sele
                 contentAlignment = Alignment.Center,
             ) { Icon(Icons.Rounded.Check, null, tint = MaterialTheme.colorScheme.onPrimary) }
         } else {
-            Avatar(contact.name, contact.photoUri, contact.id, LIST_AVATAR_SIZE)
+            // Bundle: missed call or unread text (Expressive interface).
+            Avatar(contact.name, contact.photoUri, contact.id, LIST_AVATAR_SIZE, aura = app.people.contacts.data.LocalContactAuras.current[contact.id] ?: bundle.core.design.Aura.None)
         }
         Spacer(Modifier.width(16.dp))
         androidx.compose.foundation.layout.Column(Modifier.weight(1f)) {

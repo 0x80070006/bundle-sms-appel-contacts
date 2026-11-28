@@ -1,5 +1,9 @@
 package app.people.contacts.ui.contacts
 
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
@@ -97,7 +101,8 @@ fun ContactsTab(
     val favorites = remember(list) { list?.filter { it.starred }.orEmpty() }
     // Where each letter's header sits in the list, for the A–Z strip.
     val headerIndex = remember(sections, favorites) {
-        var index = 1 + if (favorites.isNotEmpty()) 1 + favorites.size else 0
+        // Bundle: the favourites are one grid item (after their header).
+        var index = 1 + if (favorites.isNotEmpty()) 2 else 0
         sections.associate { (letter, members) -> (letter to index).also { index += 1 + members.size } }
     }
     val selecting = selected.isNotEmpty()
@@ -141,7 +146,8 @@ fun ContactsTab(
                 else -> {
                     if (favorites.isNotEmpty()) {
                         item(key = "favorites-header") { FavoritesHeader() }
-                        group("fav", favorites, selected, onTap, onLongPress)
+                        // Bundle: the close ones first, in large shapes (tap opens, long press selects).
+                        item(key = "favorites-grid") { FavoritesGrid(favorites, selected, onTap, onLongPress) }
                     }
                     // A contact in two labels shows in both, so keys carry the section's position.
                     sections.forEachIndexed { index, (title, members) ->
@@ -155,9 +161,10 @@ fun ContactsTab(
             LetterScroller(
                 letters = sections.map { it.first },
                 onLetter = { letter -> headerIndex[letter]?.let { scope.launch { listState.scrollToItem(it) } } },
+                // Bundle: at thumb height, on the lower part of the right edge.
                 modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .padding(top = contentPadding.calculateTopPadding(), bottom = contentPadding.calculateBottomPadding()),
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 2.dp, bottom = contentPadding.calculateBottomPadding() + 96.dp),
             )
         }
     }
@@ -203,6 +210,8 @@ private fun LetterScroller(letters: List<String>, onLetter: (String) -> Unit, mo
             // The letters sit in the list's right margin; the touch area reaches a little past it.
             Modifier
                 .width(24.dp)
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh, androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
+                .padding(vertical = 4.dp)
                 .onSizeChanged { height = it.height }
                 .pointerInput(letters) {
                     detectVerticalDragGestures(
@@ -309,5 +318,37 @@ fun AccessScreen(onAllow: () -> Unit) {
             stringResource(R.string.access_body),
             action = { Button(onClick = onAllow) { Text(stringResource(R.string.access_allow)) } },
         )
+    }
+}
+
+
+/** Bundle: the favourites as large shapes, four per row. */
+@Composable
+private fun FavoritesGrid(
+    favorites: List<ContactSummary>,
+    selected: Set<Long>,
+    onTap: (ContactSummary) -> Unit,
+    onLongPress: (ContactSummary) -> Unit,
+) {
+    Column(Modifier.padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        favorites.chunked(4).forEach { row ->
+            Row(Modifier.fillMaxWidth()) {
+                row.forEach { c ->
+                    Column(
+                        Modifier.weight(1f)
+                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(20.dp))
+                            .background(if (c.id in selected) MaterialTheme.colorScheme.secondaryContainer else androidx.compose.ui.graphics.Color.Transparent)
+                            .combinedClickable(onClick = { onTap(c) }, onLongClick = { onLongPress(c) })
+                            .padding(vertical = 8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        app.people.contacts.ui.components.Avatar(c.name, c.photoUri, c.id, 64.dp, expressive = true)
+                        Text(c.name.substringBefore(' '), style = MaterialTheme.typography.labelLarge, maxLines = 1, color = MaterialTheme.colorScheme.onBackground)
+                    }
+                }
+                repeat(4 - row.size) { Spacer(Modifier.weight(1f)) }
+            }
+        }
     }
 }

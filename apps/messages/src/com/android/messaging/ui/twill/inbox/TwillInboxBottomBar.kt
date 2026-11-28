@@ -45,8 +45,10 @@ internal fun TwillInboxBottomBar(
     modifier: Modifier = Modifier,
 ) {
     val barColor = LocalBarContainerColor.current
+    // Bundle: the link pastille (Contacts · Phone · Messages) above the bar.
+    androidx.compose.foundation.layout.Column(modifier) {
+    bundle.core.appearance.LinkChip(bundle.core.appearance.BundleApp.Messages)
     ShortNavigationBar(
-        modifier = modifier,
         containerColor = when {
             barColor.isSpecified -> barColor
             else -> MaterialTheme.colorScheme.surfaceContainer
@@ -73,6 +75,7 @@ internal fun TwillInboxBottomBar(
                 label = { Text(text = label) },
             )
         }
+    }
     }
 }
 

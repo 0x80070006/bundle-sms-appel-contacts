@@ -65,6 +65,8 @@ fun OrganizeTab(
         ),
         verticalArrangement = Arrangement.spacedBy(SEGMENT_GAP),
     ) {
+        // Bundle: "Keeping the book tidy" first: sync state and the fixes, a tap away.
+        item(key = "maintenance") { MaintenanceSection(duplicates.size, fixes, onOpenMerge, onOpenFix) }
         item(key = "labels-header") { SectionHeader(stringResource(R.string.section_labels)) }
         val rows = list.size + 1
         itemsIndexed(list, key = { _, l -> "label-${l.id}" }) { index, label ->

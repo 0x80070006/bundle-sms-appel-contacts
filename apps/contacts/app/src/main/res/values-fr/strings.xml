@@ -485,4 +485,19 @@
     <string name="complete_photo">Ajouter une photo</string>
     <string name="complete_birthday">Ajouter son anniversaire</string>
     <string name="complete_address">Ajouter une adresse</string>
+    <string name="maintenance_title">Entretien du carnet</string>
+    <string name="maintenance_sync_paused">Synchro en pause</string>
+    <string name="maintenance_sync_ok">Synchro Nextcloud</string>
+    <string name="maintenance_sync_last">Dernière synchro %1$s</string>
+    <string name="maintenance_sync_never">Pas encore synchronisé</string>
+    <string name="maintenance_fix_header">À corriger d\'un geste</string>
+    <string name="maintenance_duplicates">Doublons</string>
+    <string name="maintenance_merge">Fusionner</string>
+    <string name="maintenance_no_code">Sans indicatif</string>
+    <string name="maintenance_add_code">Ajouter l\'indicatif</string>
+    <string name="maintenance_no_name">Sans nom</string>
+    <string name="maintenance_name">Les nommer</string>
+    <string name="maintenance_empty">Fiches vides</string>
+    <string name="maintenance_trash">Mettre à la corbeille</string>
+    <string name="maintenance_nothing">Rien à faire</string>
 </resources>

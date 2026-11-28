@@ -216,6 +216,18 @@ private fun Home(viewModel: ContactsViewModel, tab: Tab, onTabChange: (Tab) -> U
     }
 
     // Bundle: the theme's background behind this screen (see Appearance › Themes).
+    // Bundle: auras on the list's avatars (missed call, unread text), read on resume too.
+    val auraOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    var auraTick by remember { mutableStateOf(0) }
+    androidx.compose.runtime.DisposableEffect(auraOwner) {
+        val obs = androidx.lifecycle.LifecycleEventObserver { _, e -> if (e == androidx.lifecycle.Lifecycle.Event.ON_RESUME) auraTick++ }
+        auraOwner.lifecycle.addObserver(obs)
+        onDispose { auraOwner.lifecycle.removeObserver(obs) }
+    }
+    val auras by androidx.compose.runtime.produceState(emptyMap<Long, bundle.core.design.Aura>(), contacts, auraTick) {
+        value = contacts?.let { app.people.contacts.data.loadAuras(context, it) }.orEmpty()
+    }
+    androidx.compose.runtime.CompositionLocalProvider(app.people.contacts.data.LocalContactAuras provides auras) {
     bundle.core.appearance.ThemedPage(home = true) { themedPageColor ->
     Scaffold(
         containerColor = themedPageColor,
@@ -297,6 +309,7 @@ private fun Home(viewModel: ContactsViewModel, tab: Tab, onTabChange: (Tab) -> U
                 )
             }
         }
+    }
     }
     }
 

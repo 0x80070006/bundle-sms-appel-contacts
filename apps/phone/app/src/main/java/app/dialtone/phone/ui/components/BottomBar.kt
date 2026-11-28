@@ -16,9 +16,12 @@ import androidx.compose.ui.Modifier
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ContactsMatchBottomBar(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
-    ShortNavigationBar(
-        modifier = modifier,
-        windowInsets = ShortNavigationBarDefaults.windowInsets.union(WindowInsets.ime),
-        content = content,
-    )
+    // Bundle: the link pastille (Contacts · Phone · Messages) above the bar.
+    androidx.compose.foundation.layout.Column(modifier) {
+        bundle.core.appearance.LinkChip(bundle.core.appearance.BundleApp.Phone)
+        ShortNavigationBar(
+            windowInsets = ShortNavigationBarDefaults.windowInsets.union(WindowInsets.ime),
+            content = content,
+        )
+    }
 }
