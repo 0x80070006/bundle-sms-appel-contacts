@@ -428,9 +428,12 @@ private fun ConversationListScaffold(
         if (firstTab != null) twillInbox?.selectedTab?.value = firstTab
     }
 
+    // Bundle: the theme's background behind this screen (see Appearance › Themes).
+    bundle.core.appearance.ThemedPage(home = true) { themedPageColor ->
     Scaffold(
         modifier = modifier,
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        // Bundle: transparent over a theme, the usual container colour otherwise.
+        containerColor = if (themedPageColor == androidx.compose.ui.graphics.Color.Transparent) themedPageColor else MaterialTheme.colorScheme.surfaceContainer,
         bottomBar = {
             if (isBottomBarShown && twillState != null && twillTab != null) {
                 val smsUnread = (uiState.content as? ConversationListContentUiState.Items)
@@ -477,9 +480,10 @@ private fun ConversationListScaffold(
                 .onGloballyPositioned { coordinates ->
                     pinAnimationController?.updateContentTop(coordinates.boundsInRoot().top)
                 }
-                .background(backdropColor)
+                // Bundle: see-through over a theme (Appearance › Themes), except while selecting.
+                .background(if (bundle.core.appearance.themeActive(home = true) && !isSelectionMode) Color.Transparent else backdropColor)
                 .clip(MaterialTheme.contentSurfaceShape)
-                .background(listPaneContentColor()),
+                .background(if (bundle.core.appearance.themeActive(home = true)) Color.Transparent else listPaneContentColor()),
         ) {
             // Twill: while searching, the results take the list's place.
             if (twillInbox != null && twillInbox.search.isActive) {
@@ -535,6 +539,7 @@ private fun ConversationListScaffold(
                 )
             }
         }
+    }
     }
 }
 

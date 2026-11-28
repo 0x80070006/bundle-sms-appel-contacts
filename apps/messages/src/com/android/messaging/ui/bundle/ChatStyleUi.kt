@@ -138,7 +138,20 @@ fun ChatStyle.incomingContent(themeContent: Color): Color = if (incomingColor !=
  */
 @Composable
 fun ChatBackground(style: ChatStyle, modifier: Modifier = Modifier) {
-    if (style.wallpaper == ChatWallpaper.None) return
+    if (style.wallpaper == ChatWallpaper.None) {
+        // Bundle: no background of its own: the theme's conversation texture, when the theme is
+        // set for the whole app (Appearance › Themes).
+        val appearance by bundle.core.appearance.AppearanceStore.get(androidx.compose.ui.platform.LocalContext.current).state.collectAsState()
+        if (appearance.themePack != bundle.core.appearance.ThemePack.None && appearance.themeScope == bundle.core.appearance.ThemeScope.Everywhere) {
+            bundle.core.appearance.ThemeBackdrop(
+                appearance.themePack,
+                bundle.core.appearance.themeVeil(MaterialTheme.colorScheme.background, conversation = true),
+                modifier,
+                conversation = true,
+            )
+        }
+        return
+    }
     Box(modifier) {
         val layer = Modifier
             .fillMaxSize()

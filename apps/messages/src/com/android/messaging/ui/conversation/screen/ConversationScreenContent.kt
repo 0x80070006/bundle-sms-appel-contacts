@@ -306,11 +306,11 @@ private fun Modifier.conversationScreenContentModifier(
             top = contentPadding.calculateTopPadding(),
             bottom = contentPadding.calculateBottomPadding(),
         )
-        .background(color = if (LocalChatStyle.current.wallpaper == ChatWallpaper.None) backdropColor else Color.Transparent)
+        .background(color = if (LocalChatStyle.current.wallpaper == ChatWallpaper.None && !bundle.core.appearance.themeActive(home = false)) backdropColor else Color.Transparent)
         .clip(shape = MaterialTheme.contentSurfaceShape)
         .background(
             color = when (LocalChatStyle.current.wallpaper) {
-                ChatWallpaper.None -> MaterialTheme.colorScheme.background
+                ChatWallpaper.None -> if (bundle.core.appearance.themeActive(home = false)) Color.Transparent else MaterialTheme.colorScheme.background
                 else -> Color.Transparent
             },
         )

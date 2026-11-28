@@ -299,7 +299,18 @@ internal fun ConversationScreenScaffold(
     val chatStyleStore = ChatStyleStore.get(bubbleContext)
     val chatOverrides by chatStyleStore.overrides.collectAsState()
     val chatDefault by chatStyleStore.default.collectAsState()
-    val chatStyle = chatStyleStore.styleFor(conversationId?.value, chatOverrides, chatDefault)
+    // Bundle: bubbles take the theme's colours (or the ones set per element in Appearance) unless
+    // this conversation's style sets its own.
+    val bundleLook by bundle.core.appearance.AppearanceStore.get(bubbleContext).state.collectAsState()
+    val chatStyle = chatStyleStore.styleFor(conversationId?.value, chatOverrides, chatDefault).let { s ->
+        val themed = bundleLook.themePack != bundle.core.appearance.ThemePack.None && bundleLook.themeScope == bundle.core.appearance.ThemeScope.Everywhere
+        val mine = bundleLook.elements.bubbleMine.takeIf { it != 0 } ?: if (themed) bundleLook.themePack.bubbleMine.toInt() else 0
+        val theirs = bundleLook.elements.bubbleTheirs.takeIf { it != 0 } ?: if (themed) bundleLook.themePack.bubbleTheirs.toInt() else 0
+        s.copy(
+            bubbleColor = if (s.bubbleColor != 0) s.bubbleColor else mine,
+            incomingColor = if (s.incomingColor != 0) s.incomingColor else theirs,
+        )
+    }
     var isChatStyleSheetVisible by rememberSaveable { mutableStateOf(false) }
     if (isChatStyleSheetVisible && conversationId != null) {
         ChatStyleSheet(conversationId = conversationId.value, onDismiss = { isChatStyleSheetVisible = false })

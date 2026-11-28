@@ -22,7 +22,7 @@ class AppearanceSyncProvider : ContentProvider() {
         val store = AppearanceStore.get(context)
         return when (method) {
             AppearanceStore.METHOD_APPLY -> { store.receive(arg); Bundle() }
-            AppearanceStore.METHOD_GET -> Bundle().apply { putString(AppearanceStore.EXTRA_JSON, store.state.value.toJson()) }
+            AppearanceStore.METHOD_GET -> Bundle().apply { putString(AppearanceStore.EXTRA_JSON, store.sharedJson()) }
             else -> null
         }
     }

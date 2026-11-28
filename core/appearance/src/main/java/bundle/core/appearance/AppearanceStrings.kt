@@ -18,6 +18,49 @@ class AppearanceStrings(val fr: Boolean) {
         "Theme, colours and contact pictures apply to all three apps. Language and icon are for this app only.",
     )
     val theme = t("Thème", "Theme")
+    // Bundle: tabs and themes.
+    val tabThemes = t("Thèmes", "Themes")
+    val tabColors = t("Couleurs", "Colours")
+    val tabAvatars = t("Avatars", "Avatars")
+    val tabIconLanguage = t("Icône et langue", "Icon & language")
+    val themesHeader = t("Thème de l'app", "App theme")
+    val themesNote = t(
+        "Un fond dessiné, une texture pour les conversations et des couleurs choisies pour rester lisibles.",
+        "A drawn background, a texture for conversations and colours chosen to stay readable.",
+    )
+    val themeNone = t("Aucun", "None")
+    val themeScope = t("Où l'appliquer", "Where it shows")
+    val scopeHome = t("Écran d'accueil", "Home screen")
+    val scopeEverywhere = t("Toute l'app", "Whole app")
+    val ownLook = t("Réglages propres à cette app", "This app's own settings")
+    val ownLookSummary = t(
+        "Activé, ce que vous changez ici ne concerne que cette app. Désactivé, les trois apps partagent la même apparence.",
+        "On, what you change here is for this app only. Off, the three apps share one look.",
+    )
+    val applyAll = t("Appliquer à toutes les apps", "Apply to all apps")
+    val applied = t("Appliqué aux trois apps", "Applied to the three apps")
+    val elementsHeader = t("Couleur de chaque élément", "Colour of each element")
+    val elementsNote = t("Par-dessus le thème ou la palette. « Auto » garde celle du thème.", "Over the theme or palette. \u201cAuto\u201d keeps the theme's.")
+    val elementAccent = t("Boutons et accents", "Buttons and accents")
+    val elementBackground = t("Fond des pages", "Page background")
+    val elementText = t("Texte", "Text")
+    val elementBubbleMine = t("Mes bulles (SMS)", "My bubbles (texts)")
+    val elementBubbleTheirs = t("Leurs bulles (SMS)", "Their bubbles (texts)")
+    val auto = t("Auto", "Auto")
+    val resetElements = t("Tout remettre en auto", "Reset all to auto")
+    fun themeName(pack: ThemePack): String = when (pack) {
+        ThemePack.None -> themeNone
+        ThemePack.Forest -> t("Forêt", "Forest")
+        ThemePack.Ocean -> t("Océan", "Ocean")
+        ThemePack.Space -> t("Espace", "Space")
+        ThemePack.Desert -> t("Désert", "Desert")
+        ThemePack.Mountain -> t("Montagne", "Mountain")
+        ThemePack.Aurora -> t("Aurore boréale", "Northern lights")
+        ThemePack.Sakura -> t("Sakura", "Sakura")
+        ThemePack.City -> t("Ville la nuit", "City at night")
+        ThemePack.Autumn -> t("Automne", "Autumn")
+        ThemePack.Zen -> t("Jardin zen", "Zen garden")
+    }
     val themeSystem = t("Système", "System")
     val themeLight = t("Clair", "Light")
     val themeDark = t("Sombre", "Dark")

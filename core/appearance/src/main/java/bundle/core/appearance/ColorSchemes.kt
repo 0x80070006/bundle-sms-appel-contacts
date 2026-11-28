@@ -33,7 +33,39 @@ fun bundleColorScheme(context: Context, appearance: Appearance, dark: Boolean): 
             if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         else -> schemeFromSeed(seed ?: Palette.Ocean.seed!!.toInt(), dark)
     }
-    return if (dark && appearance.pureBlack) base.pureBlack() else base
+    val black = if (dark && appearance.pureBlack) base.pureBlack() else base
+    return black.withElements(appearance.elements)
+}
+
+/**
+ * Bundle: whether the app is dark: a dark theme (space, city at night…) is dark whatever the
+ * mode, so its art and text always match.
+ */
+fun Appearance.isDarkWith(systemDark: Boolean): Boolean =
+    if (themePack != ThemePack.None && themePack.dark) true else themeMode.isDark(systemDark)
+
+/** Bundle: the colours the user set for single elements, put over the scheme. */
+private fun ColorScheme.withElements(e: ElementColors): ColorScheme {
+    if (e.isEmpty) return this
+    var s = this
+    if (e.accent != 0) {
+        val a = Color(e.accent)
+        s = s.copy(primary = a, onPrimary = contentColorFor(a), primaryContainer = a.copy(alpha = 0.85f).compositeOverOpaque(s.surface), onPrimaryContainer = contentColorFor(a))
+    }
+    if (e.background != 0) {
+        val b = Color(e.background)
+        s = s.copy(background = b, surface = b, surfaceContainerLow = b, onBackground = contentColorFor(b), onSurface = contentColorFor(b))
+    }
+    if (e.text != 0) {
+        val t = Color(e.text)
+        s = s.copy(onBackground = t, onSurface = t)
+    }
+    return s
+}
+
+private fun Color.compositeOverOpaque(under: Color): Color {
+    val a = alpha
+    return Color(red * a + under.red * (1 - a), green * a + under.green * (1 - a), blue * a + under.blue * (1 - a), 1f)
 }
 
 /** A colour's hue (0–360) and saturation (0–1), from HSL. */

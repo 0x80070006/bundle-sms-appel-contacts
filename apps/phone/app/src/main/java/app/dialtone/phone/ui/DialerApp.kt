@@ -237,7 +237,10 @@ fun DialerApp(
     val spatial = MaterialTheme.motionScheme.defaultSpatialSpec<IntOffset>()
 
     Box(Modifier.fillMaxSize()) {
-        Scaffold(
+        // Bundle: the theme's background behind this screen (see Appearance › Themes).
+    bundle.core.appearance.ThemedPage(home = true) { themedPageColor ->
+    Scaffold(
+        containerColor = themedPageColor,
             topBar = {
                 SearchBarPill(
                     query = query,
@@ -336,6 +339,7 @@ fun DialerApp(
                 }
             }
         }
+    }
         // Settings: a full page over the app, opened from the gear in any search bar.
         AnimatedVisibility(
             visible = voicemailSettingsOpen,

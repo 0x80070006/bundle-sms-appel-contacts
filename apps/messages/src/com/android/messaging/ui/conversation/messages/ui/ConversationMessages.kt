@@ -117,7 +117,8 @@ internal fun ConversationMessages(
             // Bundle: see-through when the chat has a background, which is drawn underneath.
             .background(
                 color = when (LocalChatStyle.current.wallpaper) {
-                    ChatWallpaper.None -> MaterialTheme.colorScheme.background
+                    // Bundle: a theme's texture also shows through.
+                    ChatWallpaper.None -> if (bundle.core.appearance.themeActive(home = false)) Color.Transparent else MaterialTheme.colorScheme.background
                     else -> Color.Transparent
                 },
             ),

@@ -13,6 +13,7 @@ import androidx.compose.runtime.getValue
 import bundle.core.appearance.AppearanceStore
 import bundle.core.appearance.bundleColorScheme
 import bundle.core.appearance.isDark
+import bundle.core.appearance.isDarkWith
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
@@ -90,7 +91,7 @@ fun AppTheme(
     // Bundle: the look chosen in Appearance, shared with Contacts and Phone (theme mode,
     // wallpaper or palette colours, pure black). [darkTheme] is the system's setting.
     val appearance by AppearanceStore.get(context).state.collectAsState()
-    val wallpaper = bundleColorScheme(context, appearance, appearance.themeMode.isDark(darkTheme))
+    val wallpaper = bundleColorScheme(context, appearance, appearance.isDarkWith(darkTheme))
     // The scheme's own surface container, for the bottom bar (see LocalBarContainerColor).
     CompositionLocalProvider(LocalBarContainerColor provides wallpaper.surfaceContainer) {
         MaterialExpressiveTheme(

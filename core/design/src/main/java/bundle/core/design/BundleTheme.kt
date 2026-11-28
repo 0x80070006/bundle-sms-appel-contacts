@@ -12,6 +12,7 @@ import bundle.core.appearance.Appearance
 import bundle.core.appearance.AppearanceStore
 import bundle.core.appearance.bundleColorScheme
 import bundle.core.appearance.isDark
+import bundle.core.appearance.isDarkWith
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.Font
@@ -57,7 +58,7 @@ fun BundleTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable
     // The look the user chose in Appearance (shared by the three apps): theme mode, colours,
     // pure black. [darkTheme] is the system's setting, used when the mode is System.
     val appearance by AppearanceStore.get(context).state.collectAsState()
-    val dark = appearance.themeMode.isDark(darkTheme)
+    val dark = appearance.isDarkWith(darkTheme)
     val scheme = bundleColorScheme(context, appearance, dark)
     val colorScheme = scheme.copy(
         background = scheme.surfaceContainerLow,

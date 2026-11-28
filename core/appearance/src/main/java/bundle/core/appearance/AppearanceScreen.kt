@@ -43,6 +43,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -155,14 +156,28 @@ fun AppearanceDialog(
                 )
             },
         ) { padding ->
+            // Bundle: one tab per big kind of customisation; this app's own look on every tab.
+            var tab by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(AppearanceTab.Themes) }
             LazyColumn(
                 Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(top = padding.calculateTopPadding(), bottom = padding.calculateBottomPadding() + 24.dp),
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
-                appearanceItems(strings)
-                if (appIcon != null) item(key = "appearance-icon") { AppIconSection(appIcon, strings) }
-                extra(strings)
+                item(key = "appearance-tabs") { AppearanceTabRow(tab, strings) { tab = it } }
+                item(key = "appearance-own") { OwnLookCard(strings) }
+                when (tab) {
+                    AppearanceTab.Themes -> {
+                        item(key = "appearance-themes") { ThemesTab(strings) }
+                        // The app's own extras (Messages: conversation backgrounds and bubbles).
+                        extra(strings)
+                    }
+                    AppearanceTab.Colors -> item(key = "appearance-colors") { ColorsTab(strings) }
+                    AppearanceTab.Avatars -> item(key = "appearance-avatars") { AvatarsTab(strings) }
+                    AppearanceTab.IconLanguage -> {
+                        if (appIcon != null) item(key = "appearance-icon") { AppIconSection(appIcon, strings) }
+                        item(key = "appearance-language") { LanguageSection(strings) }
+                    }
+                }
             }
         }
     }
@@ -233,7 +248,7 @@ private fun ThemeSection(strings: AppearanceStrings) {
 /** Colour swatches: wallpaper, the palettes, and a custom colour with hue and intensity sliders. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun PalettePicker(appearance: Appearance, strings: AppearanceStrings, onChange: ((Appearance) -> Appearance) -> Unit) {
+internal fun PalettePicker(appearance: Appearance, strings: AppearanceStrings, onChange: ((Appearance) -> Appearance) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(strings.colorsSummary, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {

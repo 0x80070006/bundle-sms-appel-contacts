@@ -47,11 +47,17 @@ data class Appearance(
     val language: AppLanguage = AppLanguage.System,
     /** "Interface expressive": living avatar outlines, weights that change when read, springier motion. */
     val expressiveUi: Boolean = false,
+    /** Bundle: the theme (art, colours, conversation texture); None = plain colours. */
+    val themePack: ThemePack = ThemePack.None,
+    /** Bundle: the theme on the home screen only, or everywhere in the app. */
+    val themeScope: ThemeScope = ThemeScope.Everywhere,
+    /** Bundle: colours the user set for single elements, over the theme or palette. */
+    val elements: ElementColors = ElementColors(),
     val revision: Long = 0,
 ) {
-    /** The seed colour in use, or null for wallpaper colours. */
+    /** The seed colour in use, or null for wallpaper colours. A theme brings its own. */
     val seed: Int?
-        get() = when (palette) {
+        get() = if (themePack != ThemePack.None) themePack.seed.toInt() else when (palette) {
             Palette.Wallpaper -> null
             Palette.Custom -> customSeed
             else -> palette.seed!!.toInt()
@@ -65,6 +71,10 @@ data class Appearance(
         .put("avatarStyle", avatarStyle.name)
         .put("language", language.name)
         .put("expressiveUi", expressiveUi)
+        .put("themePack", themePack.name)
+        .put("themeScope", themeScope.name)
+        .put("elAccent", elements.accent).put("elBackground", elements.background).put("elText", elements.text)
+        .put("elBubbleMine", elements.bubbleMine).put("elBubbleTheirs", elements.bubbleTheirs)
         .put("revision", revision)
         .toString()
 
@@ -83,6 +93,12 @@ data class Appearance(
                     avatarStyle = enumOr(o.optString("avatarStyle"), d.avatarStyle),
                     language = enumOr(o.optString("language"), d.language),
                     expressiveUi = o.optBoolean("expressiveUi", d.expressiveUi),
+                    themePack = enumOr(o.optString("themePack"), d.themePack),
+                    themeScope = enumOr(o.optString("themeScope"), d.themeScope),
+                    elements = ElementColors(
+                        o.optInt("elAccent"), o.optInt("elBackground"), o.optInt("elText"),
+                        o.optInt("elBubbleMine"), o.optInt("elBubbleTheirs"),
+                    ),
                     revision = o.optLong("revision", 0),
                 )
             }.getOrNull()

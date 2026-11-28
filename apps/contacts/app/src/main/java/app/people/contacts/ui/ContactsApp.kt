@@ -215,7 +215,10 @@ private fun Home(viewModel: ContactsViewModel, tab: Tab, onTabChange: (Tab) -> U
         if (result == SnackbarResult.ActionPerformed) viewModel.undoDelete()
     }
 
+    // Bundle: the theme's background behind this screen (see Appearance › Themes).
+    bundle.core.appearance.ThemedPage(home = true) { themedPageColor ->
     Scaffold(
+        containerColor = themedPageColor,
         // Pinned above the tabs, as in Dialtone: lists scroll behind it. The strip is opaque in
         // the background colour (status bar included) so nothing shows through around the pill.
         topBar = {
@@ -294,6 +297,7 @@ private fun Home(viewModel: ContactsViewModel, tab: Tab, onTabChange: (Tab) -> U
                 )
             }
         }
+    }
     }
 
     if (confirmDelete) {
